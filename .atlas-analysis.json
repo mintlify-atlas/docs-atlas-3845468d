@@ -1,0 +1,192 @@
+{
+  "projectType": "saas",
+  "projectName": "YBH Pulse Content",
+  "projectDescription": "AI-powered content production dashboard for transforming podcast episodes into social-ready assets.",
+  "theme": "aspen",
+  "primaryColor": "#F7B500",
+  "lightColor": "#F17529",
+  "darkColor": "#EF4136",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Overview",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "authentication"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/workflow",
+              "concepts/content-pipeline",
+              "concepts/ai-generation"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Features",
+        "groups": [
+          {
+            "group": "Episode Management",
+            "pages": [
+              "features/episodes/overview",
+              "features/episodes/transcript-upload",
+              "features/episodes/prf-generation",
+              "features/episodes/hooks-generation"
+            ]
+          },
+          {
+            "group": "Content Generation",
+            "pages": [
+              "features/content/metadata",
+              "features/content/social-posts",
+              "features/content/rich-text-editor"
+            ]
+          },
+          {
+            "group": "Design Studio",
+            "pages": [
+              "features/design/overview",
+              "features/design/infographics",
+              "features/design/thumbnails",
+              "features/design/career-timelines"
+            ]
+          },
+          {
+            "group": "Guest Management",
+            "pages": [
+              "features/guests/overview",
+              "features/guests/brand-kits",
+              "features/guests/linkedin-integration"
+            ]
+          },
+          {
+            "group": "Social Media",
+            "pages": [
+              "features/social/calendar",
+              "features/social/analytics",
+              "features/social/scheduling"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Configuration",
+        "groups": [
+          {
+            "group": "Setup",
+            "pages": [
+              "configuration/environment-variables",
+              "configuration/sanity-cms",
+              "configuration/ai-providers"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "configuration/integrations/kieai",
+              "configuration/integrations/pinecone",
+              "configuration/integrations/linkedin",
+              "configuration/integrations/google-drive"
+            ]
+          },
+          {
+            "group": "Brand Settings",
+            "pages": [
+              "configuration/brand/guidelines",
+              "configuration/brand/design-system",
+              "configuration/brand/prompts"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/overview",
+              "api/authentication",
+              "api/episodes",
+              "api/content-generation",
+              "api/images",
+              "api/guests"
+            ]
+          },
+          {
+            "group": "Services",
+            "pages": [
+              "api/services/ai",
+              "api/services/sanity",
+              "api/services/pinecone",
+              "api/services/kieai"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "development/setup",
+              "development/architecture",
+              "development/testing"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "development/deployment/cloudflare",
+              "development/deployment/environment",
+              "development/deployment/ci-cd"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "development/contributing/guidelines",
+              "development/contributing/bug-workflow"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "AI-powered PRF document generation from podcast transcripts",
+    "Viral hooks and social media content creation",
+    "Rich text editor with TipTap for inline editing",
+    "Design studio with infographic and thumbnail generation",
+    "Guest career timeline visualization with LinkedIn integration",
+    "Brand kit sharing and asset management",
+    "Social media calendar and analytics",
+    "Team authentication and user management",
+    "Integration with Sanity CMS, Pinecone, and Kie.ai",
+    "Cloudflare Workers backend with React TypeScript frontend"
+  ],
+  "publicApiSurface": [
+    "/api/ai/prf - Generate PRF from transcript",
+    "/api/ai/hooks - Generate viral hooks",
+    "/api/ai/metadata - Generate episode metadata",
+    "/api/ai/social - Generate social media posts",
+    "/api/auth/login - User authentication",
+    "/api/auth/register - User registration",
+    "/api/auth/reset-password - Password reset",
+    "/api/sanity/episodes - Episode data management",
+    "/api/sanity/guests - Guest profile management",
+    "/api/images/generate - Generate infographics via Kie.ai",
+    "/api/linkedin/profile - Scrape LinkedIn profiles",
+    "/api/pinecone/query - Vector search for design templates",
+    "/api/generate-episode - Complete episode generation workflow",
+    "/api/share/brand-kit - Public brand kit sharing"
+  ]
+}
