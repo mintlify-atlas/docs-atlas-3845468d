@@ -1,0 +1,443 @@
+---
+title: Sanity CMS Service
+description: TypeScript service functions for Sanity CMS operations
+---
+
+# Sanity CMS Service
+
+Client-side TypeScript service for Sanity CMS operations. All requests proxy through server-side API endpoints to keep write tokens secure.
+
+**Location**: `src/services/sanity.ts`
+
+## Overview
+
+The Sanity service provides functions for:
+
+- **Episodes** - CRUD operations for podcast episodes
+- **Guests** - Guest profile management (via API proxy)
+- **Metadata Parsing** - Extract metadata from transcript headers
+- **Connection Health** - Verify Sanity backend is reachable
+
+All requests go through `/api/sanity/*` endpoints, which handle authentication and token management.
+
+## fetchEpisodes()
+
+Retrieve all episodes.
+
+```typescript
+function fetchEpisodes(): Promise<Episode[]>
+```
+
+### Returns
+
+```typescript
+interface Episode {
+  _id: string
+  _type: 'episodeContent'
+  _rev: string
+  transcript?: string
+  prf?: string
+  viralHooks?: string
+  metadata: {
+    title: string
+    guestName: string
+    guestLinkedinUrl: string
+    episodeNumber: number
+    topics: string[]
+    summary: string
+  }
+  releaseDate?: string
+  socialPosts?: {
+    linkedin: string[]
+    instagram: string[]
+    twitter: string[]
+  }
+  generatedAssets?: any[]
+  assets?: any[]
+  videoAssets?: any[]
+  visualSuggestions?: any[]
+  scheduledPosts?: any[]
+  status: 'draft' | 'in_progress' | 'complete'
+  isApproved: boolean
+  prfApproved: boolean
+  prfApprovedAt?: string
+  hooksApproved: boolean
+  hooksApprovedAt?: string
+  linkedinApproved: boolean
+  linkedinApprovedAt?: string
+  shareToken?: string
+  shareCreatedAt?: string
+  galleryUuid?: string
+  createdAt: string
+  updatedAt: string
+  guestRef?: {
+    _type: 'reference'
+    _ref: string
+  }
+  guest?: {
+    _id: string
+    name: string
+    linkedinUrl: string
+    position: string
+    company: string
+  }
+}
+```
+
+### Example
+
+```typescript
+import { fetchEpisodes } from '@/services/sanity'
+
+const episodes = await fetchEpisodes()
+console.log(`Found ${episodes.length} episodes`)
+
+// Find specific episode
+const ep385 = episodes.find(e => e.metadata.episodeNumber === 385)
+```
+
+## fetchEpisode()
+
+Retrieve a single episode by ID.
+
+```typescript
+function fetchEpisode(id: string): Promise<Episode | null>
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  Episode ID
+</ParamField>
+
+### Returns
+
+```typescript
+Episode | null  // null if not found
+```
+
+### Example
+
+```typescript
+import { fetchEpisode } from '@/services/sanity'
+
+const episode = await fetchEpisode('episode_abc123')
+
+if (episode) {
+  console.log('Episode:', episode.metadata.title)
+  console.log('Guest:', episode.guest?.name)
+} else {
+  console.log('Episode not found')
+}
+```
+
+## createEpisode()
+
+Create a new episode.
+
+```typescript
+function createEpisode(options?: CreateEpisodeOptions): Promise<Episode>
+```
+
+### Parameters
+
+```typescript
+interface CreateEpisodeOptions {
+  transcript?: string    // Episode transcript
+  guestId?: string       // Guest ID to link
+}
+```
+
+<ParamField path="options.transcript" type="string">
+  Episode transcript. If provided, metadata is automatically parsed from header.
+</ParamField>
+
+<ParamField path="options.guestId" type="string">
+  Guest ID. If provided, guest data pre-fills episode metadata.
+</ParamField>
+
+### Returns
+
+```typescript
+Episode  // Newly created episode
+```
+
+### Examples
+
+<CodeGroup>
+```typescript Guest-First Flow
+import { createEpisode } from '@/services/sanity'
+
+// Create episode with guest reference
+const episode = await createEpisode({
+  guestId: 'guest_123'
+})
+
+// Guest data automatically populates:
+console.log(episode.metadata.guestName)  // "Chris Pacifico"
+console.log(episode.metadata.guestLinkedinUrl)  // "https://..."
+```
+
+```typescript Transcript-First Flow
+import { createEpisode } from '@/services/sanity'
+
+const transcript = `
+385-Chris Pacifico
+Host: Doug
+Guest: Chris Pacifico
+https://www.linkedin.com/in/chris-pacifico/
+
+[00:00:00] Doug: Welcome to the show...
+`
+
+const episode = await createEpisode({ transcript })
+
+// Metadata parsed from transcript header:
+console.log(episode.metadata.episodeNumber)  // 385
+console.log(episode.metadata.guestName)  // "Chris Pacifico"
+console.log(episode.metadata.guestLinkedinUrl)  // "https://..."
+```
+</CodeGroup>
+
+<Note>
+  **Automatic Parsing**: The API automatically extracts episode number, guest name, and LinkedIn URL from transcript headers.
+</Note>
+
+## updateEpisode()
+
+Update episode fields.
+
+```typescript
+function updateEpisode(
+  id: string,
+  data: Partial<Record<string, unknown>>
+): Promise<Episode>
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  Episode ID
+</ParamField>
+
+<ParamField path="data" type="object" required>
+  Fields to update (only include fields you want to change)
+</ParamField>
+
+### Returns
+
+```typescript
+Episode  // Updated episode
+```
+
+### Examples
+
+<CodeGroup>
+```typescript Update Content
+import { updateEpisode } from '@/services/sanity'
+
+// Update PRF and approval status
+await updateEpisode(episodeId, {
+  prf: prfContent,
+  prfApproved: true,
+  prfApprovedAt: new Date().toISOString()
+})
+```
+
+```typescript Update Metadata
+// Update episode metadata
+await updateEpisode(episodeId, {
+  metadata: {
+    ...episode.metadata,
+    title: 'Updated Title',
+    topics: ['IT Leadership', 'Cloud Strategy']
+  }
+})
+```
+
+```typescript Update Status
+// Mark episode as complete
+await updateEpisode(episodeId, {
+  status: 'complete',
+  isApproved: true
+})
+```
+</CodeGroup>
+
+<Note>
+  **Partial Updates**: Only fields you provide are updated. Other fields remain unchanged.
+</Note>
+
+## deleteEpisode()
+
+Delete an episode.
+
+```typescript
+function deleteEpisode(id: string): Promise<void>
+```
+
+### Parameters
+
+<ParamField path="id" type="string" required>
+  Episode ID
+</ParamField>
+
+### Example
+
+```typescript
+import { deleteEpisode } from '@/services/sanity'
+
+if (confirm('Delete this episode?')) {
+  await deleteEpisode(episodeId)
+  console.log('Episode deleted')
+}
+```
+
+<Warning>
+  **Permanent Deletion**: This action cannot be undone. The episode and all associated data will be permanently removed.
+</Warning>
+
+## Metadata Parsing
+
+The service automatically parses metadata from transcript headers:
+
+### Supported Formats
+
+```typescript
+// Format 1: Episode number with dash
+385-Chris Pacifico
+
+// Format 2: EP prefix
+EP 385 - IT Leadership in the Cloud Era
+
+// Guest line
+Guest: Chris Pacifico
+
+// LinkedIn URL (anywhere in first 10 lines)
+https://www.linkedin.com/in/chris-pacifico/
+linkedin.com/in/chris-pacifico  // Also supported
+```
+
+### Parsed Fields
+
+```typescript
+{
+  episodeNumber: 385,
+  guestName: "Chris Pacifico",
+  title: "Chris Pacifico",  // From episode number line
+  guestLinkedinUrl: "https://www.linkedin.com/in/chris-pacifico/"
+}
+```
+
+## checkSanityConnection()
+
+Verify Sanity backend is configured and reachable.
+
+```typescript
+function checkSanityConnection(): Promise<{
+  connected: boolean
+  error?: string
+}>
+```
+
+### Example
+
+```typescript
+import { checkSanityConnection } from '@/services/sanity'
+
+const { connected, error } = await checkSanityConnection()
+
+if (!connected) {
+  console.error('Sanity connection failed:', error)
+  showToast('Cannot connect to CMS', 'error')
+}
+```
+
+Use this for:
+- Health checks on app startup
+- Debugging connection issues
+- Verifying API token configuration
+
+## Guest Functions
+
+Guest management functions are documented in the [Guests API](/api/guests) page. They follow the same pattern:
+
+```typescript
+// Guest functions (proxy to API)
+await createGuest({ name: 'Chris Pacifico', ... })
+await updateGuest(guestId, { status: 'recorded' })
+await deleteGuest(guestId)
+```
+
+## Episode Number Coercion
+
+Episode numbers are automatically coerced to integers:
+
+```typescript
+import { coerceEpisodeNumber } from '@/lib/episodeNumber'
+
+// From string
+coerceEpisodeNumber('385')      // 385
+coerceEpisodeNumber('EP 385')   // 385
+coerceEpisodeNumber('385.5')    // 385 (truncated)
+
+// From number
+coerceEpisodeNumber(385)        // 385
+coerceEpisodeNumber(385.7)      // 385 (truncated)
+
+// Invalid
+coerceEpisodeNumber('abc')      // 0
+coerceEpisodeNumber('')         // 0
+coerceEpisodeNumber(null)       // 0
+```
+
+This ensures episode numbers are always valid integers in Sanity.
+
+## Error Handling
+
+All functions throw errors that should be caught:
+
+```typescript
+try {
+  const episodes = await fetchEpisodes()
+} catch (error) {
+  if (error.message === 'Session expired') {
+    // Auto-redirect to login (handled by service)
+  } else if (error.message.includes('API error: 401')) {
+    // Authentication issue
+    console.error('Not authenticated')
+  } else {
+    // Other error
+    console.error('Failed to fetch episodes:', error.message)
+  }
+}
+```
+
+## Auto-Redirect on 401
+
+If the API returns `401 Unauthorized`, the service automatically redirects to login:
+
+```typescript
+if (response.status === 401) {
+  window.location.href = `/login?returnTo=${encodeURIComponent(window.location.pathname)}`
+}
+```
+
+No need to handle this manually in your components.
+
+## TypeScript Types
+
+All types are exported for use in your code:
+
+```typescript
+import type { 
+  Episode, 
+  CreateEpisodeOptions 
+} from '@/services/sanity'
+
+function MyComponent() {
+  const [episode, setEpisode] = useState<Episode | null>(null)
+  
+  // ...
+}
+```

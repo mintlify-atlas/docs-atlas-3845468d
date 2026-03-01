@@ -1,0 +1,514 @@
+---
+title: Kie.ai integration
+description: Configure Kie.ai Nano Banana Pro for AI image generation
+---
+
+Kie.ai provides AI image generation using the Nano Banana Pro model. This integration powers all visual content generation in Pulse Content: infographics, quote cards, career timelines, and YouTube thumbnails.
+
+## Overview
+
+**API Base:** `https://api.kie.ai/api/v1/jobs/`
+
+**Model:** `nano-banana-pro`
+
+**Capabilities:**
+- Text-to-image generation
+- Image transformation (up to 8 input images)
+- Multiple aspect ratios (1:1, 16:9, 9:16, etc.)
+- High resolution output (1K, 2K, 4K)
+- Fast generation (typically 30-90 seconds)
+
+## Setup
+
+<Steps>
+  <Step title="Get API key">
+    Contact Kie.ai support to obtain an API key for your account.
+  </Step>
+  
+  <Step title="Add to environment">
+    **Local development (.dev.vars):**
+    ```bash
+    KIEAI_API_KEY=your-kieai-key-here
+    ```
+    
+    **Production:**
+    ```bash
+    wrangler secret put KIEAI_API_KEY
+    ```
+  </Step>
+  
+  <Step title="Test connection">
+    Generate an infographic from any episode to verify the integration works.
+  </Step>
+</Steps>
+
+## API endpoints
+
+### Create task
+
+**Endpoint:** `POST https://api.kie.ai/api/v1/jobs/createTask`
+
+**Request:**
+```json
+{
+  "model": "nano-banana-pro",
+  "callBackUrl": "https://pulse-content.ybh.com/api/callback",
+  "input": {
+    "prompt": "Create a professional infographic...",
+    "image_input": [],
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "taskId": "abc123def456",
+  "state": "pending"
+}
+```
+
+### Query task status
+
+**Endpoint:** `GET https://api.kie.ai/api/v1/jobs/queryTask?taskId={taskId}`
+
+**Response:**
+```json
+{
+  "taskId": "abc123def456",
+  "state": "success",
+  "imageUrl": "https://cdn.kie.ai/images/abc123.png",
+  "costTime": 45000
+}
+```
+
+**State values:**
+- `pending` - Task queued
+- `processing` - Image generating
+- `success` - Complete, image ready
+- `fail` - Generation failed
+
+## Usage in Pulse Content
+
+### Generate infographic
+
+```typescript
+import { createTask, waitForTask } from '@/services/kieai'
+
+// Create generation task
+const { taskId } = await createTask({
+  prompt: 'Professional infographic showing tech debt cycle...',
+  aspectRatio: '16:9',
+  resolution: '2K',
+})
+
+// Poll for completion (with progress callback)
+const result = await waitForTask(
+  taskId,
+  90, // max attempts
+  3000, // 3 second intervals
+  (attempt, maxAttempts, state) => {
+    console.log(`${attempt}/${maxAttempts}: ${state}`)
+  }
+)
+
+if (result.state === 'success') {
+  console.log('Image URL:', result.imageUrl)
+}
+```
+
+### Transform existing image
+
+```typescript
+const { taskId } = await createTask({
+  prompt: 'Add YBH branding to this image',
+  aspectRatio: '16:9',
+  resolution: '2K',
+  imageInput: [
+    'https://existing-image-url.com/image.png'
+  ],
+})
+
+const result = await waitForTask(taskId)
+```
+
+## Configuration options
+
+### Aspect ratios
+
+<ParamField path="aspectRatio" type="string" default="16:9">
+  Image dimensions. Supported values:
+  - `1:1` - Square (1024×1024)
+  - `16:9` - Widescreen (1920×1080)
+  - `9:16` - Vertical (1080×1920)
+  - `4:3` - Standard (1600×1200)
+  - `3:4` - Portrait (1200×1600)
+  - `21:9` - Ultrawide (2560×1080)
+  - `2:3` - Tall portrait (1365×2048)
+  - `3:2` - Wide landscape (2048×1365)
+  - `4:5` - Instagram portrait (1080×1350)
+  - `5:4` - Near square (1350×1080)
+  - `auto` - AI chooses best ratio
+</ParamField>
+
+### Resolution
+
+<ParamField path="resolution" type="string" default="2K">
+  Output image quality:
+  - `1K` - Low resolution (faster, smaller files)
+  - `2K` - Standard resolution (balanced)
+  - `4K` - High resolution (slower, larger files)
+</ParamField>
+
+### Output format
+
+<ParamField path="outputFormat" type="string" default="png">
+  Image file format:
+  - `png` - Lossless, transparency support
+  - `jpg` - Compressed, no transparency
+</ParamField>
+
+### Image input
+
+<ParamField path="imageInput" type="array" default="[]">
+  URLs of existing images to transform (up to 8 images).
+  
+  **Use cases:**
+  - Add branding to existing images
+  - Remix guest photos with infographic elements
+  - Apply style transfer
+  - Combine multiple images into collage
+</ParamField>
+
+## Polling behavior
+
+### Default settings
+
+```typescript
+await waitForTask(
+  taskId,
+  90,    // maxAttempts: 90 attempts
+  3000   // intervalMs: 3 seconds between checks
+)
+// Total wait time: 90 × 3s = 4.5 minutes
+```
+
+### Custom polling
+
+```typescript
+// Faster polling for quick generations
+await waitForTask(taskId, 60, 2000) // 60 × 2s = 2 minutes
+
+// Extended wait for complex images
+await waitForTask(taskId, 120, 5000) // 120 × 5s = 10 minutes
+```
+
+### Progress tracking
+
+```typescript
+const result = await waitForTask(
+  taskId,
+  90,
+  3000,
+  (attempt, maxAttempts, state) => {
+    const progress = Math.round((attempt / maxAttempts) * 100)
+    console.log(`Progress: ${progress}% - State: ${state}`)
+    
+    // Update UI
+    setGenerationProgress(progress)
+    setGenerationStatus(state)
+  }
+)
+```
+
+## Prompt engineering
+
+### Infographic prompts
+
+Generated by AI spec generator based on:
+- Layout structure (28 types)
+- Content template (10 types)
+- Visual style system
+- YBH brand guidelines
+- Episode context
+
+**Example:**
+```
+Create a professional isometric 3D infographic titled "Mark Baker's Tech Debt Doom Loop" (16:9, 2K resolution).
+
+Layout: Doom Loop / Continuous Cycle
+- Central circular path showing 4-6 connected stages
+- Each stage: isometric icon + bold label + 1-2 line description
+- Arrows showing clockwise flow with stress/urgency indicators
+- Dark blue background (#0F2A44) with YBH accent colors
+
+Content Structure:
+1. "Accumulate Debt" - Pressure to ship fast
+2. "Skip Testing" - Technical shortcuts
+3. "Bugs Multiply" - Production incidents
+4. "Team Burnout" - Fire-fighting mode
+5. "More Debt" - Cycle repeats
+
+Style:
+- Isometric icons (3D-like, 60-degree angles)
+- YBH brand colors: Yellow #F7B500, Orange #F17529, Red #EF4136
+- Sans-serif typography: Title 36pt bold, Labels 18pt medium
+- Episode number and guest name in bottom right
+- No logos, no watermarks
+- Professional tone for IT leadership audience
+```
+
+### Quote card prompts
+
+**Example:**
+```
+Create a cinematic quote card featuring:
+
+Quote: "Tech debt is like credit card debt – ignore it long enough and the interest will crush you."
+
+Attribution: Chris Pacifico, Episode 385
+
+Visual Style:
+- Dark cinematic background with gradient (navy to black)
+- Large serif quote text, white color, centered
+- Guest name and episode in YBH yellow (#F7B500)
+- Subtle geometric patterns or abstract shapes
+- 1:1 aspect ratio for Instagram
+- Minimalist, premium feel
+- No photos, no facial features
+```
+
+### Career timeline prompts
+
+**Example:**
+```
+Create a professional isometric 3D career timeline infographic for "Chris Pacifico" for the You've Been Heard podcast.
+
+Visual Style:
+- Isometric 3D editorial scene with clean geometry
+- Blue-Dark background (#0F2A44) with YBH accents
+- Horizontal timeline flowing left to right
+- Each position as isometric platform with year, role, company
+- Clean connector path with numbered milestones
+
+Career Positions (6 total):
+1. CTO at TechCorp (2020-Present)
+2. VP Engineering at StartupX (2017-2020)
+3. Director of IT at BigCo (2014-2017)
+4. Senior Architect at MegaSoft (2010-2014)
+5. Lead Developer at DevShop (2007-2010)
+6. Software Engineer at CodeFactory (2004-2007)
+
+Include:
+- Year labels for each milestone
+- Name and current title at top
+- Plenty of whitespace
+- No company logos, no watermarks
+- Professional, premium, suitable for IT leadership
+```
+
+## Error handling
+
+### Task timeout
+
+```typescript
+try {
+  const result = await waitForTask(taskId)
+} catch (error) {
+  if (error.message.includes('timed out')) {
+    console.error('Generation exceeded 4.5 minutes')
+    console.log('Check Kie.ai dashboard for task status')
+  }
+}
+```
+
+### Generation failure
+
+```typescript
+const result = await waitForTask(taskId)
+
+if (result.state === 'fail') {
+  console.error('Generation failed:', result.failMsg)
+  // Common reasons:
+  // - Invalid prompt
+  // - Image input URL not accessible
+  // - Content policy violation
+  // - API quota exceeded
+}
+```
+
+### Missing image URL
+
+```typescript
+if (result.state === 'success' && !result.imageUrl) {
+  console.warn('Task succeeded but imageUrl is missing')
+  // Retry query after 5 seconds
+  await new Promise(resolve => setTimeout(resolve, 5000))
+  const retryResult = await queryTask(taskId)
+}
+```
+
+## Performance optimization
+
+### Parallel generation
+
+```typescript
+const tasks = await Promise.all([
+  createTask({ prompt: 'Infographic 1...', aspectRatio: '16:9' }),
+  createTask({ prompt: 'Infographic 2...', aspectRatio: '1:1' }),
+  createTask({ prompt: 'Quote card...', aspectRatio: '1:1' }),
+])
+
+const results = await Promise.all(
+  tasks.map(({ taskId }) => waitForTask(taskId))
+)
+```
+
+### Cache generated images
+
+Store image URLs in Sanity to avoid regenerating:
+
+```typescript
+await updateEpisode(episodeId, {
+  generatedAssets: [
+    ...existingAssets,
+    {
+      type: 'infographic',
+      imageUrl: result.imageUrl,
+      spec: generatedSpec,
+      createdAt: new Date().toISOString(),
+    },
+  ],
+})
+```
+
+### Pregenerate common assets
+
+Generate career timelines immediately after LinkedIn scrape:
+
+```typescript
+const profile = await scrapeLinkedInProfile(linkedinUrl)
+const timelinePrompt = generateCareerTimelinePrompt(profile)
+const { taskId } = await createTask({
+  prompt: timelinePrompt,
+  aspectRatio: '16:9',
+  resolution: '2K',
+})
+
+// Store taskId for background polling
+await updateEpisode(episodeId, {
+  careerTimelineTaskId: taskId,
+})
+```
+
+## Cost management
+
+### Generation costs
+
+**Per image generation:**
+- Resolution affects cost (4K costs more than 2K)
+- Aspect ratio doesn't affect cost
+- Image transformations cost the same as new generations
+
+### Reduce costs
+
+<Steps>
+  <Step title="Use 2K by default">
+    2K resolution provides excellent quality for social media at lower cost than 4K.
+  </Step>
+  
+  <Step title="Batch generations">
+    Generate multiple images in parallel to maximize throughput.
+  </Step>
+  
+  <Step title="Cache aggressively">
+    Store generated images in Sanity and reuse across episodes when appropriate.
+  </Step>
+  
+  <Step title="Preview before generating">
+    Show AI-generated specs to users before committing to image generation.
+  </Step>
+</Steps>
+
+## Callback integration
+
+Kie.ai can notify your server when generation completes:
+
+```typescript
+// Set callback URL in task creation
+const { taskId } = await createTask({
+  prompt: '...',
+  aspectRatio: '16:9',
+  callBackUrl: 'https://pulse-content.ybh.com/api/images/callback',
+})
+
+// Handle callback in your API
+export async function handleCallback(request: Request) {
+  const { taskId, state, imageUrl } = await request.json()
+  
+  if (state === 'success') {
+    // Update episode with generated image
+    await updateEpisodeAsset(taskId, imageUrl)
+  }
+  
+  return new Response('OK')
+}
+```
+
+## Troubleshooting
+
+### API key invalid
+
+```
+Error: API error: 401
+```
+
+**Solution:** Verify `KIEAI_API_KEY` is set correctly:
+```bash
+echo $KIEAI_API_KEY
+```
+
+### Task not found
+
+```
+Error: API error: 404
+```
+
+**Solution:** Task may have expired (tasks expire after 24 hours). Generate a new image.
+
+### Generation takes too long
+
+**Causes:**
+- Complex prompts with many elements
+- High resolution (4K)
+- Multiple image inputs
+- High API load
+
+**Solutions:**
+- Reduce to 2K resolution
+- Simplify prompt
+- Try again during off-peak hours
+- Increase `maxAttempts` in `waitForTask`
+
+### Image quality issues
+
+**Problem:** Generated image doesn't match prompt
+
+**Solutions:**
+- Refine prompt with more specific details
+- Include layout structure and style guidelines
+- Add negative prompts ("no logos", "no watermarks")
+- Regenerate with adjusted prompt
+
+## Best practices
+
+- **Always specify aspect ratio:** Default `16:9` may not suit all use cases
+- **Use 2K for social media:** Sufficient quality, faster generation
+- **Include brand guidelines:** Mention YBH colors, fonts, and style in prompts
+- **Test prompts iteratively:** Refine prompts based on generation results
+- **Store successful prompts:** Save working prompts in knowledge base for reuse
+- **Monitor generation status:** Use progress callbacks to show users real-time updates
+- **Handle failures gracefully:** Provide retry options and clear error messages

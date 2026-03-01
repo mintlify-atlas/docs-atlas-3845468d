@@ -1,0 +1,388 @@
+---
+title: Authentication
+description: User management, sessions, and access control for YBH Pulse Content
+---
+
+## Overview
+
+YBH Pulse Content uses email/password authentication with JWT-based sessions, restricted to `@popularit.net` email addresses for internal team access.
+
+## Authentication Flow
+
+<Steps>
+  <Step title="User signs in with email and password">
+    Email domain validation ensures only `@popularit.net` accounts can authenticate.
+  </Step>
+  <Step title="Backend verifies credentials against Sanity">
+    Password is hashed using Argon2id before comparison.
+  </Step>
+  <Step title="JWT token is generated and set as HTTP-only cookie">
+    Token includes user ID, email, and role for authorization.
+  </Step>
+  <Step title="Session remains active for 24 hours">
+    Automatic expiration after 24 hours requires re-authentication.
+  </Step>
+</Steps>
+
+## User Roles
+
+Role-based access control (RBAC) determines what actions users can perform:
+
+<Tabs>
+  <Tab title="Admin">
+    **Full access** to all features:
+    - Create, edit, and delete episodes
+    - Generate and approve content
+    - Manage visual assets
+    - Create and manage users
+    - Configure system settings
+    - Access analytics and reports
+
+    Admins can promote other users to admin status.
+  </Tab>
+  <Tab title="Designer">
+    **Content and design access**:
+    - Create and edit episodes
+    - Generate content (PRF, hooks, posts)
+    - Create visual assets
+    - Approve content for publication
+    - Generate share links
+
+    Cannot manage users or system settings.
+  </Tab>
+  <Tab title="User">
+    **View-only access**:
+    - View episodes and content
+    - Access share links
+    - Download assets
+
+    Cannot create, edit, or approve content.
+  </Tab>
+</Tabs>
+
+## Session Management
+
+### Session cookies
+
+Authentication tokens are stored as HTTP-only cookies:
+
+```http
+Set-Cookie: auth_token=<jwt>; 
+  HttpOnly; 
+  Secure; 
+  SameSite=Lax; 
+  Max-Age=86400; 
+  Path=/;
+  Domain=.youvebeenheard.com
+```
+
+<Info>
+  **Security features:**
+  - `HttpOnly` prevents JavaScript access to prevent XSS attacks
+  - `Secure` ensures cookies only sent over HTTPS
+  - `SameSite=Lax` provides CSRF protection
+  - `Max-Age=86400` sets 24-hour expiration
+</Info>
+
+### JWT payload
+
+Tokens include:
+
+```json
+{
+  "userId": "user-abc123",
+  "email": "john@popularit.net",
+  "role": "designer",
+  "iat": 1709308800,
+  "exp": 1709395200
+}
+```
+
+### Session expiration
+
+Sessions expire after 24 hours. Users are automatically redirected to the login page when:
+- Token has expired
+- Token signature is invalid
+- User has been deactivated
+
+## Rate Limiting
+
+Login attempts are rate-limited to prevent brute force attacks:
+
+<CodeGroup>
+  ```text Rate Limit Policy
+  5 failed attempts per IP address
+  15-minute lockout period
+  Resets on successful login
+  ```
+
+  ```text Error Response
+  HTTP 429 Too Many Requests
+  
+  "Too many login attempts. Please try again in 14 minutes."
+  
+  Headers:
+    Retry-After: 840
+    X-RateLimit-Remaining: 0
+    X-RateLimit-Reset: 1709309640
+  ```
+</CodeGroup>
+
+<Warning>
+  Rate limits are tracked per IP address. Multiple users on the same network share the same limit.
+</Warning>
+
+## Password Requirements
+
+Passwords must meet these criteria:
+
+- Minimum 8 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+- At least one special character (!@#$%^&*)
+
+<Note>
+  Passwords are hashed using **Argon2id** (memory-hard algorithm resistant to GPU cracking) before storage in Sanity.
+</Note>
+
+## Password Reset
+
+Users can reset forgotten passwords via email:
+
+<Steps>
+  <Step title="Request password reset">
+    User enters email on `/forgot-password` page.
+  </Step>
+  <Step title="Reset link sent via email">
+    Email sent using Resend API with token valid for 1 hour.
+  </Step>
+  <Step title="User clicks link and sets new password">
+    Token validated, new password hashed and stored.
+  </Step>
+  <Step title="Automatic login after reset">
+    User logged in automatically with new credentials.
+  </Step>
+</Steps>
+
+### Email configuration
+
+Password reset emails require environment variables:
+
+```bash
+# Resend API for email delivery
+RESEND_API_KEY=re_xxx
+RESEND_FROM_EMAIL="Pulse Studio <noreply@youvebeenheard.com>"
+
+# Base URL for reset links
+APP_BASE_URL=https://pulse.youvebeenheard.com
+```
+
+## User Management
+
+### Creating users
+
+Admins can create new users from **Settings > Team**:
+
+1. Click **Add Team Member**
+2. Enter name and email (`@popularit.net` only)
+3. Set initial password (user can change later)
+4. Assign role (Admin, Designer, User)
+5. Click **Create User**
+
+Users receive an email with login instructions.
+
+### Creating the first admin
+
+Use the CLI script to create the initial admin account:
+
+```bash
+# Set Sanity API token
+export SANITY_API_TOKEN=your-token
+
+# Run admin creation script
+npx tsx scripts/create-admin.ts
+
+# Follow prompts:
+# Name: John Doe
+# Email: john@popularit.net
+# Password: (min 8 chars)
+```
+
+### Updating user roles
+
+Admins can change user roles:
+
+1. Navigate to **Settings > Team**
+2. Find user in the list
+3. Click **Edit**
+4. Select new role from dropdown
+5. Click **Save**
+
+Role changes take effect immediately.
+
+### Deactivating users
+
+Deactivate users to revoke access without deleting data:
+
+1. Go to **Settings > Team**
+2. Find user to deactivate
+3. Click **Deactivate**
+4. Confirm action
+
+Deactivated users:
+- Cannot sign in
+- Existing sessions immediately invalidated
+- Content created by user remains intact
+- Can be reactivated later
+
+## Public Access
+
+### Guest brand kit pages
+
+Share links (`/share/:token`) are **publicly accessible** without authentication:
+
+- No login required to view brand kits
+- Tokens are cryptographically secure (random 32-byte strings)
+- Tokens don't expire (permanent share links)
+- Access tracked with view counts and analytics
+
+<Info>
+  Share links are safe to send to external guests. They only expose approved content for a specific episode.
+</Info>
+
+### Gallery pages
+
+Public gallery pages (`/gallery/:uuid`) display episode assets:
+
+- Optional feature for showcasing work
+- UUID generated per episode
+- Controlled visibility via episode settings
+
+## API Authentication
+
+Internal API endpoints require valid JWT tokens:
+
+### Protected endpoints
+
+```typescript
+// All /api/* routes require authentication except:
+- POST /api/auth/login
+- POST /api/auth/forgot-password
+- POST /api/auth/reset-password
+- GET /api/share/:token
+```
+
+### Token validation
+
+API routes validate tokens from cookies:
+
+```typescript
+// Extract token from cookie
+const token = request.headers.get('Cookie')
+  ?.split('; ')
+  .find(c => c.startsWith('auth_token='))
+  ?.split('=')[1]
+
+// Verify JWT signature and expiration
+const payload = await verifyToken(token, JWT_SECRET)
+
+// Check user status in Sanity
+const user = await sanity.fetch(
+  `*[_type == "user" && _id == $userId][0]`,
+  { userId: payload.userId }
+)
+
+if (!user || user.deactivated) {
+  return new Response('Unauthorized', { status: 401 })
+}
+```
+
+### Authorization checks
+
+Role-based checks for sensitive operations:
+
+```typescript
+// Only admins can manage users
+if (payload.role !== 'admin') {
+  return new Response('Forbidden', { status: 403 })
+}
+
+// Designers and admins can edit content
+if (!['admin', 'designer'].includes(payload.role)) {
+  return new Response('Forbidden', { status: 403 })
+}
+```
+
+## Environment Setup
+
+### Required secrets
+
+Set these environment variables in Cloudflare Pages:
+
+```bash
+# JWT signing secret (generate with crypto.randomBytes(32))
+JWT_SECRET=your-random-secret-here
+
+# Sanity credentials
+SANITY_PROJECT_ID=usl8dp6j
+SANITY_DATASET=production
+SANITY_API_TOKEN=your-sanity-token
+
+# Email service (Resend)
+RESEND_API_KEY=re_xxx
+RESEND_FROM_EMAIL="Pulse Studio <noreply@youvebeenheard.com>"
+
+# Application base URL
+APP_BASE_URL=https://pulse.youvebeenheard.com
+```
+
+### Local development
+
+Create `.dev.vars` for local development:
+
+```bash
+# Copy example file
+cp .env.example .dev.vars
+
+# Edit .dev.vars with your credentials
+JWT_SECRET=local-dev-secret
+SANITY_API_TOKEN=your-token
+RESEND_API_KEY=re_xxx
+APP_BASE_URL=http://localhost:5173
+```
+
+<Warning>
+  Never commit `.dev.vars` to version control. It's included in `.gitignore` by default.
+</Warning>
+
+## Troubleshooting
+
+### "Invalid credentials" error
+
+Check:
+- Email address ends with `@popularit.net`
+- Password is correct (case-sensitive)
+- Account is not deactivated
+- Caps Lock is off
+
+### "Too many login attempts" error
+
+Wait 15 minutes before trying again, or:
+- Try from a different network
+- Contact admin to reset rate limit manually
+
+### Session expires immediately
+
+Verify:
+- `JWT_SECRET` is set correctly in production
+- System clock is synchronized (JWT uses timestamps)
+- Browser accepts cookies (check privacy settings)
+
+### Password reset email not received
+
+Check:
+- Email in spam/junk folder
+- `RESEND_API_KEY` is valid
+- `RESEND_FROM_EMAIL` is configured
+- Email domain is verified in Resend dashboard

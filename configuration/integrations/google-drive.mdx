@@ -1,0 +1,476 @@
+---
+title: Google Drive integration
+description: Configure Google Drive service account for transcript retrieval
+---
+
+The Google Drive integration allows Pulse Content to pull transcript files from a shared Google Drive folder. This enables automated transcript import without manual file uploads.
+
+## Overview
+
+**Purpose:** Automated transcript retrieval from shared Google Drive folder
+
+**Authentication:** Google Cloud service account with Drive API access
+
+**Permissions:** Read-only access to specific folder
+
+## Setup
+
+<Steps>
+  <Step title="Create Google Cloud project">
+    1. Go to https://console.cloud.google.com
+    2. Create a new project or select existing project
+    3. Note your project ID
+  </Step>
+  
+  <Step title="Enable Google Drive API">
+    1. Navigate to **APIs & Services** > **Library**
+    2. Search for "Google Drive API"
+    3. Click **Enable**
+  </Step>
+  
+  <Step title="Create service account">
+    1. Go to **IAM & Admin** > **Service Accounts**
+    2. Click **Create Service Account**
+    3. Name: `pulse-content-drive`
+    4. Description: "Read transcripts from Google Drive"
+    5. Click **Create and Continue**
+    6. Skip role assignment (folder-level permissions only)
+    7. Click **Done**
+  </Step>
+  
+  <Step title="Generate service account key">
+    1. Click on the service account you created
+    2. Go to **Keys** tab
+    3. Click **Add Key** > **Create new key**
+    4. Select **JSON** format
+    5. Click **Create**
+    6. Save the downloaded JSON file securely
+  </Step>
+  
+  <Step title="Share Drive folder with service account">
+    1. Open the Google Drive folder containing transcripts
+    2. Click **Share**
+    3. Add the service account email (from JSON file: `client_email`)
+    4. Set permission to **Viewer**
+    5. Uncheck "Notify people"
+    6. Click **Share**
+  </Step>
+  
+  <Step title="Encode service account key">
+    ```bash
+    # Base64 encode the JSON key file
+    cat service-account-key.json | base64 -w 0 > service-account-key.b64
+    ```
+  </Step>
+  
+  <Step title="Add to environment">
+    **Local development (.dev.vars):**
+    ```bash
+    GOOGLE_DRIVE_SA_KEY=<paste base64 encoded key>
+    ```
+    
+    **Production:**
+    ```bash
+    # Copy base64 key to clipboard, then:
+    wrangler secret put GOOGLE_DRIVE_SA_KEY
+    # Paste the base64 key when prompted
+    ```
+  </Step>
+  
+  <Step title="Test connection">
+    Navigate to **Episodes** > **Import from Drive** to verify the integration works.
+  </Step>
+</Steps>
+
+## API endpoints
+
+### List transcripts
+
+**Endpoint:** `GET /api/drive/list`
+
+**Response:**
+```json
+[
+  {
+    "id": "1abc123def456",
+    "name": "385-Chris-Pacifico.txt",
+    "mimeType": "text/plain",
+    "modifiedTime": "2024-03-15T10:30:00.000Z",
+    "size": "45678"
+  },
+  {
+    "id": "2ghi789jkl012",
+    "name": "386-Sarah-Johnson.txt",
+    "mimeType": "text/plain",
+    "modifiedTime": "2024-03-16T14:20:00.000Z",
+    "size": "52341"
+  }
+]
+```
+
+### Download transcript
+
+**Endpoint:** `GET /api/drive/download/{fileId}`
+
+**Response:**
+```json
+{
+  "content": "385-Chris Pacifico\nHost: Phil Howard\nGuest: Chris Pacifico\n\n[Transcript content...]"
+}
+```
+
+### Sync new transcripts
+
+**Endpoint:** `GET /api/drive/sync?since={isoDate}`
+
+**Response:**
+```json
+[
+  {
+    "id": "3mno345pqr678",
+    "name": "387-Mike-Chen.txt",
+    "mimeType": "text/plain",
+    "modifiedTime": "2024-03-17T09:15:00.000Z",
+    "size": "48234"
+  }
+]
+```
+
+## Usage in Pulse Content
+
+### List available transcripts
+
+```typescript
+import { listTranscripts } from '@/services/gdrive'
+
+const files = await listTranscripts()
+
+files.forEach(file => {
+  console.log(`${file.name} (${file.size} bytes)`)
+  console.log(`Modified: ${file.modifiedTime}`)
+})
+```
+
+### Download transcript
+
+```typescript
+import { downloadTranscript } from '@/services/gdrive'
+
+const content = await downloadTranscript(fileId)
+
+console.log('Transcript length:', content.length)
+console.log('First 100 chars:', content.slice(0, 100))
+```
+
+### Sync new transcripts
+
+```typescript
+import { getNewTranscripts } from '@/services/gdrive'
+
+// Get transcripts modified since last sync
+const lastSync = '2024-03-15T00:00:00.000Z'
+const newFiles = await getNewTranscripts(lastSync)
+
+console.log(`${newFiles.length} new transcripts since ${lastSync}`)
+```
+
+### Import workflow
+
+```typescript
+import { listTranscripts, downloadTranscript } from '@/services/gdrive'
+import { createEpisode } from '@/services/sanity'
+
+// List available transcripts
+const files = await listTranscripts()
+
+// User selects file from list
+const selectedFile = files.find(f => f.name.includes('385'))
+
+// Download transcript content
+const transcript = await downloadTranscript(selectedFile.id)
+
+// Create episode with transcript
+const episode = await createEpisode({ transcript })
+
+console.log('Episode created:', episode._id)
+```
+
+## File organization
+
+### Naming convention
+
+Transcript files should follow this pattern:
+```
+{episodeNumber}-{GuestName}.txt
+```
+
+**Examples:**
+- `385-Chris-Pacifico.txt`
+- `386-Sarah-Johnson.txt`
+- `387-Mike-Chen.txt`
+
+### Folder structure
+
+```
+YBH Transcripts/
+├── 2024/
+│   ├── March/
+│   │   ├── 385-Chris-Pacifico.txt
+│   │   ├── 386-Sarah-Johnson.txt
+│   │   └── 387-Mike-Chen.txt
+│   ├── February/
+│   └── January/
+└── 2023/
+```
+
+<Note>
+  The service account needs read access to the root "YBH Transcripts" folder. All subfolders will be accessible.
+</Note>
+
+## Supported file types
+
+- `.txt` - Plain text (preferred)
+- `.md` - Markdown
+- `.doc` / `.docx` - Microsoft Word (converted to text)
+- Google Docs (converted to text)
+
+## Automatic sync
+
+Set up a scheduled worker to check for new transcripts:
+
+```typescript
+// workers/scheduled/sync-transcripts.ts
+import { getNewTranscripts, downloadTranscript } from '@/services/gdrive'
+import { createEpisode } from '@/services/sanity'
+
+export async function syncTranscripts() {
+  // Get last sync time from KV storage
+  const lastSync = await env.TRANSCRIPT_SYNC.get('lastSyncTime')
+  const since = lastSync || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+  
+  // Fetch new transcripts
+  const newFiles = await getNewTranscripts(since)
+  
+  for (const file of newFiles) {
+    try {
+      // Download transcript
+      const transcript = await downloadTranscript(file.id)
+      
+      // Create episode
+      const episode = await createEpisode({ transcript })
+      
+      console.log(`Imported ${file.name} as episode ${episode._id}`)
+    } catch (error) {
+      console.error(`Failed to import ${file.name}:`, error)
+    }
+  }
+  
+  // Update last sync time
+  await env.TRANSCRIPT_SYNC.put('lastSyncTime', new Date().toISOString())
+}
+
+// Run every 6 hours
+export default {
+  scheduled: async (event, env, ctx) => {
+    ctx.waitUntil(syncTranscripts())
+  },
+}
+```
+
+## Error handling
+
+### Authentication failed
+
+```
+Error: Failed to authenticate with Google Drive
+```
+
+**Solution:** Verify service account key is correctly encoded:
+```bash
+# Decode to verify
+echo $GOOGLE_DRIVE_SA_KEY | base64 -d | jq
+
+# Should output valid JSON with client_email, private_key, etc.
+```
+
+### Permission denied
+
+```
+Error: 403 Forbidden
+```
+
+**Causes:**
+- Service account not shared with folder
+- Incorrect folder ID
+- Service account deleted
+
+**Solutions:**
+1. Reshare folder with service account email
+2. Verify folder ID in configuration
+3. Regenerate service account if deleted
+
+### File not found
+
+```
+Error: File not found
+```
+
+**Causes:**
+- File moved or deleted
+- File ID incorrect
+- Service account lost access
+
+**Solutions:**
+- Refresh file list with `listTranscripts()`
+- Verify file still exists in Drive
+- Check service account permissions
+
+### Rate limit exceeded
+
+```
+Error: 429 Too Many Requests
+```
+
+**Solution:** Implement exponential backoff:
+```typescript
+async function downloadWithRetry(fileId: string, retries = 3): Promise<string> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await downloadTranscript(fileId)
+    } catch (error) {
+      if (error.message.includes('429') && i < retries - 1) {
+        const delay = Math.pow(2, i) * 1000 // 1s, 2s, 4s
+        await new Promise(resolve => setTimeout(resolve, delay))
+        continue
+      }
+      throw error
+    }
+  }
+  throw new Error('Max retries exceeded')
+}
+```
+
+## Security best practices
+
+<Warning>
+  Never commit service account keys to version control. Always use environment variables and secrets management.
+</Warning>
+
+- **Principle of least privilege:** Grant service account read-only access to specific folder only
+- **Rotate keys annually:** Generate new service account keys every 12 months
+- **Monitor access:** Review service account usage in Google Cloud Console
+- **Use separate accounts:** Create separate service accounts for dev and production
+- **Encode keys securely:** Always base64 encode keys before storing in environment variables
+- **Audit folder sharing:** Regularly review who has access to transcript folder
+
+## Performance optimization
+
+### Batch downloads
+
+```typescript
+const files = await listTranscripts()
+const transcripts = await Promise.all(
+  files.slice(0, 10).map(f => downloadTranscript(f.id))
+)
+```
+
+### Cache file list
+
+```typescript
+let cachedFileList: DriveFile[] | null = null
+let cacheTime = 0
+
+async function getTranscripts(maxAge = 5 * 60 * 1000): Promise<DriveFile[]> {
+  const now = Date.now()
+  if (cachedFileList && (now - cacheTime) < maxAge) {
+    return cachedFileList
+  }
+  
+  cachedFileList = await listTranscripts()
+  cacheTime = now
+  return cachedFileList
+}
+```
+
+### Incremental sync
+
+```typescript
+// Only fetch files modified since last check
+const lastSync = await getLastSyncTime()
+const newFiles = await getNewTranscripts(lastSync)
+
+if (newFiles.length === 0) {
+  console.log('No new transcripts')
+  return
+}
+
+for (const file of newFiles) {
+  await importTranscript(file)
+}
+
+await setLastSyncTime(new Date().toISOString())
+```
+
+## Best practices
+
+- **Use descriptive file names:** Include episode number and guest name in filename
+- **Organize by date:** Create monthly or quarterly subfolders for easier management
+- **Keep transcripts clean:** Remove Adobe Podcast metadata before uploading
+- **Standardize headers:** Use consistent format for episode number, host, guest, LinkedIn URL
+- **Test with sample files:** Verify integration works before uploading production transcripts
+- **Monitor sync logs:** Review automated sync logs for errors or failures
+- **Backup transcripts:** Keep local backup of transcript files
+- **Document folder structure:** Maintain README in Drive folder explaining organization
+
+## Troubleshooting
+
+### Service account email format
+
+```
+service-account-name@project-id.iam.gserviceaccount.com
+```
+
+Find in JSON key file:
+```json
+{
+  "type": "service_account",
+  "project_id": "your-project-id",
+  "private_key_id": "...",
+  "private_key": "-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n",
+  "client_email": "pulse-content-drive@your-project-id.iam.gserviceaccount.com",
+  "client_id": "...",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token"
+}
+```
+
+### Invalid base64 encoding
+
+**Problem:** Secret contains newlines or special characters
+
+**Solution:** Use `base64 -w 0` to encode without line wraps:
+```bash
+cat service-account-key.json | base64 -w 0
+```
+
+### Folder ID vs folder URL
+
+**Folder URL:**
+```
+https://drive.google.com/drive/folders/1abc123DEF456ghi789JKL012
+```
+
+**Folder ID:** `1abc123DEF456ghi789JKL012`
+
+Extract folder ID from URL and use in API calls.
+
+### Private key format
+
+Ensure private key includes proper formatting:
+```
+-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC...
+-----END PRIVATE KEY-----
+```
+
+Newlines must be preserved as `\n` in JSON.

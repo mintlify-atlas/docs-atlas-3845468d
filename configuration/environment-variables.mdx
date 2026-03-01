@@ -1,0 +1,325 @@
+---
+title: Environment variables
+description: Complete reference for all environment variables used in YBH Pulse Content
+---
+
+YBH Pulse Content uses environment variables for configuration across client-side and server-side components. Variables are split between `.env` (client-side) and `.dev.vars` (server-side) for local development.
+
+## Client-side variables
+
+Client-side variables use the `VITE_` prefix and are bundled into the frontend. Only include non-sensitive values.
+
+### Sanity CMS
+
+<ParamField path="VITE_SANITY_PROJECT_ID" type="string" required>
+  Your Sanity project ID. Find this in your Sanity project settings.
+  
+  **Example:** `usl8dp6j`
+</ParamField>
+
+<ParamField path="VITE_SANITY_DATASET" type="string" required>
+  The Sanity dataset to use (typically `production` or `development`).
+  
+  **Default:** `production`
+</ParamField>
+
+### Brand kit
+
+<ParamField path="VITE_BRANDKIT_CTA_URL" type="string">
+  Public URL for the brand kit CTA button. Should point to Phil's scheduler (Calendly, Zoom, etc.).
+  
+  **Example:** `https://calendly.com/phil-howard/meeting`
+</ParamField>
+
+## Server-side variables
+
+Server-side variables are stored in `.dev.vars` for local development and configured via Cloudflare Dashboard or `wrangler secret` for production.
+
+### AI providers
+
+<ParamField path="GOOGLE_GENERATIVE_AI_API_KEY" type="string" required>
+  Google Gemini API key for primary agentic AI operations.
+  
+  **Get your key:** https://aistudio.google.com/apikey
+  
+  **Used for:** PRF generation, metadata extraction, visual suggestions, fact-checking
+</ParamField>
+
+<ParamField path="ANTHROPIC_API_KEY" type="string">
+  Anthropic Claude API key as fallback when Google key is not set.
+  
+  **Format:** `sk-ant-...`
+</ParamField>
+
+<ParamField path="OPENROUTER_API_KEY" type="string">
+  OpenRouter API key for embedding generation.
+  
+  **Format:** `sk-or-...`
+  
+  **Used for:** Vector embeddings for Pinecone RAG
+</ParamField>
+
+### Image generation
+
+<ParamField path="KIEAI_API_KEY" type="string" required>
+  Kie.ai API key for image generation using Nano Banana Pro.
+  
+  **Get your key:** Contact Kie.ai support
+  
+  **Used for:** Infographics, quote cards, career timelines, YouTube thumbnails
+</ParamField>
+
+### LinkedIn scraping
+
+<ParamField path="RAPIDAPI_KEY" type="string" required>
+  RapidAPI key for LinkedIn profile scraping.
+  
+  **Get your key:** https://rapidapi.com
+  
+  **Used for:** Guest career history extraction, profile data caching
+</ParamField>
+
+### Knowledge base
+
+<ParamField path="PINECONE_API_KEY" type="string" required>
+  Pinecone API key for vector database operations.
+  
+  **Used for:** Brand guidelines, infographic design database, writing guidelines
+</ParamField>
+
+<ParamField path="PINECONE_HOST" type="string" required>
+  Full Pinecone index URL including region.
+  
+  **Format:** `https://your-index-name.svc.region.pinecone.io`
+</ParamField>
+
+### Sanity CMS
+
+<ParamField path="SANITY_API_TOKEN" type="string" required>
+  Sanity API token with editor permissions for write access.
+  
+  **Permissions:** Editor role required
+  
+  **Security:** Never expose this client-side. Keep server-side only.
+</ParamField>
+
+### Authentication
+
+<ParamField path="JWT_SECRET" type="string" required>
+  Secret key for JWT token signing. Must be at least 32 characters.
+  
+  **Generate with:**
+  ```bash
+  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  ```
+  
+  **Production setup:**
+  ```bash
+  wrangler secret put JWT_SECRET
+  ```
+</ParamField>
+
+### Email (password reset)
+
+<ParamField path="RESEND_API_KEY" type="string" required>
+  Resend API key for sending password reset emails.
+  
+  **Format:** `re_...`
+  
+  **Get your key:** https://resend.com/api-keys
+</ParamField>
+
+<ParamField path="RESEND_FROM_EMAIL" type="string" required>
+  Verified sender email address for password reset emails.
+  
+  **Format:** `Pulse Studio <noreply@yourdomain.com>`
+  
+  **Note:** Must be verified in your Resend account
+</ParamField>
+
+<ParamField path="APP_BASE_URL" type="string">
+  Base URL for the application, used in password reset links.
+  
+  **Local:** `http://localhost:5173`
+  
+  **Production:** `https://production.youvebeenheard.com`
+</ParamField>
+
+### YBH sales platform integration
+
+<ParamField path="YBH_SALES_API_URL" type="string">
+  URL for YBH Sales Platform API for guest auto-sync.
+  
+  **Example:** `https://api.youvebeenheard.com`
+  
+  **Optional but recommended**
+</ParamField>
+
+<ParamField path="YBH_SALES_API_KEY" type="string">
+  API key for authenticating with YBH Sales Platform.
+  
+  **Must match:** `WEBHOOK_API_KEY` or one of `KANBAN_API_KEYS` in ybh-sales-platform
+</ParamField>
+
+<ParamField path="YBH_BACKFILL_API_KEY" type="string">
+  Optional dedicated key to protect `/api/ybh/backfill-guests` endpoint.
+  
+  **Fallback:** Uses `YBH_SALES_API_KEY` if not set
+</ParamField>
+
+### Social scheduling
+
+<ParamField path="LATE_API_KEY" type="string">
+  Late API key for social media scheduling.
+  
+  **Used for:** LinkedIn, Twitter, Instagram post scheduling
+</ParamField>
+
+### Bot access
+
+<ParamField path="PULSE_BOT_API_KEY" type="string">
+  API key for server-to-server bot authentication.
+  
+  **Usage:** Include in header `X-Pulse-Bot-Api-Key` when calling `/api/late/*` endpoints
+  
+  **Optional:** Only needed for automated bots
+</ParamField>
+
+### Media processing
+
+<ParamField path="ASSEMBLYAI_API_KEY" type="string">
+  AssemblyAI API key for video transcription.
+  
+  **Get your key:** https://www.assemblyai.com/dashboard
+  
+  **Used for:** `/api/media/transcribe` endpoint for video-to-text conversion
+</ParamField>
+
+<ParamField path="GOOGLE_DRIVE_SA_KEY" type="string">
+  Base64-encoded JSON of Google Cloud service account key for Drive access.
+  
+  **Get your key:** https://console.cloud.google.com/iam-admin/serviceaccounts
+  
+  **Used for:** Pulling transcripts from shared Google Drive folder
+  
+  **Setup:**
+  ```bash
+  wrangler secret put GOOGLE_DRIVE_SA_KEY
+  ```
+</ParamField>
+
+## Environment setup
+
+### Local development
+
+<Steps>
+  <Step title="Copy example files">
+    ```bash
+    cp .env.example .env
+    cp .dev.vars.example .dev.vars
+    ```
+  </Step>
+  
+  <Step title="Fill in values">
+    Edit `.env` and `.dev.vars` with your API keys and configuration values.
+  </Step>
+  
+  <Step title="Generate JWT secret">
+    ```bash
+    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+    ```
+    Add the output to `.dev.vars` as `JWT_SECRET`.
+  </Step>
+  
+  <Step title="Start development server">
+    ```bash
+    npm run dev
+    ```
+  </Step>
+</Steps>
+
+### Production deployment
+
+<Steps>
+  <Step title="Set client-side variables">
+    Configure in Cloudflare Pages project settings under Environment Variables:
+    - `VITE_SANITY_PROJECT_ID`
+    - `VITE_SANITY_DATASET`
+    - `VITE_BRANDKIT_CTA_URL`
+  </Step>
+  
+  <Step title="Set secrets via Wrangler">
+    ```bash
+    wrangler secret put JWT_SECRET
+    wrangler secret put SANITY_API_TOKEN
+    wrangler secret put KIEAI_API_KEY
+    wrangler secret put RAPIDAPI_KEY
+    wrangler secret put PINECONE_API_KEY
+    wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
+    wrangler secret put RESEND_API_KEY
+    wrangler secret put GOOGLE_DRIVE_SA_KEY
+    wrangler secret put ASSEMBLYAI_API_KEY
+    ```
+  </Step>
+  
+  <Step title="Set non-secret environment variables">
+    Configure in Cloudflare Pages project settings:
+    - `PINECONE_HOST`
+    - `RESEND_FROM_EMAIL`
+    - `APP_BASE_URL`
+    - `YBH_SALES_API_URL` (optional)
+    - `YBH_SALES_API_KEY` (optional)
+  </Step>
+  
+  <Step title="Deploy">
+    ```bash
+    npm run deploy
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  Session tokens expire after 24 hours. All team members must sign in with `@popularit.net` email addresses.
+</Note>
+
+## Variable reference by feature
+
+### Content generation
+- `GOOGLE_GENERATIVE_AI_API_KEY` - Primary AI provider
+- `ANTHROPIC_API_KEY` - Fallback AI provider
+- `OPENROUTER_API_KEY` - Embeddings for RAG
+- `PINECONE_API_KEY` - Knowledge base
+- `PINECONE_HOST` - Vector database connection
+
+### Image generation
+- `KIEAI_API_KEY` - Kie.ai Nano Banana Pro
+
+### Guest data
+- `RAPIDAPI_KEY` - LinkedIn profile scraping
+- `SANITY_API_TOKEN` - Guest profile storage
+
+### Authentication & security
+- `JWT_SECRET` - Session token signing
+- `RESEND_API_KEY` - Password reset emails
+- `RESEND_FROM_EMAIL` - Email sender identity
+- `APP_BASE_URL` - Reset link generation
+
+### Integrations
+- `YBH_SALES_API_URL` - Sales platform sync
+- `YBH_SALES_API_KEY` - Sales platform auth
+- `LATE_API_KEY` - Social media scheduling
+- `GOOGLE_DRIVE_SA_KEY` - Transcript retrieval
+- `ASSEMBLYAI_API_KEY` - Video transcription
+
+## Security best practices
+
+<Warning>
+  Never commit `.env` or `.dev.vars` files to version control. These files are in `.gitignore` by default.
+</Warning>
+
+- Use different API keys for development and production environments
+- Rotate JWT secrets periodically
+- Store production secrets only in Cloudflare Dashboard or via `wrangler secret`
+- Never expose `SANITY_API_TOKEN` client-side
+- Use verified sender identities for `RESEND_FROM_EMAIL`
+- Keep `YBH_SALES_API_KEY` values in sync between platforms

@@ -1,0 +1,240 @@
+---
+title: Local Development Setup
+description: Get your local development environment up and running for YBH Pulse Content
+---
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js 20+** (LTS version recommended)
+- **npm** (comes with Node.js)
+- **Git** for version control
+
+## Initial Setup
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone <repository-url>
+    cd pulse-content
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+    
+    This installs all required packages including:
+    - React 18.2.0
+    - TypeScript 5.4.2
+    - Vite 5.1.6
+    - Wrangler 4.54.0 (Cloudflare Workers CLI)
+    - TipTap rich text editor
+    - Testing libraries (Vitest, Testing Library)
+  </Step>
+
+  <Step title="Configure environment variables">
+    Create a `.dev.vars` file in the root directory for local development:
+
+    ```bash
+    # Sanity CMS
+    SANITY_PROJECT_ID=your-project-id
+    SANITY_DATASET=production
+    SANITY_API_TOKEN=your-token-with-editor-role
+
+    # AI Services
+    ANTHROPIC_API_KEY=your-anthropic-key
+    OPENROUTER_API_KEY=your-openrouter-key
+
+    # Vector Database
+    PINECONE_API_KEY=your-pinecone-key
+    PINECONE_HOST=https://your-index.svc.region.pinecone.io
+
+    # Image Generation
+    KIEAI_API_KEY=your-kie-api-key
+
+    # LinkedIn Scraper
+    RAPIDAPI_KEY=your-rapidapi-key
+
+    # Authentication
+    JWT_SECRET=your-random-32-byte-hex-string
+
+    # Email (Password Reset)
+    RESEND_API_KEY=re_xxx
+    RESEND_FROM_EMAIL="Pulse Studio <noreply@yourdomain.com>"
+    APP_BASE_URL=http://localhost:5173
+
+    # Media Processing
+    ASSEMBLYAI_API_KEY=your-assemblyai-key
+    GOOGLE_DRIVE_SA_KEY=base64-encoded-service-account-json
+
+    # Optional: YBH Sales Integration
+    YBH_SALES_API_URL=https://api.youvebeenheard.com
+    YBH_SALES_API_KEY=your-shared-api-key
+    ```
+
+    <Note>
+      Generate a secure JWT_SECRET:
+      ```bash
+      node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+      ```
+    </Note>
+  </Step>
+
+  <Step title="Create first admin user">
+    ```bash
+    SANITY_API_TOKEN=your-token npx tsx scripts/create-admin.ts
+    ```
+    
+    This creates the initial admin user for the @popularit.net domain.
+  </Step>
+
+  <Step title="Start development servers">
+    ```bash
+    npm run dev
+    ```
+    
+    This starts two concurrent processes:
+    - **Vite dev server** on `http://localhost:5173` (frontend)
+    - **Cloudflare Pages Functions** on `http://localhost:8788` (backend API)
+  </Step>
+</Steps>
+
+## Development Commands
+
+<CodeGroup>
+```bash Development
+# Start dev server (Vite + Cloudflare Workers)
+npm run dev
+
+# Start only Vite (frontend)
+npm run dev:vite
+
+# Start only Cloudflare Functions (backend)
+npm run dev:functions
+```
+
+```bash Building
+# Type check + build for production
+npm run build
+
+# Preview production build locally
+npm run preview
+```
+
+```bash Testing
+# Run tests in watch mode
+npm test
+
+# Run tests once (CI mode)
+npm run test:run
+
+# Generate coverage report
+npm run test:coverage
+```
+
+```bash Quality
+# Run ESLint
+npm run lint
+
+# Type check without emitting files
+npm run typecheck
+```
+
+```bash Utilities
+# Setup knowledge base (Pinecone)
+npm run setup:knowledge-base
+
+# Validate episode assets
+npm run validate:episode-assets
+
+# Run Pulse CLI
+npm run pulse
+```
+</CodeGroup>
+
+## Project Structure
+
+```
+pulse-content/
+├── src/                      # Frontend React app
+│   ├── components/          # React components
+│   ├── routes/              # Page routes
+│   ├── services/            # API clients (Sanity, Pinecone, Kie.ai)
+│   ├── hooks/               # Custom React hooks
+│   ├── utils/               # Utility functions
+│   └── types/               # TypeScript types
+├── functions/               # Cloudflare Pages Functions (backend)
+│   └── api/                 # API endpoints
+├── public/                  # Static assets
+├── scripts/                 # Utility scripts
+└── sanity/                  # Sanity CMS schemas
+```
+
+## Accessing the App
+
+Once the dev server is running:
+
+1. Open `http://localhost:5173` in your browser
+2. Sign in at `/login` with your admin credentials
+3. Start creating episodes and generating content
+
+<Info>
+  The Vite dev server proxies `/api/*` requests to the Cloudflare Workers server at `http://localhost:8788`.
+</Info>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port already in use">
+    If port 5173 or 8788 is already in use:
+    
+    ```bash
+    # Kill process on port 5173
+    lsof -ti:5173 | xargs kill -9
+    
+    # Kill process on port 8788
+    lsof -ti:8788 | xargs kill -9
+    ```
+  </Accordion>
+
+  <Accordion title="Module not found errors">
+    Try clearing node_modules and reinstalling:
+    
+    ```bash
+    rm -rf node_modules package-lock.json
+    npm install
+    ```
+  </Accordion>
+
+  <Accordion title="Cloudflare Workers not starting">
+    Ensure you have the latest Wrangler CLI:
+    
+    ```bash
+    npm install -g wrangler@latest
+    ```
+  </Accordion>
+
+  <Accordion title="Sanity connection issues">
+    Verify your Sanity credentials and ensure the API token has **Editor** role permissions.
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    Understand the system architecture and data flow
+  </Card>
+  <Card title="Testing" icon="flask" href="/development/testing">
+    Learn about the testing strategy
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing/guidelines">
+    Read the contributing guidelines
+  </Card>
+  <Card title="Deployment" icon="rocket" href="/development/deployment/cloudflare">
+    Deploy to production
+  </Card>
+</CardGroup>

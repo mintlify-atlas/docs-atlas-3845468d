@@ -1,122 +1,176 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "YBH Pulse Content",
+  "theme": "aspen",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#F7B500",
+    "light": "#F17529",
+    "dark": "#EF4136"
   },
-  "favicon": "/favicon.svg",
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/Greg-LeDall/pulse-content"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Greg-LeDall/pulse-content"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Overview",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "authentication"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Concepts",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
-            ]
-          },
-          {
-            "group": "Writing content",
-            "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
-            ]
-          },
-          {
-            "group": "AI tools",
-            "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "concepts/workflow",
+              "concepts/content-pipeline",
+              "concepts/ai-generation"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Features",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Episode Management",
             "pages": [
-              "api-reference/introduction"
+              "features/episodes/overview",
+              "features/episodes/transcript-upload",
+              "features/episodes/prf-generation",
+              "features/episodes/hooks-generation"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Content Generation",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "features/content/metadata",
+              "features/content/social-posts",
+              "features/content/rich-text-editor"
+            ]
+          },
+          {
+            "group": "Design Studio",
+            "pages": [
+              "features/design/overview",
+              "features/design/infographics",
+              "features/design/thumbnails",
+              "features/design/career-timelines"
+            ]
+          },
+          {
+            "group": "Guest Management",
+            "pages": [
+              "features/guests/overview",
+              "features/guests/brand-kits",
+              "features/guests/linkedin-integration"
+            ]
+          },
+          {
+            "group": "Social Media",
+            "pages": [
+              "features/social/calendar",
+              "features/social/analytics",
+              "features/social/scheduling"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Configuration",
+        "groups": [
+          {
+            "group": "Setup",
+            "pages": [
+              "configuration/environment-variables",
+              "configuration/sanity-cms",
+              "configuration/ai-providers"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "configuration/integrations/kieai",
+              "configuration/integrations/pinecone",
+              "configuration/integrations/linkedin",
+              "configuration/integrations/google-drive"
+            ]
+          },
+          {
+            "group": "Brand Settings",
+            "pages": [
+              "configuration/brand/guidelines",
+              "configuration/brand/design-system",
+              "configuration/brand/prompts"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/overview",
+              "api/authentication",
+              "api/episodes",
+              "api/content-generation",
+              "api/images",
+              "api/guests"
+            ]
+          },
+          {
+            "group": "Services",
+            "pages": [
+              "api/services/ai",
+              "api/services/sanity",
+              "api/services/pinecone",
+              "api/services/kieai"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "development/setup",
+              "development/architecture",
+              "development/testing"
+            ]
+          },
+          {
+            "group": "Deployment",
+            "pages": [
+              "development/deployment/cloudflare",
+              "development/deployment/environment",
+              "development/deployment/ci-cd"
+            ]
+          },
+          {
+            "group": "Contributing",
+            "pages": [
+              "development/contributing/guidelines",
+              "development/contributing/bug-workflow"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

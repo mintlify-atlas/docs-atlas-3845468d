@@ -1,0 +1,548 @@
+---
+title: Rich Text Editor (TipTap)
+description: Use the powerful TipTap editor to format transcripts, PRFs, hooks, and social posts with advanced features
+icon: edit-3
+---
+
+## Overview
+
+Pulse Content uses **TipTap** (a Notion-like rich text editor) for editing all content. The editor provides:
+
+- Familiar formatting controls (bold, italic, headings, lists)
+- Advanced features (tables, highlights, colors)
+- Context menus for quick actions
+- Keyboard shortcuts for power users
+- Real-time autosave
+
+<Info>
+All content in Pulse is stored as **HTML** (not Markdown). This preserves formatting across all platforms and enables rich visual styling.
+</Info>
+
+## Editor Locations
+
+The rich text editor appears in:
+
+1. **Transcript tab** - Edit uploaded transcripts
+2. **PRF tab** - Refine AI-generated PRF content
+3. **Hooks tab** - Edit viral hook variations
+4. **Posts tab** - Format LinkedIn and Instagram posts
+
+## Toolbar Features
+
+### History
+
+<Tabs>
+  <Tab title="Undo">
+    **Icon:** ↶
+    
+    **Shortcut:** `Ctrl+Z` (Windows/Linux) or `Cmd+Z` (Mac)
+    
+    Undo your last change. Stack-based undo supports multiple levels.
+  </Tab>
+  
+  <Tab title="Redo">
+    **Icon:** ↷
+    
+    **Shortcut:** `Ctrl+Shift+Z` or `Ctrl+Y` (Windows/Linux), `Cmd+Shift+Z` (Mac)
+    
+    Redo a change you undid.
+  </Tab>
+</Tabs>
+
+### Text Formatting
+
+<Tabs>
+  <Tab title="Bold">
+    **Icon:** **B**
+    
+    **Shortcut:** `Ctrl+B` (or `Cmd+B`)
+    
+    Make selected text bold. Use for emphasis on key points.
+    
+    **Example:**
+    ```
+    The **most important** insight from this episode...
+    ```
+  </Tab>
+  
+  <Tab title="Italic">
+    **Icon:** *I*
+    
+    **Shortcut:** `Ctrl+I` (or `Cmd+I`)
+    
+    Italicize selected text. Use for quotes, book titles, or subtle emphasis.
+    
+    **Example:**
+    ```
+    As Mark says, *"Tech debt is not a technical problem."*
+    ```
+  </Tab>
+  
+  <Tab title="Strikethrough">
+    **Icon:** ~~S~~
+    
+    **Shortcut:** None (click toolbar button)
+    
+    Strike through text. Useful for showing what NOT to do.
+    
+    **Example:**
+    ```
+    ~~Ignore tech debt~~ → Address it systematically
+    ```
+  </Tab>
+  
+  <Tab title="Code">
+    **Icon:** `</>`
+    
+    **Shortcut:** `Ctrl+E` (or `Cmd+E`)
+    
+    Monospace font for code snippets or technical terms.
+    
+    **Example:**
+    ```
+    Run `kubectl get pods` to check status.
+    ```
+  </Tab>
+  
+  <Tab title="Highlight">
+    **Icon:** Highlighter
+    
+    **Shortcut:** `Ctrl+Shift+H` (or `Cmd+Shift+H`)
+    
+    Highlight text with a yellow background. Use sparingly for critical points.
+    
+    **Example:**
+    Use highlight for <mark>action items</mark> in meeting notes.
+  </Tab>
+</Tabs>
+
+### Headings
+
+<Tabs>
+  <Tab title="Heading 1">
+    **Icon:** H1
+    
+    **Shortcut:** `Ctrl+Alt+1` (or `Cmd+Option+1`)
+    
+    Large heading for major sections.
+    
+    **Usage:**
+    - Main episode topics in transcript
+    - Section breaks in PRF
+    - Post titles (LinkedIn)
+  </Tab>
+  
+  <Tab title="Heading 2">
+    **Icon:** H2
+    
+    **Shortcut:** `Ctrl+Alt+2` (or `Cmd+Option+2`)
+    
+    Medium heading for subsections.
+    
+    **Usage:**
+    - Topic segments in transcript
+    - Framework steps in PRF
+    - Key points in posts
+  </Tab>
+  
+  <Tab title="Heading 3">
+    **Icon:** H3
+    
+    **Shortcut:** `Ctrl+Alt+3` (or `Cmd+Option+3`)
+    
+    Small heading for minor topics.
+    
+    **Usage:**
+    - Sub-topics in transcript
+    - Supporting points in PRF
+  </Tab>
+</Tabs>
+
+<Tip>
+Use headings to create a **visual hierarchy**. This makes long content scannable and helps the AI better understand content structure during generation.
+</Tip>
+
+### Lists
+
+<Tabs>
+  <Tab title="Bullet List">
+    **Icon:** • List icon
+    
+    **Shortcut:** `Ctrl+Shift+8` (or `Cmd+Shift+8`)
+    
+    Unordered list with bullet points.
+    
+    **Usage:**
+    - Key takeaways
+    - Feature lists
+    - Discussion points
+    
+    **Example:**
+    ```
+    Mark's framework includes:
+    • Phase 1: Visibility
+    • Phase 2: Prioritization  
+    • Phase 3: Transformation
+    ```
+  </Tab>
+  
+  <Tab title="Numbered List">
+    **Icon:** 1. List icon
+    
+    **Shortcut:** `Ctrl+Shift+7` (or `Cmd+Shift+7`)
+    
+    Ordered list with numbers.
+    
+    **Usage:**
+    - Step-by-step processes
+    - Ranked items
+    - Sequential instructions
+    
+    **Example:**
+    ```
+    Follow these steps:
+    1. Audit your current state
+    2. Get executive buy-in
+    3. Start with quick wins
+    ```
+  </Tab>
+  
+  <Tab title="Quote Block">
+    **Icon:** Quote icon
+    
+    **Shortcut:** `Ctrl+Shift+B` (or `Cmd+Shift+B`)
+    
+    Blockquote formatting for guest quotes.
+    
+    **Usage:**
+    - Direct guest quotes
+    - Pull quotes for emphasis
+    - Attribution
+    
+    **Example:**
+    ```
+    > "The biggest mistake IT leaders make is treating 
+    > tech debt as a technical problem. It's an 
+    > organizational problem."
+    > — Mark Baker, CIO at Acme Corp
+    ```
+  </Tab>
+</Tabs>
+
+### Tables
+
+**Icon:** Table grid
+
+**Shortcut:** None (click toolbar button)
+
+Insert a 3x3 table (expandable). Use for:
+- Comparison matrices
+- Data organization
+- Feature breakdowns
+
+**Example use case:**
+
+| Problem | Traditional Approach | Mark's Solution |
+|---------|---------------------|----------------|
+| Tech debt | Add governance | Focus on visibility |
+| Developer burnout | Hire more people | Remove obstacles |
+| Incidents | Post-mortems | Proactive monitoring |
+
+<Note>
+Tables are resizable by dragging column borders. Right-click cells for insert/delete options.
+</Note>
+
+### Clear Formatting
+
+**Icon:** Remove formatting (eraser)
+
+**Shortcut:** `Ctrl+\` (or `Cmd+\`)
+
+Remove all formatting from selected text (reset to plain text).
+
+**Use when:**
+- Pasting from external sources (Word, Google Docs)
+- Resetting overformatted content
+- Starting fresh on a section
+
+## Special Features
+
+### Transcript Formatting
+
+In the **Transcript tab**, an additional button appears:
+
+**"Format" button** (icon: Align Left)
+
+**Purpose:** Auto-format raw transcripts with:
+- Speaker detection (Doug, Guest)
+- Paragraph breaks
+- Timestamp preservation
+- Cleanup of filler words (um, uh, like)
+
+<Steps>
+  <Step title="Upload raw transcript">
+    Paste unformatted transcript text from Adobe Podcast, Otter.ai, or other tools.
+  </Step>
+  
+  <Step title="Click Format button">
+    The AI detects:
+    - Speaker changes (Doug vs. guest)
+    - Natural paragraph breaks
+    - Timestamps (if present)
+  </Step>
+  
+  <Step title="Review formatting">
+    - Check speaker labels are correct
+    - Fix any misidentified speakers
+    - Adjust paragraph breaks if needed
+  </Step>
+</Steps>
+
+**Before formatting:**
+```
+So like you know tech debt is um it's not really a technical problem 
+right it's more of an organizational issue and um what I've seen is 
+that you know companies try to solve it with governance which actually 
+makes it worse because...
+```
+
+**After formatting:**
+```
+Guest: Tech debt is not really a technical problem. It's more of an 
+organizational issue.
+
+What I've seen is that companies try to solve it with governance, 
+which actually makes it worse because...
+```
+
+### Spell Check
+
+**LinkedIn and Instagram posts** have spell check enabled:
+
+1. **AI Spell Check** - Click the spell check button (ABC with checkmark)
+   - Context-aware corrections
+   - Won't flag industry jargon
+   - Batch fix all issues
+
+2. **Browser Spell Check** - Red underlines appear automatically
+   - Right-click for suggestions
+   - Native to your browser
+   - Instant corrections
+
+### Line Spacing
+
+**LinkedIn posts** use relaxed line spacing for better readability:
+- Extra space between paragraphs
+- Breathing room for long-form content
+- Matches LinkedIn's native post style
+
+**Normal line spacing** used for:
+- Transcripts (dense content)
+- PRF documents (analysis format)
+- Hooks (compact list format)
+
+## Keyboard Shortcuts
+
+Master these shortcuts for faster editing:
+
+### Essential Shortcuts
+
+| Action | Windows/Linux | Mac |
+|--------|--------------|-----|
+| Bold | `Ctrl+B` | `Cmd+B` |
+| Italic | `Ctrl+I` | `Cmd+I` |
+| Undo | `Ctrl+Z` | `Cmd+Z` |
+| Redo | `Ctrl+Shift+Z` | `Cmd+Shift+Z` |
+| Save | `Ctrl+S` | `Cmd+S` |
+| Find | `Ctrl+F` | `Cmd+F` |
+
+### Advanced Shortcuts
+
+| Action | Windows/Linux | Mac |
+|--------|--------------|-----|
+| Heading 1 | `Ctrl+Alt+1` | `Cmd+Option+1` |
+| Heading 2 | `Ctrl+Alt+2` | `Cmd+Option+2` |
+| Heading 3 | `Ctrl+Alt+3` | `Cmd+Option+3` |
+| Bullet list | `Ctrl+Shift+8` | `Cmd+Shift+8` |
+| Numbered list | `Ctrl+Shift+7` | `Cmd+Shift+7` |
+| Quote block | `Ctrl+Shift+B` | `Cmd+Shift+B` |
+| Code | `Ctrl+E` | `Cmd+E` |
+| Highlight | `Ctrl+Shift+H` | `Cmd+Shift+H` |
+| Clear formatting | `Ctrl+\` | `Cmd+\` |
+
+<Tip>
+**Power user tip:** Learn 5-6 shortcuts you use most. Ignore the rest. Even just Bold, Italic, and Undo will 10x your editing speed.
+</Tip>
+
+## Context Menu (Right-Click)
+
+In the **Transcript, PRF, and Hooks** tabs, right-click selected text for quick actions:
+
+### "Create Visual" Menu
+
+**Available actions:**
+- **Create Infographic** - Opens Design page with text pre-filled
+- **Create Quote Card** - Opens Design page with quote card specs
+
+**Workflow:**
+1. Select compelling text (quote, framework, data point)
+2. Right-click → "Create Infographic" or "Create Quote Card"
+3. Design page opens with:
+   - Selected text in context
+   - AI-generated visual spec
+   - Source reference (which tab/section)
+4. Generate image directly from there
+
+<Info>
+Context is preserved - the Design page "remembers" where the text came from (PRF, Hooks, etc.) for better spec generation.
+</Info>
+
+## Copy/Paste Behavior
+
+### Pasting from External Sources
+
+When pasting from Word, Google Docs, or websites:
+
+1. **HTML is preserved** - Bold, italic, lists carry over
+2. **Colors are stripped** - Dark theme compatibility
+3. **Fonts are normalized** - Consistent with Pulse design
+4. **Backgrounds removed** - No white boxes on dark UI
+
+**To paste as plain text:**
+- Windows/Linux: `Ctrl+Shift+V`
+- Mac: `Cmd+Shift+V`
+
+### Copying for External Use
+
+The **Copy button** in each content section:
+- Strips HTML formatting
+- Converts to plain text
+- Copies to clipboard
+- Ready to paste anywhere
+
+**Manual copy:**
+1. Select text
+2. `Ctrl+C` (or `Cmd+C`)
+3. HTML is copied (preserves formatting if destination supports it)
+
+## Autosave
+
+Content saves automatically as you type:
+
+- **Save frequency:** Every 2 seconds after you stop typing
+- **Save indicator:** Subtle "Saving..." → "Saved" in UI
+- **No manual save required** - Changes persist immediately
+
+<Warning>
+**Don't close the browser tab** while "Saving..." is visible. Wait for "Saved" to appear.
+</Warning>
+
+## Editor States
+
+### Editable (Default)
+
+Full editing capabilities:
+- Toolbar visible
+- Content is editable
+- Autosave enabled
+- Keyboard shortcuts active
+
+### Read-Only
+
+View-only mode (rare in Pulse):
+- Toolbar hidden
+- Content not editable
+- Copy still works
+- Used for approved/locked content
+
+### Loading
+
+While content loads:
+- Skeleton placeholder visible
+- Editor disabled
+- Typically 1-2 seconds
+
+## Best Practices
+
+### Formatting Guidelines
+
+**Do:**
+- Use headings to organize long content
+- Bold key takeaways and action items
+- Bullet lists for 3+ related points
+- Line breaks between distinct thoughts
+- Blockquotes for guest quotes
+
+**Don't:**
+- Overuse bold (loses impact)
+- Use ALL CAPS (hard to read)
+- Highlight entire paragraphs (defeats purpose)
+- Mix heading levels randomly (breaks hierarchy)
+- Use tables for non-tabular data
+
+### Transcript Editing
+
+1. **Clean up speaker labels** - Ensure Doug vs. Guest is accurate
+2. **Fix names** - Correct spelling of guest name, companies, products
+3. **Remove filler** - Delete excessive "um," "uh," "you know"
+4. **Add paragraphs** - Break up long speaker turns
+5. **Keep timestamps** - Preserve [00:00] format if present
+
+### PRF Editing
+
+1. **Strengthen headings** - Make section titles descriptive
+2. **Bold frameworks** - Highlight key methodologies
+3. **Bullet key points** - Extract actionable insights
+4. **Remove fluff** - AI sometimes over-explains
+5. **Verify facts** - Double-check statistics against transcript
+
+### Social Post Editing
+
+1. **Front-load hooks** - Most compelling content first
+2. **Line breaks** - Visual breathing room (especially LinkedIn)
+3. **Bold sparingly** - 1-2 key phrases maximum
+4. **Remove AI tells** - Edit out phrases like "In this episode..." if awkward
+5. **Character count** - LinkedIn truncates at 1,300 chars in feed
+
+## Troubleshooting
+
+### Content not saving
+
+**Check:**
+- Is "Saving..." stuck? (Refresh the page)
+- Network connection active? (Check your internet)
+- Browser console errors? (Report to team)
+
+**Fix:**
+1. Copy your content (Ctrl+A, Ctrl+C)
+2. Refresh the page
+3. Paste content back if lost
+
+### Toolbar buttons disabled
+
+**Reason:** No text selected or cursor not in editor
+
+**Fix:** Click inside the editor to activate
+
+### Pasted content looks broken
+
+**Reason:** Source formatting incompatible
+
+**Fix:**
+1. Select all pasted content
+2. Click "Clear Formatting" button (eraser icon)
+3. Reapply formatting manually
+
+### Keyboard shortcuts not working
+
+**Reason:** Browser extension conflict
+
+**Fix:**
+1. Check for conflicting extensions (Grammarly, etc.)
+2. Disable extensions temporarily
+3. Use toolbar buttons as fallback
+
+## Related Features
+
+- [Episode Metadata](/features/content/metadata) - Edit generated descriptions
+- [Social Posts](/features/content/social-posts) - Format LinkedIn and Instagram posts

@@ -1,0 +1,481 @@
+---
+title: Sanity CMS
+description: Configure Sanity.io for episode content management and guest profiles
+---
+
+YBH Pulse Content uses Sanity.io as its headless CMS for storing episodes, guest profiles, generated content, and social media assets.
+
+## Project setup
+
+<Steps>
+  <Step title="Create Sanity project">
+    If you don't have a Sanity project yet:
+    
+    ```bash
+    npm install -g @sanity/cli
+    sanity init
+    ```
+    
+    Note your project ID and dataset name.
+  </Step>
+  
+  <Step title="Configure environment variables">
+    Add to `.env` (client-side):
+    ```bash
+    VITE_SANITY_PROJECT_ID=your-project-id
+    VITE_SANITY_DATASET=production
+    ```
+    
+    Add to `.dev.vars` (server-side):
+    ```bash
+    SANITY_API_TOKEN=your-editor-token
+    ```
+  </Step>
+  
+  <Step title="Generate API token">
+    1. Go to https://sanity.io/manage
+    2. Select your project
+    3. Navigate to **API** > **Tokens**
+    4. Create a token with **Editor** permissions
+    5. Copy the token to `SANITY_API_TOKEN`
+  </Step>
+  
+  <Step title="Deploy schemas">
+    ```bash
+    npm run sanity:deploy
+    ```
+  </Step>
+</Steps>
+
+## Schema structure
+
+Pulse Content uses four primary schemas in Sanity:
+
+### Episode content
+
+Document type: `episodeContent`
+
+Stores all generated content for each episode:
+- Transcript (raw text)
+- PRF document (HTML)
+- Viral hooks (HTML)
+- Social posts (LinkedIn, Instagram, Twitter)
+- Generated assets (infographics, quote cards, thumbnails)
+- Episode metadata (title, guest name, episode number, topics, summary)
+- Sanity page metadata (for podcast website)
+- Visual suggestions (AI-generated design ideas)
+- Brand kit assets (curated assets for sharing)
+- Video assets (square and vertical clips)
+- Scheduled posts (Late API tracking)
+- Approval status and timestamps
+- Fact-check results and verified facts bank
+
+### Guest
+
+Document type: `guest`
+
+Guest directory with contact information:
+- Name, position, company
+- Email, mobile, address
+- LinkedIn URL and follower count
+- Circle community membership
+- Status (booked, recorded, in production, complete)
+- Episode references
+- Share links
+- Notes
+- Transcript upload tracking
+
+### Guest profile
+
+Document type: `guestProfile`
+
+Cached LinkedIn data to avoid repeated API calls:
+- Name and headline
+- LinkedIn URL
+- Professional summary
+- Career history (positions, companies, dates, descriptions)
+- Scraped timestamp (cached for 24 hours)
+
+### User
+
+Document type: `user`
+
+Team authentication:
+- Email (must be `@popularit.net`)
+- Password hash
+- Created and updated timestamps
+
+## API access patterns
+
+### Client-side (read-only)
+
+All client-side requests go through `/api/sanity/*` proxy endpoints. The Sanity API token is never exposed to the browser.
+
+```typescript
+import { fetchEpisodes, fetchEpisode } from '@/services/sanity'
+
+// List all episodes
+const episodes = await fetchEpisodes()
+
+// Get single episode
+const episode = await fetchEpisode('episode-id')
+```
+
+### Server-side (read/write)
+
+Server-side functions access Sanity directly using the editor token:
+
+```typescript
+import { createClient } from '@sanity/client'
+
+const client = createClient({
+  projectId: env.VITE_SANITY_PROJECT_ID,
+  dataset: env.VITE_SANITY_DATASET,
+  token: env.SANITY_API_TOKEN,
+  useCdn: false,
+  apiVersion: '2024-03-01',
+})
+
+// Create document
+await client.create({
+  _type: 'episodeContent',
+  transcript: 'Episode transcript...',
+  status: 'draft',
+})
+
+// Update document
+await client.patch('episode-id')
+  .set({ prf: 'PRF content...' })
+  .commit()
+
+// Query documents
+const episodes = await client.fetch(
+  `*[_type == "episodeContent"] | order(_createdAt desc)`
+)
+```
+
+## Data flow
+
+### Episode creation flow
+
+<Steps>
+  <Step title="Upload transcript">
+    User uploads transcript file or pulls from Google Drive.
+  </Step>
+  
+  <Step title="Parse metadata">
+    System extracts episode number, guest name, and LinkedIn URL from transcript header:
+    ```
+    385-Chris Pacifico
+    Host: Phil Howard
+    Guest: Chris Pacifico
+    https://www.linkedin.com/in/chris-pacifico/
+    ```
+  </Step>
+  
+  <Step title="Create episode document">
+    ```typescript
+    const episode = await createEpisode({
+      transcript,
+      guestId, // Optional
+    })
+    ```
+  </Step>
+  
+  <Step title="Auto-generate PRF">
+    AI generates Podcast Repurposing Framework document from transcript.
+  </Step>
+  
+  <Step title="Auto-generate hooks">
+    AI generates viral hooks from PRF and transcript.
+  </Step>
+  
+  <Step title="Generate on demand">
+    - Episode metadata (title, descriptions, takeaways, show notes)
+    - LinkedIn posts
+    - Instagram posts
+    - Visual suggestions
+    - Career timeline
+  </Step>
+</Steps>
+
+### Guest profile caching
+
+<Steps>
+  <Step title="Check Sanity cache">
+    Look for existing `guestProfile` by LinkedIn URL.
+  </Step>
+  
+  <Step title="Check cache freshness">
+    If cached profile exists and is less than 24 hours old, use it.
+  </Step>
+  
+  <Step title="Scrape LinkedIn">
+    If cache is stale or missing, fetch fresh data from RapidAPI.
+  </Step>
+  
+  <Step title="Update cache">
+    Upsert `guestProfile` with new data and timestamp.
+  </Step>
+  
+  <Step title="Link to episode">
+    Store guest reference in `episodeContent.guestRef`.
+  </Step>
+</Steps>
+
+## Content production workflow
+
+### Document linking
+
+Episodes and guests are linked via references:
+
+```typescript
+// Episode content references guest
+{
+  _type: 'episodeContent',
+  guestRef: {
+    _type: 'reference',
+    _ref: 'guest-document-id',
+  },
+}
+
+// Guest references episodes
+{
+  _type: 'guest',
+  episodeRefs: [
+    { _type: 'reference', _ref: 'episode-1-id' },
+    { _type: 'reference', _ref: 'episode-2-id' },
+  ],
+}
+```
+
+### Status tracking
+
+Episode status values:
+- `draft` - Initial state after upload
+- `in_progress` - Generating content
+- `running` - Active generation process
+- `complete` - All content generated
+- `partial` - Some content generated
+- `failed` - Generation failed
+- `degraded` - Generation completed with warnings
+
+### Approval workflow
+
+Content requires approval before sharing:
+
+```typescript
+// PRF approval
+await updateEpisode(episodeId, {
+  prfApproved: true,
+  prfApprovedAt: new Date().toISOString(),
+})
+
+// Hooks approval
+await updateEpisode(episodeId, {
+  hooksApproved: true,
+  hooksApprovedAt: new Date().toISOString(),
+})
+
+// LinkedIn posts approval
+await updateEpisode(episodeId, {
+  linkedinApproved: true,
+  linkedinApprovedAt: new Date().toISOString(),
+})
+
+// Visual asset approval
+const suggestions = episode.visualSuggestions?.map(s => ({
+  ...s,
+  status: s._key === selectedKey ? 'approved' : s.status,
+  approvedAt: s._key === selectedKey ? new Date().toISOString() : s.approvedAt,
+}))
+
+await updateEpisode(episodeId, { visualSuggestions: suggestions })
+```
+
+### Brand kit curation
+
+<Steps>
+  <Step title="Select assets">
+    Team curates 4-10 assets for guest brand kit from approved visuals.
+  </Step>
+  
+  <Step title="Add to brand kit">
+    ```typescript
+    await updateEpisode(episodeId, {
+      brandKitAssets: [
+        {
+          type: 'infographic',
+          imageUrl: 'https://...',
+          title: 'Key Insight',
+          caption: 'Share this on LinkedIn',
+          order: 1,
+          addedAt: new Date().toISOString(),
+        },
+      ],
+    })
+    ```
+  </Step>
+  
+  <Step title="Lock brand kit">
+    When finalized:
+    ```typescript
+    await updateEpisode(episodeId, {
+      brandKitLocked: true,
+      brandKitLockedAt: new Date().toISOString(),
+    })
+    ```
+  </Step>
+  
+  <Step title="Generate share link">
+    Creates public URL: `/share/{episodeNumber}-{token}`
+  </Step>
+</Steps>
+
+## Sanity Studio
+
+Manage content directly in Sanity Studio:
+
+```bash
+# Start Sanity Studio locally
+npm run sanity:dev
+
+# Deploy Sanity Studio
+npm run sanity:deploy
+```
+
+Access at: `https://your-project.sanity.studio/`
+
+<Note>
+  Pulse Content is the primary interface for content production. Use Sanity Studio only for administrative tasks or manual data corrections.
+</Note>
+
+## Database maintenance
+
+### Backup episodes
+
+```bash
+sanity dataset export production backup.tar.gz
+```
+
+### Import episodes
+
+```bash
+sanity dataset import backup.tar.gz production
+```
+
+### Clean up old drafts
+
+```groq
+*[_type == "episodeContent" && status == "draft" && _createdAt < "2024-01-01"]
+```
+
+## Common queries
+
+### Recent episodes
+
+```groq
+*[_type == "episodeContent"] | order(metadata.episodeNumber desc) [0...10] {
+  _id,
+  metadata,
+  status,
+  prfApproved,
+  hooksApproved,
+  linkedinApproved,
+}
+```
+
+### Episodes by guest
+
+```groq
+*[_type == "episodeContent" && references($guestId)] {
+  _id,
+  metadata,
+  guestRef->,
+}
+```
+
+### Approved assets ready for sharing
+
+```groq
+*[_type == "episodeContent" && prfApproved == true && hooksApproved == true && linkedinApproved == true] {
+  _id,
+  metadata,
+  brandKitAssets,
+  shareToken,
+}
+```
+
+## Performance optimization
+
+### Use CDN for reads
+
+Enable CDN for read-only queries:
+
+```typescript
+const client = createClient({
+  projectId: env.VITE_SANITY_PROJECT_ID,
+  dataset: env.VITE_SANITY_DATASET,
+  useCdn: true, // Enable CDN for faster reads
+  apiVersion: '2024-03-01',
+})
+```
+
+### Disable CDN for writes
+
+Always use `useCdn: false` for mutations:
+
+```typescript
+const client = createClient({
+  projectId: env.VITE_SANITY_PROJECT_ID,
+  dataset: env.VITE_SANITY_DATASET,
+  token: env.SANITY_API_TOKEN,
+  useCdn: false, // Disable CDN for writes
+  apiVersion: '2024-03-01',
+})
+```
+
+### Batch updates
+
+Use transactions for multiple related updates:
+
+```typescript
+const transaction = client.transaction()
+transaction
+  .patch(episodeId, { set: { prfApproved: true } })
+  .patch(episodeId, { set: { hooksApproved: true } })
+  .commit()
+```
+
+## Troubleshooting
+
+### Connection errors
+
+Verify project ID and dataset:
+
+```bash
+echo $VITE_SANITY_PROJECT_ID
+echo $VITE_SANITY_DATASET
+```
+
+### Permission denied
+
+Ensure API token has **Editor** role:
+1. Go to https://sanity.io/manage
+2. Select project > API > Tokens
+3. Check token permissions
+4. Regenerate if needed
+
+### Data not updating
+
+Check CDN cache:
+- Use `useCdn: false` for real-time data
+- CDN cache can take up to 60 seconds to update
+
+### Schema validation errors
+
+Redeploy schemas:
+
+```bash
+npm run sanity:deploy
+```

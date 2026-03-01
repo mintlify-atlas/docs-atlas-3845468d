@@ -1,0 +1,282 @@
+---
+title: Design Studio Overview
+description: Create AI-powered visual assets including infographics, quote cards, thumbnails, and career timelines
+icon: palette
+---
+
+## Introduction
+
+Design Studio is YBH Pulse Content's visual asset creation hub, transforming podcast content into shareable graphics optimized for social media. The system uses AI to analyze episode content and generate professional visuals that maintain brand consistency.
+
+## Core Capabilities
+
+<CardGroup cols={2}>
+  <Card title="Infographics" icon="chart-network" href="/features/design/infographics">
+    Data visualizations, frameworks, and concept diagrams from episode insights
+  </Card>
+  <Card title="Quote Cards" icon="quote-left" href="/features/design/infographics#quote-cards">
+    Shareable quote graphics with bold typography and brand colors
+  </Card>
+  <Card title="Thumbnails" icon="image" href="/features/design/thumbnails">
+    Eye-catching YouTube thumbnails for video content
+  </Card>
+  <Card title="Career Timelines" icon="timeline" href="/features/design/career-timelines">
+    Isometric 3D career journey visualizations from LinkedIn data
+  </Card>
+</CardGroup>
+
+## Access Points
+
+Design Studio can be accessed through multiple entry points:
+
+### 1. From Episode Assets Tab
+
+Navigate to any episode and click **Design Studio** to create visuals with full episode context.
+
+### 2. From Visual Suggestions
+
+AI-generated suggestions in the Assets tab can be opened directly in Design Studio with pre-filled specifications.
+
+### 3. Via Context Menu
+
+Right-click any text in Transcript, PRF, or Hooks editors and select **"Create Visual"** to instantly start designing with that content.
+
+<Info>
+  When accessing Design Studio from a specific episode, AI automatically uses the transcript, PRF, and hooks as context for better generation results.
+</Info>
+
+## Design Workflow
+
+<Steps>
+  <Step title="Select Design Type">
+    Choose from infographic, quote card, thumbnail, or career timeline based on your content needs.
+  </Step>
+  
+  <Step title="Provide Content">
+    Enter or paste the text you want to visualize. For timelines, link an episode with guest LinkedIn URL.
+  </Step>
+  
+  <Step title="Generate Specification">
+    AI analyzes your content and episode context to create a complete design spec with layout, colors, and template selection.
+  </Step>
+  
+  <Step title="Generate Image">
+    Click **Generate Image** to create the visual using Kie.ai's Nano Banana Pro API. Images are generated at your selected resolution (1K, 2K, or 4K).
+  </Step>
+  
+  <Step title="Add Logo & Save">
+    Use the Logo Compositor to add YBH branding, adjust placement, and save to episode assets.
+  </Step>
+</Steps>
+
+## AI Design Intelligence
+
+The Design Studio AI system ensures variety and quality:
+
+### Layout Selection
+
+AI chooses from **28 layout structures** including:
+- Circular & Cyclical (Doom Loop, Hub & Spoke)
+- Linear & Sequential (Timeline, Staircase, Pipeline)
+- Comparison (Split Screen, Matrix, Spectrum)
+- Hierarchical (Pyramid, Tree, Pillars)
+- Grid (Dashboard, Card Grid, Modular Blocks)
+- Network & Relationship (Node Network, Workflow)
+- Specialized (Gauge, Exploded View, Cross-Section)
+
+### Template Matching
+
+AI selects from **10 content templates** based on your content:
+- **Doom Loop**: Vicious cycles, organizational traps
+- **Strategic Framework**: Methodologies, governance models
+- **Journey Map**: Transformation stories, career progressions
+- **Reality Check**: Vendor promises vs. reality
+- **Data Story**: Research findings, statistics
+- **Comparison Matrix**: Tool selection, vendor evaluation
+- **Workflow Optimization**: Process improvement
+- **Leadership Playbook**: Best practices, strategies
+- **Communication Sins**: Pitfalls, anti-patterns
+- **System Architecture**: Tech stacks, infrastructure
+
+### Variety Tracking
+
+AI tracks generation history per episode to ensure visual diversity:
+```typescript
+const history = episode.generatedAssets?.map(a => 
+  `${a.spec.template}|${a.spec.layout}|${a.spec.colorSystem}`
+)
+```
+
+This prevents repetitive designs across multiple assets from the same episode.
+
+## Brand Consistency
+
+All generated visuals adhere to YBH brand guidelines:
+
+### Color Systems
+
+1. **YBH Gradient** (Primary): Yellow (#F7B500) → Orange (#F17529) → Red (#EF4136)
+2. **Problem/Solution**: Red/Orange → Green/Blue progression
+3. **Corporate Professional**: Navy, Teal, Orange
+4. **High Contrast**: Cyan, Magenta, Yellow on black
+5. **Blueprint Dark**: Dark blue (#0F2A44) for cinematic infographics
+6. **Blueprint Light**: Light gray (#F5F5F5) for editorial style
+
+### Typography Hierarchy
+
+- **Level 1 (Title)**: 32-48pt, Bold
+- **Level 2 (Section)**: 24-32pt, Semi-bold
+- **Level 3 (Subsection)**: 18-24pt, Medium
+- **Level 4 (Body)**: 14-16pt, Regular
+- **Level 5 (Labels)**: 10-12pt, Regular/Light
+
+### Icon Styles
+
+- **Isometric** (60%): 3D-like, for physical/tangible concepts
+- **Flat 2D** (40%): Simple, for abstract concepts
+
+<Warning>
+  AI automatically selects appropriate icon style based on content type. Isometric is used for tangible concepts (tools, systems, processes) while Flat 2D is used for abstract ideas (strategies, mindsets, principles).
+</Warning>
+
+## Image Generation
+
+Design Studio uses **Kie.ai's Nano Banana Pro** API for high-quality image generation.
+
+### Technical Details
+
+```typescript
+// src/services/kieai.ts
+export async function createTask(params: {
+  prompt: string
+  aspectRatio?: '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '4:5' | '5:4' | '2:3' | '3:2' | '21:9'
+  resolution?: '1K' | '2K' | '4K'
+  imageInput?: string[]  // For transformations
+}): Promise<{ taskId: string }>
+
+export async function waitForTask(
+  taskId: string,
+  maxAttempts = 90,      // 4.5 minutes max
+  intervalMs = 3000,     // Poll every 3 seconds
+  onProgress?: (attempt: number, maxAttempts: number, state: string) => void
+): Promise<KieAiTaskResult>
+```
+
+### Polling Strategy
+
+- **Default timeout**: 4.5 minutes (90 attempts × 3 seconds)
+- **Progress callback**: UI updates during generation
+- **Error handling**: Automatic retry on network failures
+- **State tracking**: `pending` → `processing` → `success` | `fail`
+
+### Aspect Ratios
+
+<CardGroup cols={3}>
+  <Card title="1:1 Square" icon="square">
+    Perfect for Instagram posts and profile images
+  </Card>
+  <Card title="16:9 Landscape" icon="rectangle-wide">
+    YouTube thumbnails, LinkedIn posts, presentations
+  </Card>
+  <Card title="9:16 Portrait" icon="rectangle-vertical">
+    Instagram Stories, TikTok, vertical video
+  </Card>
+</CardGroup>
+
+Additional ratios: 4:3, 3:4, 4:5, 5:4, 2:3, 3:2, 21:9
+
+## Logo Compositor
+
+After generating an image, use the Logo Compositor to add YBH branding:
+
+### Features
+
+- **Live Preview**: See logo placement in real-time
+- **Position Control**: Place logo in any corner or center
+- **Size Adjustment**: Scale logo to fit your design
+- **Opacity Control**: Adjust transparency for subtlety
+- **Export Options**: Download or save directly to episode assets
+
+### Implementation
+
+```tsx
+<LogoCompositor
+  imageUrl={generatedImageUrl}
+  onComposite={(dataUrl) => {
+    setCompositedImageUrl(dataUrl)
+  }}
+  onAddToAssets={handleAddToAssets}
+  showAddToAssets={!!linkedEpisode}
+  isAddingToAssets={isApproving}
+/>
+```
+
+<Info>
+  The compositor converts base64 images and uploads them to Sanity CDN via `/api/images/upload` endpoint.
+</Info>
+
+## Asset Management
+
+Generated visuals are automatically tracked and stored:
+
+### Asset Schema
+
+```typescript
+interface GeneratedAsset {
+  _key: string
+  type: 'infographic' | 'quoteCard' | 'thumbnail' | 'careerTimeline'
+  status: 'pending' | 'approved' | 'rejected'
+  source: 'design_studio' | 'suggestions'
+  imageUrl: string
+  title: string
+  spec: {
+    layout: string
+    template: string
+    colorSystem: string
+    prompt: string
+  }
+  suggestionKey?: string
+  createdAt: string
+}
+```
+
+### History Panel
+
+View all generated assets for the current episode in the sidebar:
+- Thumbnail previews
+- Asset type and layout
+- Creation timestamp
+- Quick access to regenerate
+
+## Quality Standards
+
+All generated visuals meet these criteria:
+
+<CardGroup cols={2}>
+  <Card title="Clarity" icon="eye">
+    Main message visible within 5 seconds
+  </Card>
+  <Card title="Brevity" icon="text-size">
+    Titles under 10 words for maximum impact
+  </Card>
+  <Card title="Professional" icon="briefcase">
+    Tone appropriate for IT leaders (CIOs, CTOs)
+  </Card>
+  <Card title="Branded" icon="badge-check">
+    YBH colors, typography, and episode attribution
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create Infographics" icon="chart-network" href="/features/design/infographics">
+    Learn about data visualizations and frameworks
+  </Card>
+  <Card title="Generate Thumbnails" icon="image" href="/features/design/thumbnails">
+    Design eye-catching YouTube thumbnails
+  </Card>
+  <Card title="Build Career Timelines" icon="timeline" href="/features/design/career-timelines">
+    Create guest journey visualizations from LinkedIn
+  </Card>
+</CardGroup>

@@ -1,0 +1,205 @@
+---
+title: Episode management
+description: Transform podcast transcripts into production-ready content with YBH Pulse Content's episode management system
+---
+
+YBH Pulse Content centralizes your podcast content production workflow. Upload a transcript, and the AI-powered pipeline generates PRF documents, viral hooks, social posts, infographics, and video clips—all editable and ready for distribution.
+
+## What is episode management?
+
+Episode management is the core workflow of YBH Pulse Content. It transforms raw podcast transcripts into a complete suite of social-ready assets:
+
+- **PRF (Podcast Repurposing Framework)** - Strategic content analysis
+- **Viral hooks** - Attention-grabbing social snippets
+- **Social posts** - Platform-optimized content for LinkedIn and Instagram
+- **Visual suggestions** - AI-generated infographics and quote cards
+- **Video clips** - Short-form video recommendations with timestamps
+- **Episode metadata** - Titles, descriptions, and show notes for your podcast CMS
+
+<Tip>
+The transcript is the single source of truth. Everything generated from it is fully editable before export.
+</Tip>
+
+## Episode workflow
+
+Here's how content flows through the system:
+
+<Steps>
+  <Step title="Upload transcript">
+    Start with a transcript from Adobe Podcast or any text file. The system auto-formats it for readability.
+  </Step>
+  
+  <Step title="Generate PRF">
+    AI analyzes the conversation and creates a strategic framework document. This happens automatically after transcript upload.
+  </Step>
+  
+  <Step title="Generate hooks">
+    Viral hooks are extracted from the PRF. These become the foundation for social content.
+  </Step>
+  
+  <Step title="Create social content">
+    Generate LinkedIn posts, Instagram captions, and visual suggestions based on PRF and hooks.
+  </Step>
+  
+  <Step title="Generate visuals">
+    Create infographics, quote cards, and video clip specs using AI-powered design suggestions.
+  </Step>
+  
+  <Step title="Publish metadata">
+    Push episode metadata (titles, descriptions, show notes) to your Sanity podcast CMS.
+  </Step>
+</Steps>
+
+## Episode detail page
+
+The episode detail page is organized into tabs:
+
+### Transcript tab
+
+- Upload transcript via file drop or paste
+- Edit transcript in rich text editor
+- Auto-formatting for speaker labels and timestamps
+- Source material for all AI generation
+
+### PRF tab
+
+- Strategic analysis of episode content
+- Key themes, insights, and takeaways
+- Fully editable in TipTap rich text editor
+- Approval workflow for content validation
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:218-255`
+
+### Hooks tab
+
+- 3-5 viral hooks extracted from PRF
+- Designed for social media attention
+- Edit, reorder, or regenerate hooks
+- Approval workflow
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:257-296`
+
+### Videos tab
+
+- AI-generated short-form video clip suggestions
+- Includes transcript snippets, timestamps, and hook sentences
+- "Why it works" rationale for each clip
+- Export-ready for video editors
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:408-468`
+
+### Posts tab
+
+- LinkedIn and Instagram post generation
+- Platform-specific formatting and character counts
+- Spell check and fact verification
+- Copy-to-clipboard for easy sharing
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:299-406`
+
+### Assets tab
+
+- Unified brand kit for episode visuals
+- Approve/reject AI-generated images
+- Upload custom graphics
+- Lock brand kit when finalized for guest sharing
+
+## Content approval workflow
+
+Each content type (PRF, Hooks, LinkedIn posts) has an approval bar:
+
+<AccordionGroup>
+  <Accordion title="How approval tracking works">
+    - **Unapproved state**: Yellow indicator, "Approve" button visible
+    - **Approved state**: Green checkmark, timestamp shown, "Revoke" option available
+    - Approval doesn't block editing—you can always make changes
+    - Approvals help track production progress across the team
+  </Accordion>
+  
+  <Accordion title="When to approve content">
+    Approve content when it's ready for distribution or final review. This signals to the team that the content has been validated and is production-ready.
+  </Accordion>
+</AccordionGroup>
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:565-605`
+
+## Episode metadata generation
+
+Generate complete episode metadata for your podcast CMS (Sanity):
+
+- **Title**: SEO-optimized with episode number and guest name
+- **Short description**: 1-2 sentence summary
+- **Long description**: "On this episode" content for podcast page
+- **Key takeaways**: Exactly 3 bullet points
+- **Show notes**: Timestamped segments from the transcript
+
+<Steps>
+  <Step title="Click 'Generate Metadata'">
+    Opens the metadata modal and starts AI generation using transcript and PRF.
+  </Step>
+  
+  <Step title="Review generated content">
+    Check title, descriptions, and takeaways. Edit inline if needed.
+  </Step>
+  
+  <Step title="Push to Sanity">
+    One-click sync to your YBH podcast CMS. Creates or updates the episode page.
+  </Step>
+</Steps>
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:780-881`
+
+## Guest linking
+
+Episodes can be linked to guests in your Guest Directory:
+
+- Automatic status updates (recorded → in production → complete)
+- LinkedIn profile integration for career timeline visuals
+- Share link generation for guest approval
+- Episode history per guest
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:247-250, 478-482`
+
+## Agentic AI mode
+
+YBH Pulse Content uses agentic AI with RAG (Retrieval-Augmented Generation) for intelligent content creation:
+
+<Note>
+Agentic mode uses semantic search to find relevant brand guidelines, past content examples, and design templates. This ensures consistency and variety across episodes.
+</Note>
+
+**Features**:
+- Real-time status updates during generation
+- Fact verification against transcript
+- History tracking to avoid repetitive content
+- Customizable prompts per agent (PRF, Hooks, LinkedIn, etc.)
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:119-141`
+
+## Permissions
+
+User roles control access to episode features:
+
+- **View Content**: See PRF, Hooks, Posts tabs
+- **Edit Content**: Modify generated text
+- **Generate Content**: Trigger AI generation
+- **Edit Assets**: Manage visual brand kit
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:52-67`
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Transcript upload" icon="file-arrow-up" href="/features/episodes/transcript-upload">
+    Learn how to upload and format transcripts
+  </Card>
+  <Card title="PRF generation" icon="sparkles" href="/features/episodes/prf-generation">
+    Generate strategic content frameworks
+  </Card>
+  <Card title="Hooks generation" icon="bolt" href="/features/episodes/hooks-generation">
+    Create viral social media hooks
+  </Card>
+  <Card title="Visual suggestions" icon="image" href="/features/design/infographics">
+    AI-powered infographic and quote card generation
+  </Card>
+</CardGroup>

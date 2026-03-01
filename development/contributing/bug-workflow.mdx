@@ -1,0 +1,480 @@
+---
+title: Bug Fixing Workflow
+description: Test-driven bug fixing process for YBH Pulse Content
+---
+
+## Overview
+
+Pulse Content follows a strict **test-driven bug fixing workflow** to ensure bugs are properly understood before fixing and to prevent regressions.
+
+<Warning>
+  **Critical Rule:** When a bug is reported, **DO NOT start by trying to fix it.** Follow the workflow below.
+</Warning>
+
+## The Workflow
+
+<Steps>
+  <Step title="Reproduce the bug">
+    Understand the exact conditions that trigger the bug:
+    
+    - Read the bug report carefully
+    - Try to reproduce it locally
+    - Document the exact steps to reproduce
+    - Note the expected vs. actual behavior
+    
+    **Example:**
+    ```
+    Steps to Reproduce:
+    1. Create new episode
+    2. Generate PRF document
+    3. Click "Save" without making changes
+    4. Application crashes with error: "Cannot read property 'content' of undefined"
+    
+    Expected: Should save without error
+    Actual: Application crashes
+    ```
+  </Step>
+
+  <Step title="Write a test that reproduces the bug">
+    **Before fixing anything**, write a test that captures the bug:
+    
+    ```typescript
+    // functions/api/episodes/save.test.ts
+    import { describe, it, expect, vi } from 'vitest'
+    import { onRequestPost } from './save'
+    
+    describe('POST /api/episodes/save', () => {
+      it('should handle empty PRF content without crashing', async () => {
+        const request = new Request('http://localhost/api/episodes/save', {
+          method: 'POST',
+          body: JSON.stringify({
+            episodeId: '123',
+            prf: { content: null }  // Bug: null content causes crash
+          })
+        })
+        
+        // This test should capture the bug
+        const response = await onRequestPost({ request, env: mockEnv })
+        
+        // Should not crash, should return 400 or handle gracefully
+        expect(response.status).toBe(400)
+      })
+    })
+    ```
+  </Step>
+
+  <Step title="Verify the test fails">
+    Run the test to confirm it fails:
+    
+    ```bash
+    npm run test:run -- save.test.ts
+    ```
+    
+    **Expected output:**
+    ```
+    ❌ FAIL  functions/api/episodes/save.test.ts
+      POST /api/episodes/save
+        ✕ should handle empty PRF content without crashing (15ms)
+    
+    TypeError: Cannot read property 'content' of undefined
+        at onRequestPost (save.ts:23:15)
+    ```
+    
+    <Info>
+      If the test passes immediately, you haven't captured the bug correctly. Revise the test.
+    </Info>
+  </Step>
+
+  <Step title="Fix the bug">
+    Now implement the fix:
+    
+    ```typescript
+    // functions/api/episodes/save.ts
+    export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+      const body = await request.json()
+      
+      // ✅ Fix: Validate PRF content before accessing
+      if (!body.prf || body.prf.content === null) {
+        return new Response(
+          JSON.stringify({ error: 'PRF content is required' }),
+          { status: 400 }
+        )
+      }
+      
+      // Safe to access body.prf.content now
+      const content = body.prf.content
+      // ... rest of save logic
+    }
+    ```
+  </Step>
+
+  <Step title="Verify the test passes">
+    Run the test again:
+    
+    ```bash
+    npm run test:run -- save.test.ts
+    ```
+    
+    **Expected output:**
+    ```
+    ✅ PASS  functions/api/episodes/save.test.ts
+      POST /api/episodes/save
+        ✓ should handle empty PRF content without crashing (8ms)
+    ```
+  </Step>
+
+  <Step title="Run full test suite">
+    Ensure your fix doesn't break existing tests:
+    
+    ```bash
+    npm run test:run
+    npm run typecheck
+    ```
+    
+    All tests must pass before committing.
+  </Step>
+
+  <Step title="Commit only when tests pass">
+    ```bash
+    git add .
+    git commit -m "fix(api): handle null PRF content gracefully
+    
+    - Add validation for PRF content
+    - Return 400 error instead of crashing
+    - Add regression test
+    
+    Fixes #123"
+    ```
+  </Step>
+</Steps>
+
+## Benefits of This Workflow
+
+<CardGroup cols={2}>
+  <Card title="Ensures Understanding" icon="brain">
+    Writing a test first forces you to fully understand the bug before fixing it.
+  </Card>
+  
+  <Card title="Prevents Regressions" icon="shield">
+    The test will catch if the bug reappears in the future.
+  </Card>
+  
+  <Card title="Documents Behavior" icon="book">
+    Tests serve as documentation for expected behavior.
+  </Card>
+  
+  <Card title="Increases Confidence" icon="check">
+    Passing tests prove the fix works as intended.
+  </Card>
+</CardGroup>
+
+## Example: Real Bug Fix
+
+### Bug Report
+
+```
+Title: Editor crashes when selecting text in empty document
+
+Steps to reproduce:
+1. Create new episode
+2. Open PRF editor (empty)
+3. Click and drag to select text
+4. Editor crashes with: "Cannot read property 'text' of null"
+
+Expected: Should handle empty selection gracefully
+Actual: Editor crashes
+```
+
+### Step 1: Write Failing Test
+
+```typescript
+// src/components/editor/TipTapEditor.test.tsx
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, it, expect } from 'vitest'
+import { TipTapEditor } from './TipTapEditor'
+
+describe('TipTapEditor', () => {
+  it('should handle selection in empty document', async () => {
+    const { container } = render(
+      <TipTapEditor initialContent="" />
+    )
+    
+    const editor = container.querySelector('.ProseMirror')
+    expect(editor).toBeInTheDocument()
+    
+    // Simulate text selection
+    await userEvent.click(editor!)
+    await userEvent.keyboard('{Shift>}{ArrowRight}{/Shift}')
+    
+    // Should not crash
+    expect(editor).toBeInTheDocument()
+  })
+})
+```
+
+### Step 2: Run Test (Should Fail)
+
+```bash
+npm run test:run -- TipTapEditor.test.tsx
+
+# ❌ FAIL: TypeError: Cannot read property 'text' of null
+```
+
+### Step 3: Fix the Bug
+
+```typescript
+// src/components/editor/TipTapEditor.tsx
+import { useEditor, EditorContent } from '@tiptap/react'
+
+export function TipTapEditor({ initialContent }: Props) {
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: initialContent,
+    onSelectionUpdate: ({ editor }) => {
+      const { from, to } = editor.state.selection
+      
+      // ✅ Fix: Check if selection exists and has content
+      if (from === to) return  // Empty selection
+      
+      const text = editor.state.doc.textBetween(from, to)
+      if (!text) return  // No text in selection
+      
+      // Safe to use text now
+      handleSelection(text)
+    }
+  })
+  
+  return <EditorContent editor={editor} />
+}
+```
+
+### Step 4: Verify Test Passes
+
+```bash
+npm run test:run -- TipTapEditor.test.tsx
+
+# ✅ PASS: All tests passed
+```
+
+## Testing Strategies
+
+### Unit Tests for Utility Functions
+
+```typescript
+// src/utils/parseTranscript.test.ts
+import { describe, it, expect } from 'vitest'
+import { parseTranscript } from './parseTranscript'
+
+describe('parseTranscript', () => {
+  it('should handle empty input', () => {
+    expect(parseTranscript('')).toEqual([])
+  })
+  
+  it('should handle malformed timestamps', () => {
+    const input = '[invalid] Speaker: Text'
+    expect(parseTranscript(input)).toEqual([])
+  })
+  
+  it('should parse valid transcript', () => {
+    const input = '[00:00:10] John: Hello world'
+    const result = parseTranscript(input)
+    
+    expect(result).toEqual([{
+      timestamp: '00:00:10',
+      speaker: 'John',
+      text: 'Hello world'
+    }])
+  })
+})
+```
+
+### Integration Tests for API Endpoints
+
+```typescript
+// functions/api/generate/prf.test.ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { onRequestPost } from './prf'
+import * as ai from '@/services/ai'
+
+vi.mock('@/services/ai')
+
+describe('POST /api/generate/prf', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  
+  it('should handle AI service timeout', async () => {
+    vi.spyOn(ai, 'generatePRF').mockRejectedValue(
+      new Error('Request timeout')
+    )
+    
+    const request = new Request('http://localhost/api/generate/prf', {
+      method: 'POST',
+      body: JSON.stringify({ transcript: 'test' })
+    })
+    
+    const response = await onRequestPost({ request, env: mockEnv })
+    
+    expect(response.status).toBe(504)  // Gateway timeout
+    const data = await response.json()
+    expect(data.error).toContain('timeout')
+  })
+})
+```
+
+### Component Tests for UI
+
+```typescript
+// src/components/EpisodeList.test.tsx
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, it, expect, vi } from 'vitest'
+import { EpisodeList } from './EpisodeList'
+import * as api from '@/services/api'
+
+vi.mock('@/services/api')
+
+describe('EpisodeList', () => {
+  it('should display error when API fails', async () => {
+    vi.spyOn(api, 'fetchEpisodes').mockRejectedValue(
+      new Error('Network error')
+    )
+    
+    render(<EpisodeList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText(/error loading episodes/i)).toBeInTheDocument()
+    })
+  })
+  
+  it('should retry on click', async () => {
+    const fetchSpy = vi.spyOn(api, 'fetchEpisodes')
+      .mockRejectedValueOnce(new Error('Network error'))
+      .mockResolvedValueOnce([])
+    
+    render(<EpisodeList />)
+    
+    await waitFor(() => {
+      expect(screen.getByText(/error/i)).toBeInTheDocument()
+    })
+    
+    await userEvent.click(screen.getByText(/retry/i))
+    
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
+  })
+})
+```
+
+## Common Bug Categories
+
+### Null/Undefined Errors
+
+```typescript
+// ❌ Bug: Doesn't check for null
+function formatGuestName(guest) {
+  return guest.firstName + ' ' + guest.lastName
+}
+
+// ✅ Fix: Add null checks
+function formatGuestName(guest: Guest | null) {
+  if (!guest) return 'Unknown Guest'
+  return `${guest.firstName || ''} ${guest.lastName || ''}`.trim() || 'Unknown Guest'
+}
+
+// ✅ Test
+it('should handle null guest', () => {
+  expect(formatGuestName(null)).toBe('Unknown Guest')
+})
+```
+
+### Race Conditions
+
+```typescript
+// ❌ Bug: Race condition
+function useEpisode(id: string) {
+  const [episode, setEpisode] = useState(null)
+  
+  useEffect(() => {
+    fetchEpisode(id).then(setEpisode)
+  }, [id])
+  
+  return episode
+}
+
+// ✅ Fix: Cleanup and cancellation
+function useEpisode(id: string) {
+  const [episode, setEpisode] = useState(null)
+  
+  useEffect(() => {
+    let cancelled = false
+    
+    fetchEpisode(id).then(data => {
+      if (!cancelled) setEpisode(data)
+    })
+    
+    return () => { cancelled = true }
+  }, [id])
+  
+  return episode
+}
+```
+
+### Validation Errors
+
+```typescript
+// ❌ Bug: No validation
+function createEpisode(data) {
+  return sanity.create({ _type: 'episode', ...data })
+}
+
+// ✅ Fix: Validate input
+function createEpisode(data: Partial<Episode>) {
+  if (!data.episodeNumber) {
+    throw new Error('Episode number is required')
+  }
+  if (data.episodeNumber < 1) {
+    throw new Error('Episode number must be positive')
+  }
+  
+  return sanity.create({ _type: 'episode', ...data })
+}
+
+// ✅ Test
+it('should reject invalid episode number', () => {
+  expect(() => createEpisode({ episodeNumber: 0 }))
+    .toThrow('Episode number must be positive')
+})
+```
+
+## Checklist
+
+Before submitting a bug fix PR:
+
+- [ ] Bug is reproducible locally
+- [ ] Test written that captures the bug
+- [ ] Test fails before fix
+- [ ] Fix implemented
+- [ ] Test passes after fix
+- [ ] All existing tests still pass
+- [ ] Type checking passes
+- [ ] Code linted
+- [ ] Commit message follows format
+- [ ] PR description explains bug and fix
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Contributing Guidelines" icon="code-pull-request" href="/development/contributing/guidelines">
+    General contribution guidelines
+  </Card>
+  <Card title="Testing Strategy" icon="flask" href="/development/testing">
+    Learn about testing approach
+  </Card>
+  <Card title="CI/CD Pipeline" icon="rocket" href="/development/deployment/ci-cd">
+    Understand automated testing
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    Review system architecture
+  </Card>
+</CardGroup>

@@ -1,0 +1,427 @@
+---
+title: LinkedIn Profile Integration
+description: Scrape LinkedIn profiles via RapidAPI to auto-populate guest data and generate career timeline graphics
+---
+
+YBH Pulse Content integrates with LinkedIn via RapidAPI to automatically fetch guest professional information and career history. This data populates guest profiles and generates premium career timeline infographics for brand kits.
+
+## Overview
+
+LinkedIn integration provides:
+- **Auto-population:** Fetch name, headline, summary, and career positions
+- **Career timelines:** Generate isometric 3D timeline graphics via Kie.ai
+- **Caching:** Store scraped data in Sanity to avoid repeated API calls
+- **Manual refresh:** Re-scrape when profile data is outdated
+
+## How It Works
+
+<Steps>
+  <Step title="Guest provides LinkedIn URL">
+    Team member adds LinkedIn profile URL to guest record
+  </Step>
+  
+  <Step title="System scrapes profile">
+    API call to RapidAPI LinkedIn scraper via proxy endpoint
+  </Step>
+  
+  <Step title="Data stored in Sanity">
+    Profile data saved to guest record with timestamp
+  </Step>
+  
+  <Step title="Career timeline generated">
+    Kie.ai generates isometric 3D graphic from career data
+  </Step>
+  
+  <Step title="Assets added to brand kit">
+    Timeline image included in guest's shareable brand kit
+  </Step>
+</Steps>
+
+## Scraped Data
+
+### Profile Fields
+
+```typescript
+interface LinkedInProfile {
+  name: string
+  headline: string           // Current position/title
+  summary: string            // About section
+  positions: CareerPosition[]
+  scrapedAt: string         // ISO timestamp
+  linkedinUrl: string       // Normalized URL
+}
+```
+
+### Career Positions
+
+```typescript
+interface CareerPosition {
+  _key: string              // Unique identifier
+  title: string             // Job title
+  company: string           // Company name
+  startDate: string         // YYYY-MM format
+  endDate?: string          // YYYY-MM or undefined (current)
+  description?: string      // Role description
+}
+```
+
+**Position Ordering:** Most recent first (reverse chronological)
+
+## RapidAPI Integration
+
+### API Endpoint
+
+All LinkedIn requests go through server-side proxy:
+
+```
+POST /api/linkedin/profile
+```
+
+**Request Body:**
+```json
+{
+  "linkedinUrl": "https://www.linkedin.com/in/username/"
+}
+```
+
+**Response:**
+```json
+{
+  "profile": {
+    "name": "John Doe",
+    "headline": "CTO at Example Corp",
+    "summary": "...",
+    "careerHistory": [
+      {
+        "title": "CTO",
+        "company": "Example Corp",
+        "startDate": "2020-01",
+        "endDate": null,
+        "description": "..."
+      }
+    ]
+  }
+}
+```
+
+<Note>
+The RapidAPI key is stored server-side as an environment variable and never exposed to the client.
+</Note>
+
+### Error Handling
+
+**Common Errors:**
+- `404` - Profile not found or private
+- `429` - Rate limit exceeded
+- `500` - RapidAPI service error
+
+**Client Behavior:**
+- Display error message to user
+- Option to retry or manually enter data
+- Fall back to cached data if available
+
+## Caching Strategy
+
+### Cache Layers
+
+**1. In-Memory Cache (Session-Scoped)**
+- Fastest retrieval (no network call)
+- Cleared on page refresh
+- Key: Normalized LinkedIn URL
+
+**2. Sanity Cache (Persistent)**
+- Stored in guest document
+- Includes `scrapedAt` timestamp
+- Persists across sessions
+
+### Cache Freshness
+
+**Fresh:** Data less than 24 hours old
+
+**Stale:** Data older than 24 hours
+
+**Strategy:**
+1. Check in-memory cache (instant)
+2. Check Sanity cache if fresh (less than 24h)
+3. Scrape from LinkedIn if stale or missing
+
+### Manual Refresh
+
+Force re-scrape with `forceRefresh` option:
+
+```typescript
+const profile = await scrapeLinkedInProfile(linkedinUrl, {
+  forceRefresh: true  // Skip all caches
+})
+```
+
+**Use Cases:**
+- Guest updates their LinkedIn profile
+- Scraped data appears incorrect
+- Periodic refresh for accuracy
+
+## URL Normalization
+
+All LinkedIn URLs are normalized for consistent caching:
+
+**Input Examples:**
+```
+https://linkedin.com/in/username
+https://www.linkedin.com/in/username/
+http://LinkedIn.COM/in/UserName
+```
+
+**Normalized Output:**
+```
+https://www.linkedin.com/in/username/
+```
+
+**Rules:**
+- Always HTTPS with `www.`
+- Lowercase username
+- Trailing slash
+- Extract username from full URLs
+
+## Career Timeline Generation
+
+Timeline graphics are generated via Kie.ai's Nano Banana Pro model.
+
+### Prompt Template
+
+```
+Create a professional isometric 3D career timeline infographic 
+for "{guestName}" for the You've Been Heard podcast.
+
+Visual Style:
+- Isometric 3D editorial scene with clean geometry
+- Blue-Dark background (#0F2A44) or light (#F5F5F5)
+- YBH brand accents: Yellow #F7B500, Orange #F17529, Red #EF4136
+- Clean, modern, executive aesthetic
+
+Layout:
+- Horizontal timeline (left to right)
+- Each position as isometric stage/platform
+- Year ranges, roles, companies
+- Isometric icon elements (no logos)
+- Name and title at top
+
+Career Positions ({count} total):
+1. {title} at {company} ({startDate}-{endDate})
+2. ...
+
+Include:
+- Year labels
+- Optional skills panel (3-6 skills)
+- No company logos, no watermarks
+- Faceless avatars only (if people shown)
+
+Style: Professional, premium, IT leadership audience
+```
+
+**Aspect Ratio:** 16:9
+
+**Resolution:** 2K
+
+**Output Format:** PNG
+
+<Info>
+Timeline generation is triggered manually from the guest profile or automatically during brand kit creation.
+</Info>
+
+### Generated Image Storage
+
+**Sanity Field:** `careerTimeline.imageUrl`
+
+**URL Format:** Kie.ai CDN URL (permanent)
+
+**Brand Kit Integration:** Automatically included in visual assets section
+
+## UI Workflows
+
+### Adding LinkedIn to Guest
+
+**From Guest Profile:**
+1. Click "Edit" button
+2. Enter LinkedIn URL in field
+3. Save changes
+4. System validates URL format
+5. Option to scrape immediately or save URL only
+
+### Viewing Scraped Data
+
+**Guest Profile Display:**
+- Position/company (from headline)
+- LinkedIn icon with external link
+- "Scraped X hours ago" timestamp
+- "Refresh" button to re-scrape
+
+### Generating Timeline
+
+**Trigger Options:**
+1. **Manual:** Click "Generate Career Timeline" in guest profile
+2. **Automatic:** Triggered when creating brand kit if timeline missing
+
+**Generation Process:**
+1. Scrape LinkedIn (if needed)
+2. Generate prompt from career data
+3. Submit to Kie.ai API
+4. Poll for completion (or use callback)
+5. Store image URL in Sanity
+6. Display in brand kit
+
+## Data Validation
+
+### Required Fields
+
+**Minimum for Timeline:**
+- Guest name
+- At least 2 career positions
+- Position title and company
+- Start dates
+
+**Optional but Recommended:**
+- Headline (for context)
+- Summary (for bio)
+- Position descriptions
+- End dates (to show progression)
+
+### Quality Checks
+
+**Before Scraping:**
+- Validate URL format
+- Confirm profile is public
+- Check rate limit availability
+
+**After Scraping:**
+- Verify non-empty name
+- At least 1 position returned
+- Dates in valid format
+
+## API Reference
+
+### Service Functions
+
+**`scrapeLinkedInProfile(url, options?)`**
+
+Scrape profile with caching.
+
+**Parameters:**
+- `url: string` - LinkedIn profile URL
+- `options.cachedProfile?: GuestProfile` - Sanity cached data
+- `options.forceRefresh?: boolean` - Skip cache
+
+**Returns:** `Promise<LinkedInProfile>`
+
+---
+
+**`normalizeLinkedInUrl(url)`**
+
+Normalize URL for consistent caching.
+
+**Parameters:**
+- `url: string` - Raw LinkedIn URL
+
+**Returns:** `string` - Normalized URL
+
+---
+
+**`isValidLinkedInUrl(url)`**
+
+Validate URL format.
+
+**Parameters:**
+- `url: string` - URL to check
+
+**Returns:** `boolean`
+
+---
+
+**`generateCareerTimelinePrompt(profile)`**
+
+Generate Kie.ai prompt from profile data.
+
+**Parameters:**
+- `profile: LinkedInProfile`
+
+**Returns:** `string` - Formatted prompt
+
+---
+
+**`clearProfileCache(url?)`**
+
+Clear in-memory cache.
+
+**Parameters:**
+- `url?: string` - Specific URL or all if omitted
+
+**Returns:** `void`
+
+## Rate Limits
+
+**RapidAPI Plan:** Depends on subscription tier
+
+**Typical Limits:**
+- 100 requests/day (free tier)
+- 1000 requests/day (basic)
+- 10000 requests/month (pro)
+
+**Rate Limit Strategy:**
+- Cache aggressively (24h freshness)
+- Batch scraping for multiple guests
+- Use Sanity as fallback
+- Display clear error messages when limit reached
+
+<Note>
+If rate limit is exceeded, system falls back to cached data or allows manual data entry.
+</Note>
+
+## Privacy and Compliance
+
+**Public Data Only:** Scraper only accesses public LinkedIn profile data
+
+**User Consent:** Guests implicitly consent by providing their public profile URL
+
+**Data Retention:** Profile data stored indefinitely in Sanity for operational use
+
+**Right to Deletion:** Guests can request removal of their data
+
+## Troubleshooting
+
+### Profile Not Found
+
+**Causes:**
+- Private profile
+- Invalid URL
+- Profile deleted or suspended
+
+**Solution:** Manually enter guest data or request public profile URL
+
+### Incomplete Data
+
+**Causes:**
+- Guest has minimal LinkedIn profile
+- Career positions missing dates
+- No headline or summary
+
+**Solution:** Augment with manual entry or skip timeline generation
+
+### Timeline Generation Fails
+
+**Causes:**
+- Insufficient career data (< 2 positions)
+- Kie.ai API error
+- Invalid prompt formatting
+
+**Solution:** Review error logs, retry with adjusted prompt, or use manual graphic
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Guest Management" icon="users" href="/features/guests/overview">
+    Manage guest profiles and contact info
+  </Card>
+  
+  <Card title="Brand Kit Sharing" icon="gift" href="/features/guests/brand-kits">
+    Share career timelines in guest brand kits
+  </Card>
+</CardGroup>

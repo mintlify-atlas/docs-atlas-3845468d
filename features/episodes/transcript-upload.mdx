@@ -1,0 +1,227 @@
+---
+title: Transcript upload
+description: Upload and format podcast transcripts to start the YBH Pulse Content generation pipeline
+---
+
+The transcript is the foundation of all content generation in YBH Pulse Content. Upload a transcript to unlock PRF generation, viral hooks, social posts, and visual suggestions.
+
+## Upload methods
+
+You can upload transcripts in two ways:
+
+### Drag and drop file
+
+The fastest method for .txt transcript files:
+
+<Steps>
+  <Step title="Prepare your transcript">
+    Export from Adobe Podcast, Descript, or any transcription tool as a `.txt` file.
+  </Step>
+  
+  <Step title="Drag file to upload zone">
+    Open the episode detail page. If no transcript exists, you'll see an upload banner. Drag your `.txt` file into the highlighted zone.
+  </Step>
+  
+  <Step title="Automatic formatting">
+    The system auto-formats the transcript for readability:
+    - Standardizes speaker labels
+    - Cleans up whitespace
+    - Preserves timestamps if present
+  </Step>
+</Steps>
+
+**File reference**: `src/components/ui/TranscriptUploadBanner.tsx:44-49`
+
+### Paste text directly
+
+Ideal when copying from web tools or editing existing transcripts:
+
+<Steps>
+  <Step title="Click 'Paste Text'">
+    Instead of dragging a file, click the "Paste Text" button in the upload banner.
+  </Step>
+  
+  <Step title="Paste transcript content">
+    A text area appears. Paste your transcript content (supports up to 5MB).
+  </Step>
+  
+  <Step title="Review character count">
+    The interface shows character count and estimated reading time.
+  </Step>
+  
+  <Step title="Click 'Upload Transcript'">
+    The system formats and saves the transcript, then triggers automatic PRF generation.
+  </Step>
+</Steps>
+
+**File reference**: `src/components/ui/TranscriptUploadBanner.tsx:51-58, 75-116`
+
+<Warning>
+Transcript files are limited to 5MB. For longer episodes (3+ hours), consider splitting the transcript or using paste mode to bypass file size limits.
+</Warning>
+
+## Transcript format requirements
+
+### Supported formats
+
+- **Plain text (.txt)** - Recommended
+- **Speaker labels** - Format: `Speaker Name:` or `[Speaker Name]`
+- **Timestamps** - Format: `[00:12:34]` or `(00:12:34)`
+
+### Example transcript structure
+
+```text
+Doug: Welcome to You've Been Heard. Today we're talking with Mark Baker about IT governance.
+
+Mark Baker: Thanks for having me. IT governance is one of those topics that sounds boring but is absolutely critical.
+
+Doug: [00:02:15] Let's start with the biggest misconception you see.
+
+Mark Baker: The idea that governance means "more bureaucracy." It's actually about enabling teams to move faster with confidence.
+```
+
+### Auto-formatting features
+
+The transcript formatter (`src/lib/transcriptFormatter.ts`) automatically:
+
+1. **Normalizes speaker labels** - Converts `[Name]`, `Name -`, `Name|` to `Name:`
+2. **Cleans whitespace** - Removes extra blank lines and trailing spaces
+3. **Preserves structure** - Keeps paragraph breaks and timestamps intact
+4. **Detects timestamps** - Recognizes multiple timestamp formats
+
+**File reference**: `src/components/ui/TranscriptUploadBanner.tsx:39-41, 53-55`
+
+<Tip>
+If your transcript export includes chapter markers or section headers, keep them. The PRF agent uses these to identify key segments.
+</Tip>
+
+## Editing transcripts
+
+After upload, transcripts are editable in the Transcript tab:
+
+### Rich text editor features
+
+- **Bold, italic, headings** - Standard formatting
+- **Speaker styling** - Highlight speaker names for clarity
+- **Timestamps** - Add or edit timestamps inline
+- **Search and replace** - Fix repeated errors across the transcript
+- **Context menu** - Right-click text to create visuals (see [Visual Suggestions](/features/design/infographics))
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:470-483`
+
+### When to edit transcripts
+
+<AccordionGroup>
+  <Accordion title="Before PRF generation">
+    Edit the transcript **before** generating PRF if:
+    - Speaker names are incorrect or inconsistent
+    - Major transcription errors affect meaning
+    - You want to remove off-topic segments
+    
+    Editing after PRF generation is fine, but you'll need to regenerate the PRF to reflect changes.
+  </Accordion>
+  
+  <Accordion title="After PRF generation">
+    Minor edits (typos, formatting) can be done anytime. They won't affect existing PRF, Hooks, or Posts unless you regenerate those assets.
+  </Accordion>
+</AccordionGroup>
+
+## Transcript validation
+
+The system validates transcripts on upload:
+
+### Security checks
+
+- **File extension validation** - Must be `.txt`
+- **MIME type validation** - Checks for `text/plain`
+- **Size limit** - Maximum 5MB
+
+**File reference**: `src/components/ui/TranscriptUploadBanner.tsx:21-36`
+
+<Note>
+If you upload a file with an invalid extension or MIME type, it's silently rejected. Always use `.txt` files from trusted sources.
+</Note>
+
+### Content checks
+
+After upload, the AI performs these checks during PRF generation:
+
+- **Minimum length** - At least 500 words recommended
+- **Speaker detection** - Identifies if transcript has multiple speakers
+- **Language detection** - Confirms English language (primary support)
+
+## Transcript storage
+
+Transcripts are stored in Sanity.io:
+
+- **Field**: `transcript` (text field)
+- **Versioning**: Sanity history tracks all changes
+- **Privacy**: Only accessible to authenticated users with episode access
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:559-562`
+
+## What happens after upload?
+
+When a transcript is successfully uploaded:
+
+<Steps>
+  <Step title="Transcript saved">
+    The transcript is saved to the episode document in Sanity.
+  </Step>
+  
+  <Step title="Guest status updated">
+    If the episode is linked to a guest, their status changes to "Recorded".
+  </Step>
+  
+  <Step title="PRF generation triggered">
+    The system automatically starts generating the PRF (Podcast Repurposing Framework).
+  </Step>
+  
+  <Step title="Tabs unlock">
+    PRF, Hooks, Posts, Videos, and Assets tabs become available.
+  </Step>
+</Steps>
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:559-562, 478-482`
+
+<Tip>
+You'll see a success toast notification: "Transcript uploaded. Your transcript has been saved and is ready for processing."
+</Tip>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Upload button is disabled">
+    **Cause**: Transcript field is empty or contains only whitespace.
+    
+    **Solution**: Paste at least 100 characters of transcript content.
+  </Accordion>
+  
+  <Accordion title="File upload does nothing">
+    **Cause**: File is not `.txt` format or exceeds 5MB.
+    
+    **Solution**: 
+    - Convert to `.txt` using a text editor
+    - If file is too large, use paste mode instead
+  </Accordion>
+  
+  <Accordion title="Transcript looks messy after upload">
+    **Cause**: Auto-formatting couldn't detect speaker labels or structure.
+    
+    **Solution**: 
+    - Manually format speaker names as `Name:`
+    - Add blank lines between speaker turns
+    - Re-save to trigger auto-formatting
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="PRF generation" icon="sparkles" href="/features/episodes/prf-generation">
+    Generate strategic content analysis from your transcript
+  </Card>
+  <Card title="Episode overview" icon="folder-open" href="/features/episodes/overview">
+    Learn about the full episode workflow
+  </Card>
+</CardGroup>

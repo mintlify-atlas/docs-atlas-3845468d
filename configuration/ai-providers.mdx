@@ -1,0 +1,484 @@
+---
+title: AI providers
+description: Configure Google Gemini, Anthropic Claude, and OpenRouter for content generation
+---
+
+YBH Pulse Content uses multiple AI providers for different content generation tasks. Google Gemini is the primary provider, with Anthropic Claude as a fallback.
+
+## Supported providers
+
+### Google Gemini (primary)
+
+**Model:** `gemini-2.0-flash-exp`
+
+**Used for:**
+- PRF (Podcast Repurposing Framework) generation
+- Viral hooks extraction
+- Episode metadata generation
+- LinkedIn and Instagram post creation
+- Visual suggestions (infographics, quote cards)
+- Fact-checking and content validation
+- Spell checking
+
+**Capabilities:**
+- Agentic tool calling
+- Structured output (JSON mode)
+- Long context window (over 1M tokens)
+- Fast response times
+- Cost-effective for high-volume generation
+
+**Get your API key:** https://aistudio.google.com/apikey
+
+### Anthropic Claude (fallback)
+
+**Model:** `claude-3-5-sonnet-20241022`
+
+**Used for:**
+- All generation tasks when Google key is not available
+- Same capabilities as Google Gemini
+
+**Format:** `sk-ant-...`
+
+**Get your API key:** https://console.anthropic.com/
+
+### OpenRouter (embeddings)
+
+**Model:** `text-embedding-3-small` via OpenRouter
+
+**Used for:**
+- Vector embeddings for Pinecone RAG
+- Semantic search across brand guidelines
+- Infographic design database retrieval
+
+**Format:** `sk-or-...`
+
+**Get your API key:** https://openrouter.ai/keys
+
+## Configuration
+
+<Steps>
+  <Step title="Add API keys to .dev.vars">
+    ```bash
+    # Primary AI provider
+    GOOGLE_GENERATIVE_AI_API_KEY=your-google-api-key-here
+    
+    # Fallback AI provider
+    ANTHROPIC_API_KEY=sk-ant-your-key-here
+    
+    # Embeddings provider
+    OPENROUTER_API_KEY=sk-or-your-key-here
+    ```
+  </Step>
+  
+  <Step title="Set production secrets">
+    ```bash
+    wrangler secret put GOOGLE_GENERATIVE_AI_API_KEY
+    wrangler secret put ANTHROPIC_API_KEY
+    wrangler secret put OPENROUTER_API_KEY
+    ```
+  </Step>
+  
+  <Step title="Test connection">
+    Generate a PRF from any episode to verify AI providers are working.
+  </Step>
+</Steps>
+
+## AI generation endpoints
+
+### PRF generation
+
+**Endpoint:** `POST /api/ai/prf`
+
+**Input:**
+```json
+{
+  "transcript": "Episode transcript text...",
+  "model": "gemini-2.0-flash-exp",
+  "systemPrompt": "Generate a PRF document..."
+}
+```
+
+**Output:**
+```json
+{
+  "content": "PRF HTML content..."
+}
+```
+
+**Usage:**
+```typescript
+import { generatePRF } from '@/services/ai'
+
+const prf = await generatePRF(transcript)
+```
+
+### Viral hooks generation
+
+**Endpoint:** `POST /api/ai/hooks`
+
+**Requires:** Transcript for fact verification
+
+**Input:**
+```json
+{
+  "prf": "PRF content with transcript...",
+  "model": "gemini-2.0-flash-exp",
+  "systemPrompt": "Generate viral hooks..."
+}
+```
+
+**Output:**
+```json
+{
+  "content": "Hooks HTML content..."
+}
+```
+
+**Usage:**
+```typescript
+import { generateHooks } from '@/services/ai'
+
+const hooks = await generateHooks(
+  transcript,
+  prf,
+  episodeNumber,
+  guestName
+)
+```
+
+### Episode metadata (agentic)
+
+**Endpoint:** `POST /api/agent/metadata`
+
+**Uses:** Server-sent events (SSE) for progress updates
+
+**Input:**
+```json
+{
+  "episodeId": "episode-123",
+  "episodeNumber": "385",
+  "guestName": "Chris Pacifico",
+  "transcript": "Full transcript...",
+  "prf": "Optional PRF content..."
+}
+```
+
+**Output (streamed):**
+```typescript
+// Status event
+{
+  "type": "status",
+  "step": "Analyzing transcript",
+  "detail": "Extracting key themes...",
+  "progress": 30
+}
+
+// Result event
+{
+  "type": "result",
+  "content": {
+    "title": "Episode 385: Chris Pacifico on Tech Debt Management",
+    "shortDescription": "Chris shares...",
+    "longDescription": "On this episode...",
+    "keyTakeaways": ["Takeaway 1", "Takeaway 2", "Takeaway 3"],
+    "showNotes": [
+      { "timestamp": "00:00", "description": "Introduction" },
+      { "timestamp": "05:30", "description": "Tech debt discussion" }
+    ]
+  }
+}
+```
+
+**Usage:**
+```typescript
+import { generateEpisodeMetadata } from '@/services/ai'
+
+const metadata = await generateEpisodeMetadata(
+  episodeId,
+  episodeNumber,
+  guestName,
+  transcript,
+  prf,
+  (step, detail, progress) => {
+    console.log(`${progress}%: ${step} - ${detail}`)
+  }
+)
+```
+
+### Visual suggestions (parallel generation)
+
+**Endpoint:** `POST /api/agent/suggestions`
+
+**Uses:** Server-sent events (SSE) for progress updates
+
+**Generates:** 4 Data Viz + 4 Cinematic + 2 Quote Cards = 10 total
+
+**Input:**
+```json
+{
+  "episodeId": "episode-123",
+  "episodeNumber": "385",
+  "guestName": "Chris Pacifico",
+  "transcript": "Full transcript...",
+  "prf": "PRF content...",
+  "hooks": "Viral hooks...",
+  "history": ["previous-style-1", "previous-style-2"],
+  "datavizPrompt": "Custom prompt for data viz...",
+  "cinematicPrompt": "Custom prompt for cinematic...",
+  "quoteCardsPrompt": "Custom prompt for quote cards..."
+}
+```
+
+**Output:**
+```json
+{
+  "suggestions": [
+    {
+      "visualType": "dataviz",
+      "type": "infographic",
+      "sourceText": "Selected text from PRF...",
+      "sourceSection": "PRF Section 2",
+      "spec": {
+        "layout": "Card Grid",
+        "template": "Strategic Framework",
+        "title": "Tech Debt Management Framework",
+        "colorSystem": "Corporate Professional",
+        "iconStyle": "isometric",
+        "aspectRatio": "16:9",
+        "prompt": "Full Kie.ai prompt..."
+      }
+    }
+  ],
+  "counts": {
+    "dataviz": 4,
+    "cinematic": 4,
+    "quoteCard": 2
+  },
+  "errors": {
+    "dataviz": null,
+    "cinematic": null,
+    "quoteCard": null
+  }
+}
+```
+
+### Fact-checking
+
+**Endpoint:** `POST /api/agent/fact-check`
+
+**Purpose:** Verify generated content against transcript to prevent hallucinations
+
+**Input:**
+```json
+{
+  "transcript": "Full transcript...",
+  "prf": "PRF content...",
+  "guestName": "Chris Pacifico",
+  "coHostName": "Doug",
+  "items": [
+    {
+      "type": "quote",
+      "content": "Tech debt is like credit card debt",
+      "source": "Chris Pacifico"
+    },
+    {
+      "type": "statistic",
+      "content": "70% of IT budgets go to maintenance",
+      "source": "Chris Pacifico"
+    }
+  ]
+}
+```
+
+**Output:**
+```json
+{
+  "overallScore": 85,
+  "passedValidation": true,
+  "results": [
+    {
+      "item": { "type": "quote", "content": "..." },
+      "status": "verified",
+      "confidence": 95,
+      "transcriptEvidence": "Exact quote from transcript..."
+    }
+  ],
+  "summary": "2 items verified, 0 issues found",
+  "criticalIssues": []
+}
+```
+
+## Model selection
+
+The system automatically selects the best available model:
+
+```typescript
+function getModel() {
+  if (env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    return 'gemini-2.0-flash-exp'
+  }
+  if (env.ANTHROPIC_API_KEY) {
+    return 'claude-3-5-sonnet-20241022'
+  }
+  throw new Error('No AI provider configured')
+}
+```
+
+## Cost optimization
+
+### Token usage
+
+**Google Gemini pricing (as of 2024):**
+- Input: Low cost per 1M tokens
+- Output: Low cost per 1M tokens
+- Flash models optimized for speed and cost
+
+**Anthropic Claude pricing:**
+- Input: Higher cost per 1M tokens
+- Output: Higher cost per 1M tokens
+- Higher quality for complex reasoning
+
+### Reduce costs
+
+<Steps>
+  <Step title="Truncate long transcripts">
+    For visual suggestions, only send first 3000 characters of transcript:
+    ```typescript
+    const truncated = transcript.slice(0, 3000)
+    const context = truncated.length < transcript.length
+      ? `${truncated}\n[...truncated for context window...]`
+      : truncated
+    ```
+  </Step>
+  
+  <Step title="Cache RAG results">
+    Store Pinecone query results to avoid repeated embedding calls:
+    ```typescript
+    const cacheKey = `rag:${query}`
+    const cached = await cache.get(cacheKey)
+    if (cached) return cached
+    
+    const results = await queryKnowledgeBase(query)
+    await cache.set(cacheKey, results, 3600) // 1 hour
+    return results
+    ```
+  </Step>
+  
+  <Step title="Batch generations">
+    Generate multiple visual suggestions in parallel to amortize prompt costs:
+    ```typescript
+    // Generates 10 suggestions in 3 parallel calls
+    await generateVisualSuggestionsV2(...)
+    ```
+  </Step>
+  
+  <Step title="Use Google Gemini as primary">
+    Google Gemini Flash models are significantly cheaper than Claude for equivalent quality on most tasks.
+  </Step>
+</Steps>
+
+## Prompt management
+
+Prompts are stored in the Settings page and can be customized per agent:
+
+### Agent types
+
+- **PRF** - Podcast Repurposing Framework generation
+- **Hooks** - Viral hooks extraction
+- **LinkedIn** - LinkedIn post creation
+- **Instagram** - Instagram post creation
+- **Infographic** - Infographic spec generation
+- **Thumbnail** - YouTube thumbnail spec generation
+- **Timeline** - Career timeline spec generation
+- **Suggestions** - Visual suggestions orchestration
+
+### Preset fields
+
+Prompts support variable interpolation:
+
+- `{{episodeNumber}}` - Episode number
+- `{{guestName}}` - Guest name
+- `{{recentStyles}}` - Recent visual styles for variety
+- `{{brandVoice}}` - YBH brand voice guidelines
+- `{{targetAudience}}` - IT leaders (CIOs, CTOs, IT Directors)
+
+### Edit prompts
+
+1. Navigate to **Settings** > **AI Configuration**
+2. Select agent type
+3. Edit system prompt
+4. Save changes
+5. Test with new episode
+
+<Warning>
+  Changes to prompts affect all future generations. Test thoroughly before deploying to production.
+</Warning>
+
+## Error handling
+
+### Retry logic
+
+The system automatically retries failed generations:
+
+```typescript
+try {
+  const prf = await generatePRF(transcript)
+} catch (error) {
+  if (error.message.includes('rate limit')) {
+    // Wait and retry
+    await sleep(5000)
+    return generatePRF(transcript)
+  }
+  throw error
+}
+```
+
+### Fallback behavior
+
+1. Try Google Gemini (if key available)
+2. Fall back to Anthropic Claude (if key available)
+3. Return error if both fail
+
+### Common errors
+
+**Rate limit exceeded:**
+```
+Error: Rate limit exceeded. Please try again in 60 seconds.
+```
+
+**Solution:** Wait and retry, or upgrade API plan.
+
+**Invalid API key:**
+```
+Error: API key is invalid or expired.
+```
+
+**Solution:** Regenerate API key from provider dashboard.
+
+**Context too long:**
+```
+Error: Input exceeds maximum context length.
+```
+
+**Solution:** Truncate transcript or split into chunks.
+
+## Monitoring
+
+Track AI usage in application logs:
+
+```typescript
+import { logger } from '@/utils/logger'
+
+logger.debug('[AI] Generating PRF', { episodeId, model })
+const prf = await generatePRF(transcript)
+logger.info('[AI] PRF generated', { episodeId, length: prf.length })
+```
+
+## Best practices
+
+- **Always verify facts:** Use fact-checking endpoint before approving content
+- **Include transcript:** Pass transcript to all generation endpoints for accuracy
+- **Monitor token usage:** Track costs across Google, Anthropic, and OpenRouter
+- **Test prompts:** Validate prompt changes on multiple episodes before deployment
+- **Cache aggressively:** Store expensive generation results in Sanity
+- **Use streaming:** Implement SSE for long-running operations to show progress

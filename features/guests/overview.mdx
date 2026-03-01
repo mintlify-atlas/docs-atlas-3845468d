@@ -1,0 +1,267 @@
+---
+title: Guest Management
+description: Manage podcast guests with comprehensive profiles, status tracking, and brand kit sharing
+---
+
+YBH Pulse Content provides a centralized guest management system to track every podcast guest from booking through post-production. Each guest profile stores contact information, professional details, LinkedIn data, episode associations, and shareable brand kit links.
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Guest Directory" icon="users">
+    View all guests with sortable columns, multi-filter search, and status tracking across the production pipeline.
+  </Card>
+  
+  <Card title="Brand Kit Sharing" icon="share">
+    Generate secure share links to deliver personalized brand kits with episode assets, career timelines, and promotional content.
+  </Card>
+  
+  <Card title="LinkedIn Integration" icon="linkedin">
+    Scrape LinkedIn profiles to auto-populate guest details and generate professional career timeline infographics.
+  </Card>
+  
+  <Card title="Status Progression" icon="workflow">
+    Track guests through stages: Booked → Recorded → In Production → Complete
+  </Card>
+</CardGroup>
+
+## Guest Directory
+
+The main guest directory (`/guests`) displays all podcast guests in a sortable, filterable table:
+
+**Data Columns:**
+- Episode number (supports multi-episode guests)
+- Name with transcript indicator
+- Position, company, and LinkedIn link
+- Contact info (email, phone, address)
+- Production status with visual badges
+- Episode release date
+- Brand kit share link
+- Circle membership status
+- LinkedIn follower count
+
+**Sorting:** Click column headers to sort by episode number, name, status, circle membership, or LinkedIn followers (ascending/descending).
+
+**Filtering:**
+- Search by name, company, or position
+- Filter by production status
+- Filter by Circle membership
+
+**Bulk Actions:**
+- Select multiple guests for batch deletion
+- Clear all guests with double confirmation
+
+<Note>
+The table displays 25 guests per page with URL-based pagination (`?page=2`) for bookmarkable navigation.
+</Note>
+
+## Guest Profile
+
+Each guest has a detailed profile page (`/guests/:id`) with:
+
+### Contact Information Card
+
+```typescript
+// Stored fields
+{
+  email: string
+  emailAlt?: string  // Alternative email
+  mobile?: string
+  linkedinUrl?: string
+  address?: string
+}
+```
+
+All contact fields include:
+- Click-to-copy buttons
+- Direct action links (mailto:, tel:)
+- LinkedIn profile link with external icon
+
+### Status Progression
+
+Visual stepper showing the guest's journey:
+
+<Steps>
+  <Step title="Booked">
+    Guest confirmed, episode scheduled
+  </Step>
+  <Step title="Recorded">
+    Recording session complete
+  </Step>
+  <Step title="In Production">
+    Editing, asset generation in progress
+  </Step>
+  <Step title="Complete">
+    Episode published, all assets delivered
+  </Step>
+</Steps>
+
+Click any status bubble to update the guest's current stage.
+
+### Promotional Targeting
+
+**LinkedIn Followers:** Display follower count for targeting paid promotion strategies
+
+**Circle Membership:** Toggle to mark high-value guests for recurring engagement
+
+### Episode Associations
+
+Guests can appear on multiple episodes. The profile shows:
+- Number of linked episodes
+- Episode numbers and titles
+- Release dates
+- Link to episode detail pages
+
+<Info>
+If a guest was imported from CSV with an episode number but hasn't been linked to a Sanity episode yet, the profile shows the imported episode number with a "not yet linked" notice.
+</Info>
+
+## CSV Import
+
+Bulk import guests from spreadsheets:
+
+**Supported Fields:**
+- Name (required)
+- Episode number
+- Position, company
+- Email, phone
+- LinkedIn URL
+- Notes
+
+**Import Process:**
+1. Click "Import CSV" button
+2. Select CSV file
+3. Map columns to guest fields
+4. Review and confirm
+5. System creates guest records and reports results
+
+## Guest Actions
+
+### Create Guest
+
+Click "Add Guest" or navigate to `/guests/new`:
+
+- Enter basic info (name required)
+- Add contact details
+- Include LinkedIn URL
+- Save to create record
+
+### Edit Guest
+
+From the guest profile:
+- Click "Edit" button
+- Update any field in the modal editor
+- Changes save immediately to Sanity
+
+### Delete Guest
+
+Delete individual guests or use bulk actions:
+- Single delete requires confirmation
+- Bulk delete shows count and requires confirmation
+- "Clear All" requires double confirmation with explicit OK prompt
+
+### Create Episode
+
+From a guest profile, click "Create Episode" to:
+- Generate a new episode linked to this guest
+- Navigate to episode editor
+- Pre-populate guest details
+
+## Share Links
+
+Guests can have multiple brand kit share links (one per episode):
+
+```typescript
+interface GuestShareLink {
+  _key: string
+  episodeNumber: number
+  shareUrl: string  // Format: /share/{token}
+  createdAt: string
+}
+```
+
+**In Guest Directory:**
+- Shows most recent share link
+- Displays episode number (e.g., "EP348")
+- Click-to-copy button
+- "+X more" indicator for multi-episode guests
+
+**In Guest Profile:**
+- Lists all share links by episode
+- Full URL visible
+- Individual copy buttons
+
+See [Brand Kit Sharing](/features/guests/brand-kits) for details on what guests receive.
+
+## Status Badges
+
+Production status appears throughout the UI with color-coded badges:
+
+- **Booked:** Gray calendar icon
+- **Recorded:** Blue microphone icon  
+- **In Production:** Orange gear icon
+- **Complete:** Green checkmark icon
+
+Badges show:
+- Current status label
+- Associated episode number (if linked)
+- Hoverable tooltip with release date
+
+## Search and Filtering
+
+The guest directory supports advanced filtering:
+
+**Text Search:**
+Searches across:
+- Guest name
+- Company name
+- Position/title
+
+**Status Filter:**
+- All statuses (default)
+- Booked
+- Recorded
+- In Production
+- Complete
+
+**Circle Filter:**
+- All (default)
+- In Circle
+- Not In Circle
+
+<Info>
+Filters automatically reset pagination to page 1. Clear all filters with one click.
+</Info>
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Brand Kit Sharing" icon="gift" href="/features/guests/brand-kits">
+    Learn how to generate and share guest brand kits
+  </Card>
+  
+  <Card title="LinkedIn Integration" icon="linkedin" href="/features/guests/linkedin-integration">
+    Scrape profiles and generate career timelines
+  </Card>
+</CardGroup>
+
+## Technical Details
+
+**Data Source:** Sanity CMS (Episodes bucket)
+
+**Schema:** Guest documents with references to Episode documents
+
+**API Routes:**
+- `GET /api/sanity/guests` - List with filters, sorting, pagination
+- `GET /api/sanity/guests/:id` - Single guest detail
+- `POST /api/sanity/guests` - Create new guest
+- `PATCH /api/sanity/guests/:id` - Update guest
+- `DELETE /api/sanity/guests/:id` - Delete single guest
+- `DELETE /api/sanity/guests` - Clear all guests (requires confirmation)
+
+**Frontend Components:**
+- `GuestsPage.tsx` - Main directory with table
+- `GuestDetailPage.tsx` - Full profile view
+- `GuestSidePanel` - Quick-view panel
+- `CSVImportModal` - Bulk import interface
+- `StatusBadgePopover` - Interactive status badges

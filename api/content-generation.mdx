@@ -1,0 +1,448 @@
+---
+title: Content Generation
+description: AI-powered content generation endpoints for PRF, viral hooks, and social posts
+---
+
+# Content Generation
+
+Generate podcast content using AI (Anthropic Claude) with RAG-enhanced prompts from the Pinecone knowledge base.
+
+## Generate PRF
+
+Generate a PRF (Podcast Repurposing Framework) document from a transcript.
+
+```bash
+POST /api/ai/prf
+```
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://production.youvebeenheard.com/api/ai/prf \
+  -H "Content-Type: application/json" \
+  -H "Cookie: auth_token=<token>" \
+  -d '{
+    "transcript": "Full episode transcript...",
+    "systemPrompt": "Generate a PRF...",
+    "useRAG": true
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/ai/prf', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include',
+  body: JSON.stringify({
+    transcript: 'Full episode transcript...',
+    systemPrompt: 'Generate a PRF document...',
+    useRAG: true
+  })
+})
+
+const data = await response.json()
+console.log('PRF:', data.content)
+```
+</CodeGroup>
+
+### Request
+
+<ParamField body="transcript" type="string" required>
+  Full episode transcript (max 100,000 characters)
+</ParamField>
+
+<ParamField body="systemPrompt" type="string" required>
+  System prompt with generation instructions
+</ParamField>
+
+<ParamField body="useRAG" type="boolean" default={true}>
+  Enable RAG context from Pinecone knowledge base (brand guidelines, writing style)
+</ParamField>
+
+<ParamField body="ragQuery" type="string">
+  Custom RAG query (defaults to first 500 chars of transcript)
+</ParamField>
+
+### Response
+
+```json
+{
+  "content": "# Podcast Repurposing Framework\n\n## Core Message\nChris Pacifico explains..."
+}
+```
+
+<ResponseField name="content" type="string">
+  Generated PRF document (Markdown format)
+</ResponseField>
+
+### RAG Context
+
+When `useRAG: true`, the system:
+
+1. Generates embedding for `ragQuery` (or transcript excerpt)
+2. Queries Pinecone for relevant context from:
+   - `brand-manual` - YBH brand guidelines
+   - `anti-ai-writing-guide` - Writing style rules
+   - `brand-narrative` - Brand voice examples
+3. Appends context to system prompt
+
+Example RAG context appended:
+
+```
+═══════════════════════════════════════════════════════════════════
+KNOWLEDGE BASE CONTEXT (Use for reference)
+═══════════════════════════════════════════════════════════════════
+
+[Brand Manual - Voice]
+We don't sell. We unsell. Anti-spin, Anti-transactional, Pro-IT leader.
+
+---
+
+[Anti Ai Writing Guide - Avoid]
+Don't use phrases like "In today's rapidly changing world" or "Let's dive in".
+```
+
+### Model Configuration
+
+Uses **Claude Sonnet 4** (`claude-sonnet-4-20250514`):
+
+- **Max tokens**: 8,192
+- **Temperature**: Not specified (defaults to 1.0)
+- **System prompt**: Enhanced with RAG context
+
+## Generate Viral Hooks
+
+Generate viral social media hooks from PRF.
+
+```bash
+POST /api/ai/hooks
+```
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://production.youvebeenheard.com/api/ai/hooks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prf": "PRF document...",
+    "systemPrompt": "Generate viral hooks...",
+    "useRAG": true
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/ai/hooks', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    prf: 'PRF document...',
+    systemPrompt: 'Generate 5 viral hooks...'
+  })
+})
+
+const data = await response.json()
+console.log('Hooks:', data.content)
+```
+</CodeGroup>
+
+### Request
+
+<ParamField body="prf" type="string" required>
+  PRF document (Markdown or text)
+</ParamField>
+
+<ParamField body="systemPrompt" type="string" required>
+  System prompt with hook generation instructions
+</ParamField>
+
+<ParamField body="useRAG" type="boolean" default={true}>
+  Enable brand voice context from Pinecone
+</ParamField>
+
+### Response
+
+```json
+{
+  "content": "<h2>Hook 1: The Hidden Cost</h2>\n<p>Most IT leaders...</p>"
+}
+```
+
+<ResponseField name="content" type="string">
+  Generated viral hooks (HTML format with TipTap-compatible structure)
+</ResponseField>
+
+<Note>
+  **Fact Verification**: Best practice is to include the original transcript in the PRF input to enable fact-checking:
+  
+  ```javascript
+  const prfInput = `SOURCE TRANSCRIPT (for fact verification):\n${transcript}\n\n═══...═══\nPRF ANALYSIS:\n${prf}`
+  ```
+</Note>
+
+## Generate Infographic Spec
+
+Generate infographic design specifications with layout, colors, and content structure.
+
+```bash
+POST /api/ai/infographic
+```
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://production.youvebeenheard.com/api/ai/infographic \
+  -H "Content-Type: application/json" \
+  -d '{
+    "selectedText": "Text to visualize...",
+    "episodeContext": "Episode 385: Chris Pacifico...",
+    "history": ["Doom Loop", "Quadrant Matrix"],
+    "designType": "infographic",
+    "systemPrompt": "Design an infographic..."
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/ai/infographic', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    selectedText: 'The three pillars of IT leadership...',
+    episodeContext: `Episode: 385\nGuest: Chris Pacifico\n\nTranscript excerpt...`,
+    history: ['Doom Loop', 'Timeline'],
+    designType: 'infographic'
+  })
+})
+
+const data = await response.json()
+console.log('Spec:', data.spec)
+```
+</CodeGroup>
+
+### Request
+
+<ParamField body="selectedText" type="string" required>
+  Text excerpt to visualize
+</ParamField>
+
+<ParamField body="episodeContext" type="string" required>
+  Episode metadata and context (episode number, guest, transcript excerpt)
+</ParamField>
+
+<ParamField body="history" type="string[]" required>
+  Previously used infographic types (for variety)
+</ParamField>
+
+<ParamField body="designType" type="string" default="infographic">
+  Design type: `infographic`, `quote`, or `thumbnail`
+</ParamField>
+
+<ParamField body="systemPrompt" type="string" required>
+  System prompt with design instructions
+</ParamField>
+
+<ParamField body="useRAG" type="boolean" default={true}>
+  Enable design database context from Pinecone
+</ParamField>
+
+### Response
+
+```json
+{
+  "spec": {
+    "layout": "Pyramid (Bottom-Up)",
+    "template": "Strategic Framework",
+    "title": "The Three Pillars of IT Leadership",
+    "colorSystem": "Corporate Professional",
+    "iconStyle": "isometric",
+    "aspectRatio": "16:9",
+    "contentBreakdown": {
+      "mainMessage": "IT leaders need three core skills",
+      "sections": ["Technical Expertise", "Business Acumen", "People Leadership"],
+      "dataPoints": ["70% of CIOs", "3-5 years average tenure"]
+    },
+    "prompt": "Create a professional isometric infographic..."
+  }
+}
+```
+
+<ResponseField name="spec" type="object">
+  Infographic design specification
+  
+  <Expandable title="spec object">
+    <ResponseField name="layout" type="string">
+      Layout structure (e.g., "Pyramid", "Quadrant Matrix", "Timeline")
+    </ResponseField>
+    
+    <ResponseField name="template" type="string">
+      Content template type (e.g., "Strategic Framework", "Doom Loop")
+    </ResponseField>
+    
+    <ResponseField name="title" type="string">
+      Infographic title (under 10 words)
+    </ResponseField>
+    
+    <ResponseField name="colorSystem" type="string">
+      Color palette (e.g., "Corporate Professional", "High Contrast")
+    </ResponseField>
+    
+    <ResponseField name="iconStyle" type="string">
+      Icon style: `isometric` or `flat2d`
+    </ResponseField>
+    
+    <ResponseField name="aspectRatio" type="string">
+      Aspect ratio: `16:9`, `1:1`, `9:16`, etc.
+    </ResponseField>
+    
+    <ResponseField name="contentBreakdown" type="object">
+      Content structure and data points
+    </ResponseField>
+    
+    <ResponseField name="prompt" type="string">
+      Complete Kie.ai generation prompt
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Design Database Context
+
+When `useRAG: true`, queries Pinecone for:
+
+- **Layout structures** (28 types): Circular, Linear, Comparison, Grid, etc.
+- **Content templates** (10 types): Doom Loop, Strategic Framework, Journey Map, etc.
+- **Visual style systems**: Icon styles, color palettes, typography rules
+
+Skips RAG for `designType: "quote"` (doesn't need layout templates).
+
+### Default Specs by Design Type
+
+<Tabs>
+  <Tab title="Infographic">
+    ```json
+    {
+      "layout": "Card Grid",
+      "template": "Strategic Framework",
+      "title": "Key Insight",
+      "colorSystem": "Corporate Professional",
+      "iconStyle": "isometric",
+      "aspectRatio": "16:9",
+      "prompt": "<selectedText>"
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Quote Card">
+    ```json
+    {
+      "layout": "hero_quote",
+      "template": "Quote Card",
+      "title": "Quote Card",
+      "colorSystem": "dark_cinematic",
+      "iconStyle": "flat2d",
+      "aspectRatio": "1:1",
+      "prompt": "<selectedText>"
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Thumbnail">
+    ```json
+    {
+      "layout": "thumbnail",
+      "template": "YouTube Thumbnail",
+      "title": "Thumbnail",
+      "colorSystem": "dark_cinematic",
+      "iconStyle": "flat2d",
+      "aspectRatio": "16:9",
+      "prompt": "<selectedText>"
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Error Responses
+
+All content generation endpoints return consistent error responses:
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| `400` | Transcript is required | Missing required input |
+| `400` | PRF is required | Missing required PRF input |
+| `400` | Selected text is required | Missing infographic input |
+| `500` | Anthropic API key not configured | Missing API key |
+| `500` | Anthropic API error | Upstream API error |
+| `500` | Failed to generate [content] | Generation error |
+
+## Rate Limiting & Costs
+
+<Warning>
+  **API Costs**: Content generation uses the Anthropic Claude API, which incurs costs per request:
+  
+  - **PRF generation**: ~$0.10-0.30 per episode (8K tokens)
+  - **Hooks generation**: ~$0.05-0.15 per set (4K tokens)
+  - **Infographic specs**: ~$0.03-0.08 per spec (2K tokens)
+  
+  Monitor usage via Anthropic dashboard.
+</Warning>
+
+<Note>
+  **No Built-in Rate Limiting**: Content generation endpoints do not enforce rate limits. Implement client-side rate limiting or request throttling as needed.
+</Note>
+
+## Best Practices
+
+### 1. Include Source Transcript
+
+For fact accuracy, always include the original transcript:
+
+```javascript
+// PRF with transcript for context
+const prfResponse = await fetch('/api/ai/prf', {
+  body: JSON.stringify({
+    transcript: fullTranscript,
+    systemPrompt: prfPrompt
+  })
+})
+
+// Hooks with transcript for fact-checking
+const hooksResponse = await fetch('/api/ai/hooks', {
+  body: JSON.stringify({
+    prf: `SOURCE TRANSCRIPT:\n${fullTranscript}\n\n═══...═══\nPRF:\n${prfContent}`,
+    systemPrompt: hooksPrompt
+  })
+})
+```
+
+### 2. Use RAG for Brand Consistency
+
+Keep `useRAG: true` (default) to inject brand guidelines:
+
+```javascript
+{
+  "useRAG": true,  // Fetches brand voice, writing rules, design patterns
+  "ragQuery": "viral hooks for IT leaders"  // Custom query for better context
+}
+```
+
+### 3. Track Generation History
+
+For infographics, pass previous designs to ensure variety:
+
+```javascript
+const history = episode.generatedAssets.map(a => a.spec.layout)
+
+const spec = await generateInfographic({
+  history: history,  // ["Doom Loop", "Timeline", "Pyramid"]
+  // ... other params
+})
+```
+
+### 4. Validate AI Output
+
+Always validate generated content before saving:
+
+```javascript
+if (!prfContent || prfContent.length < 500) {
+  throw new Error('PRF generation failed or too short')
+}
+
+if (!spec.prompt || spec.prompt.length < 100) {
+  throw new Error('Invalid infographic spec')
+}
+```

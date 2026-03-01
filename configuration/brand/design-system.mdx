@@ -1,0 +1,700 @@
+---
+title: Design system
+description: Infographic layouts, templates, and visual style system for YBH content
+---
+
+The YBH design system provides 28 layout structures and 10 content templates for creating professional infographics and visual content. The system is stored in Pinecone and retrieved via RAG for AI-powered design generation.
+
+## Layout structures
+
+The design database includes 28 proven layout structures organized into 6 categories:
+
+### Circular and cyclical (4 layouts)
+
+**Best for:** Processes, cycles, feedback loops, continuous improvement
+
+#### 1. Doom loop
+
+**Use case:** Vicious cycles, organizational traps, downward spirals
+
+**Structure:**
+- Central circular path with 4-6 connected stages
+- Clockwise flow with stress/urgency indicators
+- Each stage: isometric icon + bold label + 1-2 line description
+- Visual emphasis on the cyclical nature (no escape)
+
+**Example:** Tech debt accumulation cycle
+
+#### 2. Continuous process circle
+
+**Use case:** Ongoing workflows, iterative processes, DevOps cycles
+
+**Structure:**
+- Circular arrangement of 3-8 steps
+- Arrows showing continuous flow
+- Equal emphasis on all stages
+- Optional center element showing the goal or output
+
+**Example:** Agile sprint cycle
+
+#### 3. Concentric circles (target)
+
+**Use case:** Nested concepts, priority levels, layered systems
+
+**Structure:**
+- Multiple rings from center outward
+- Core concept in center
+- Expanding layers of detail or context
+- Labels on or beside each ring
+
+**Example:** Enterprise architecture layers
+
+#### 4. Hub and spoke
+
+**Use case:** Centralized systems, core concepts with multiple applications
+
+**Structure:**
+- Central hub element
+- 4-8 spokes radiating outward
+- End elements showing connected concepts
+- Bidirectional flow indicators
+
+**Example:** Central platform with integrated tools
+
+### Linear and sequential (5 layouts)
+
+**Best for:** Timelines, processes, step-by-step workflows
+
+#### 5. Horizontal stage journey
+
+**Use case:** Transformation stories, maturity models, roadmaps
+
+**Structure:**
+- Left-to-right progression
+- 3-6 major stages
+- Each stage: milestone marker + title + description
+- Optional substeps within stages
+- Progress line connecting stages
+
+**Example:** Digital transformation journey
+
+#### 6. Vertical timeline
+
+**Use case:** Historical progression, career paths, project milestones
+
+**Structure:**
+- Top-to-bottom or bottom-to-top flow
+- Dated milestones on timeline spine
+- Alternating left/right content blocks
+- Icons or images for each milestone
+
+**Example:** Guest career timeline
+
+#### 7. Stepped staircase
+
+**Use case:** Incremental progress, skill development, maturity levels
+
+**Structure:**
+- Ascending steps from left to right
+- Each step: level number + title + brief description
+- Visual height indicates progress
+- Optional metrics or indicators per step
+
+**Example:** DevOps maturity model
+
+#### 8. Snake/zigzag path
+
+**Use case:** Complex processes, detailed workflows, narrative stories
+
+**Structure:**
+- Winding path through multiple stages
+- Alternating directions to maximize space
+- 6-12 stages possible
+- Decision points and branches
+
+**Example:** Incident response workflow
+
+#### 9. Pipeline/funnel
+
+**Use case:** Filtering processes, lead qualification, data pipelines
+
+**Structure:**
+- Wide top narrowing to bottom
+- Each stage shows volume/quantity reduction
+- Labels inside or beside funnel sections
+- Metrics showing conversion rates
+
+**Example:** Sales pipeline stages
+
+### Comparison (5 layouts)
+
+**Best for:** Contrasts, evaluations, decision frameworks
+
+#### 10. Split screen (two-column)
+
+**Use case:** Before/after, old vs new, good vs bad practices
+
+**Structure:**
+- Vertical divider down center
+- Left and right sections with parallel content
+- Contrasting colors or visual styles
+- Optional header showing the comparison theme
+
+**Example:** Legacy systems vs modern architecture
+
+#### 11. Quadrant matrix (2x2)
+
+**Use case:** Prioritization, strategic planning, categorization
+
+**Structure:**
+- Four quadrants with labeled axes
+- Items plotted within quadrants
+- Axis labels indicating dimensions
+- Color coding by quadrant
+
+**Example:** Eisenhower priority matrix
+
+#### 12. Multi-column comparison
+
+**Use case:** Product comparisons, feature matrices, vendor evaluation
+
+**Structure:**
+- 3-5 columns representing options
+- Rows showing comparison criteria
+- Check marks, X's, or text in cells
+- Header row with option names
+
+**Example:** Cloud platform comparison
+
+#### 13. Spectrum/scale
+
+**Use case:** Ranges, gradients, positioning on a continuum
+
+**Structure:**
+- Horizontal or vertical scale
+- Labeled points along the spectrum
+- Items positioned on the scale
+- Color gradient showing the range
+
+**Example:** Risk tolerance spectrum
+
+#### 14. Layered/stacked comparison
+
+**Use case:** Overlapping concepts, feature sets, capability layers
+
+**Structure:**
+- Multiple horizontal layers
+- Each layer shows a different aspect
+- Alignment shows relationships
+- Semi-transparent or outlined layers
+
+**Example:** OSI network model
+
+### Hierarchical (4 layouts)
+
+**Best for:** Organization structures, dependencies, taxonomies
+
+#### 15. Pyramid (bottom-up)
+
+**Use case:** Foundations, building blocks, hierarchies
+
+**Structure:**
+- Wide base narrowing to apex
+- 3-6 horizontal levels
+- Each level labeled and described
+- Foundation concepts at bottom
+
+**Example:** Maslow's hierarchy applied to IT
+
+#### 16. Inverted pyramid (top-down)
+
+**Use case:** Decision trees, cascading impacts, top-down thinking
+
+**Structure:**
+- Narrow top expanding to wide base
+- Branching or expanding levels
+- Strategic decisions at top
+- Detailed execution at bottom
+
+**Example:** Strategic planning cascade
+
+#### 17. Tree/branching structure
+
+**Use case:** Taxonomies, decision trees, system dependencies
+
+**Structure:**
+- Root node at top or center
+- Branches extending outward
+- Multiple levels of nodes
+- Lines connecting related elements
+
+**Example:** Service dependency map
+
+#### 18. Pillars/columns
+
+**Use case:** Core principles, supporting elements, foundational concepts
+
+**Structure:**
+- 3-5 vertical pillars
+- Equal height and width
+- Each pillar: icon + title + description
+- Optional foundation bar at bottom
+
+**Example:** IT governance framework pillars
+
+### Grid (3 layouts)
+
+**Best for:** Multiple items, portfolios, feature sets
+
+#### 19. Card grid (uniform)
+
+**Use case:** Feature lists, tool portfolios, best practices
+
+**Structure:**
+- Even grid of 4, 6, or 9 cards
+- Each card: icon + title + short description
+- Consistent sizing and spacing
+- Optional numbering
+
+**Example:** 6 principles of cloud architecture
+
+#### 20. Dashboard panels
+
+**Use case:** Metrics, KPIs, system status
+
+**Structure:**
+- Mixed-size panels in grid layout
+- Larger panels for key metrics
+- Smaller panels for supporting data
+- Visual hierarchy through size
+
+**Example:** IT operations dashboard
+
+#### 21. Modular blocks
+
+**Use case:** System components, building blocks, flexibility
+
+**Structure:**
+- Irregular grid with varied block sizes
+- Blocks show relationships through proximity
+- Color coding by category
+- Connecting lines where needed
+
+**Example:** Microservices architecture
+
+### Network and relationship (3 layouts)
+
+**Best for:** Connections, dependencies, ecosystems
+
+#### 22. Node network
+
+**Use case:** System dependencies, team relationships, integration maps
+
+**Structure:**
+- Central or distributed nodes
+- Lines connecting related nodes
+- Node size indicates importance
+- Color coding by type or category
+
+**Example:** Application dependency graph
+
+#### 23. Workflow with decision points
+
+**Use case:** Conditional processes, troubleshooting, decision making
+
+**Structure:**
+- Flowchart-style layout
+- Diamond shapes for decisions
+- Rectangles for actions
+- Multiple paths based on conditions
+
+**Example:** Incident triage workflow
+
+#### 24. Sankey/flow diagram
+
+**Use case:** Resource allocation, data flow, budget distribution
+
+**Structure:**
+- Flows from source to destination
+- Width indicates volume or importance
+- Color coding by category
+- Labels showing quantities
+
+**Example:** IT budget allocation
+
+### Specialized (4 layouts)
+
+**Best for:** Unique use cases, specific visual metaphors
+
+#### 25. Center-converge model
+
+**Use case:** Integration, consolidation, convergence
+
+**Structure:**
+- Multiple external elements
+- Arrows pointing to center
+- Central element shows result
+- Balanced radial arrangement
+
+**Example:** Data consolidation into single source of truth
+
+#### 26. Exploded view
+
+**Use case:** System components, detailed breakdowns, architecture
+
+**Structure:**
+- Central system or concept
+- Components separated outward
+- Lines connecting to original position
+- Labels for each component
+
+**Example:** Server architecture layers
+
+#### 27. Cross-section
+
+**Use case:** Hidden complexity, layers beneath surface, inside view
+
+**Structure:**
+- Cutaway showing interior
+- Visible and hidden elements
+- Labels pointing to internal components
+- Clear boundary between outer and inner
+
+**Example:** Security layers in zero-trust architecture
+
+#### 28. Gauge/meter dashboard
+
+**Use case:** Performance metrics, health scores, system status
+
+**Structure:**
+- Multiple gauge/meter visualizations
+- Color-coded zones (red, yellow, green)
+- Current value indicators
+- Target or benchmark lines
+
+**Example:** System health dashboard
+
+## Content templates
+
+The design database includes 10 content templates optimized for IT leadership audiences:
+
+### Template A: Doom loop / problem cycle
+
+**Best for:** Vicious cycles, organizational traps, systemic issues
+
+**Structure:**
+- Circular layout (doom loop)
+- 4-6 stages in the cycle
+- Arrows showing progression
+- Visual indicators of escalation
+- Problem-focused color scheme (red, orange)
+
+**Example topics:**
+- Tech debt accumulation
+- Vendor lock-in spiral
+- Firefighting culture
+- Burnout cycle
+
+### Template B: Strategic framework
+
+**Best for:** Methodologies, governance models, conceptual models
+
+**Structure:**
+- Pillars, quadrant, or layered layout
+- 3-5 major components
+- Clear relationships between elements
+- Professional color scheme (navy, teal, orange)
+
+**Example topics:**
+- IT governance framework
+- Cloud migration strategy
+- Innovation model
+- Risk management approach
+
+### Template C: Journey map
+
+**Best for:** Transformation stories, career progressions, maturity models
+
+**Structure:**
+- Horizontal stage journey or stepped staircase
+- 3-6 major phases
+- Milestones and achievements
+- Progressive color scheme (red to green)
+
+**Example topics:**
+- Digital transformation roadmap
+- Career progression path
+- DevOps adoption journey
+- Organizational change
+
+### Template D: Reality check
+
+**Best for:** Vendor promises vs reality, myths vs facts, expectations vs outcomes
+
+**Structure:**
+- Split screen comparison
+- Left: promises/marketing/expectations
+- Right: reality/truth/actual outcomes
+- High contrast visual style
+
+**Example topics:**
+- Cloud migration promises vs reality
+- AI hype vs actual capabilities
+- Vendor claims vs customer experience
+- Job title vs actual responsibilities
+
+### Template E: Data story
+
+**Use case:** Research findings, statistics, survey results
+
+**Structure:**
+- Card grid or dashboard layout
+- Large numbers prominently displayed
+- Supporting context and labels
+- Data visualization color scheme
+
+**Example topics:**
+- Survey results summary
+- Industry statistics
+- Performance benchmarks
+- Adoption trends
+
+### Template F: Comparison matrix
+
+**Use case:** Tool selection, vendor evaluation, feature comparison
+
+**Structure:**
+- Multi-column comparison table
+- Rows for evaluation criteria
+- Visual indicators (check marks, ratings)
+- Neutral professional color scheme
+
+**Example topics:**
+- Cloud platform comparison
+- Monitoring tool evaluation
+- Security solution matrix
+- Database selection criteria
+
+### Template G: Workflow optimization
+
+**Use case:** Process improvement, automation, efficiency gains
+
+**Structure:**
+- Snake path or workflow with decision points
+- Before/after comparison
+- Bottleneck indicators
+- Efficiency gains highlighted
+
+**Example topics:**
+- Deployment pipeline optimization
+- Incident response workflow
+- Approval process improvement
+- Change management flow
+
+### Template H: Leadership playbook
+
+**Use case:** Best practices, communication strategies, management tips
+
+**Structure:**
+- Card grid or numbered list
+- 5-8 actionable principles
+- Icons representing each principle
+- Empowering color scheme
+
+**Example topics:**
+- Remote team management
+- Stakeholder communication
+- Conflict resolution strategies
+- One-on-one meeting framework
+
+### Template I: Communication sins
+
+**Use case:** Pitfalls, anti-patterns, what not to do
+
+**Structure:**
+- Card grid with warning indicators
+- Red/orange alert color scheme
+- X marks or prohibition symbols
+- Clear labels of mistakes to avoid
+
+**Example topics:**
+- Email communication mistakes
+- Meeting anti-patterns
+- Presentation pitfalls
+- Vendor negotiation errors
+
+### Template J: System architecture
+
+**Use case:** Tech stacks, infrastructure, component diagrams
+
+**Structure:**
+- Layered comparison or modular blocks
+- Technical color scheme (blue, gray, cyan)
+- Clear component boundaries
+- Connection lines showing data flow
+
+**Example topics:**
+- Cloud architecture patterns
+- Microservices topology
+- Security architecture
+- Data pipeline design
+
+## Visual style system
+
+### Icon styles
+
+**Primary (60%): Isometric icons**
+- 3D-like appearance
+- 60-degree angles
+- Depth and dimension
+- Best for: Physical objects, tangible concepts, systems
+
+**Secondary (40%): Flat 2D icons**
+- Simple, clean lines
+- Minimal detail
+- Abstract representation
+- Best for: Abstract concepts, ideas, processes
+
+### Color systems
+
+**System 1: Problem/Solution**
+- Problem: Red `#EF4136`, Orange `#F17529`
+- Solution: Green `#27AE60`, Blue `#3498DB`
+- Use: Split screen comparisons, before/after
+
+**System 2: Progression/Journey**
+- Start: Red `#EF4136`
+- Mid 1: Orange `#F17529`
+- Mid 2: Yellow `#F7B500`
+- End: Green `#27AE60`
+- Use: Timelines, maturity models, transformation journeys
+
+**System 3: Corporate Professional**
+- Primary: Navy `#0F3460`
+- Secondary: Teal `#16A085`
+- Accent: Orange `#F17529`
+- Use: Frameworks, governance, strategic content
+
+**System 4: High Contrast**
+- Background: Black `#000000`
+- Primary: Cyan `#00D9FF`
+- Secondary: Magenta `#FF006E`
+- Tertiary: Yellow `#FFD60A`
+- Use: Data visualization, technical content
+
+**System 5: Monochromatic**
+- Single hue (blue, orange, or purple)
+- 5-7 shades from light to dark
+- YBH yellow accent
+- Use: Minimalist content, quote cards, professional tone
+
+### Spacing and typography
+
+**8-point grid system:**
+- All spacing in multiples of 8px
+- Margins: 16px, 24px, 32px
+- Padding: 16px, 24px
+- Gaps: 8px, 16px, 24px
+
+**Typography levels:**
+- **Level 1 (Title):** 32-48pt, Bold, YBH brand colors
+- **Level 2 (Section):** 24-32pt, Semi-bold, White or dark
+- **Level 3 (Subsection):** 18-24pt, Medium, Primary color
+- **Level 4 (Body):** 14-16pt, Regular, White or dark
+- **Level 5 (Labels):** 10-12pt, Regular/Light, Secondary color
+
+## Quality standards
+
+### Infographic checklist
+
+- [ ] Title under 10 words
+- [ ] Main message clear within 5 seconds
+- [ ] Professional tone for IT leaders
+- [ ] YBH branding present (colors, episode number)
+- [ ] Guest credentials included
+- [ ] Generous whitespace (not cluttered)
+- [ ] Clear visual hierarchy
+- [ ] Consistent typography scale
+- [ ] Appropriate color system
+- [ ] No company logos
+- [ ] No watermarks
+- [ ] No facial features (if people shown)
+
+### Technical specifications
+
+**Aspect ratios:**
+- Instagram: 1:1 (square)
+- LinkedIn: 16:9 or 1:1
+- Stories: 9:16 (vertical)
+- Thumbnails: 16:9 (widescreen)
+- Timelines: 16:9 (horizontal)
+
+**Resolution:**
+- Social media: 2K (2048 × 1152 for 16:9)
+- Print: 4K (3840 × 2160 for 16:9)
+- Presentations: 2K or 4K
+
+**File format:**
+- PNG: Lossless, transparency support (preferred)
+- JPG: Compressed, smaller file size
+
+## Usage in Pulse Content
+
+### Semantic retrieval
+
+The design system is embedded in Pinecone and retrieved via semantic search:
+
+```typescript
+import { queryInfographicDesign } from '@/services/pinecone'
+
+const results = await queryInfographicDesign(
+  'Show me layouts for circular processes and cycles'
+)
+
+// Returns: Doom Loop, Continuous Process Circle, Hub & Spoke
+```
+
+### AI spec generation
+
+The AI uses retrieved layouts and templates to generate full infographic specs:
+
+```typescript
+const spec = await generateInfographicSpec(
+  selectedText,
+  transcript,
+  prf,
+  episodeNumber,
+  guestName,
+  history,
+  'infographic'
+)
+
+// Returns:
+{
+  layout: 'Doom Loop',
+  template: 'Problem Cycle',
+  title: 'Tech Debt Accumulation Spiral',
+  colorSystem: 'Problem/Solution',
+  iconStyle: 'isometric',
+  aspectRatio: '16:9',
+  prompt: 'Full Kie.ai prompt...'
+}
+```
+
+### Variety tracking
+
+History tracking ensures visual diversity:
+
+```typescript
+const history = [
+  'Doom Loop - Problem/Solution colors',
+  'Card Grid - Corporate Professional colors',
+  'Horizontal Journey - Progression colors',
+]
+
+// AI avoids recently used layouts and color systems
+```
+
+<Note>
+  The design system is continuously refined based on generation results. New layouts and templates are added quarterly.
+</Note>

@@ -1,0 +1,507 @@
+---
+title: Post Scheduling and Publishing
+description: Create, edit, schedule, and publish social media posts across multiple platforms
+---
+
+YBH Pulse Content integrates with Late.com to schedule and publish social media posts to LinkedIn, Instagram, Twitter, TikTok, and YouTube. Manage post content, media attachments, scheduling, and track publication status from a unified interface.
+
+## Overview
+
+Post scheduling workflow:
+
+<Steps>
+  <Step title="Create post">
+    Write content, add media, select platforms and accounts
+  </Step>
+  
+  <Step title="Set schedule">
+    Choose publish time or add to queue
+  </Step>
+  
+  <Step title="Review and approve">
+    Internal approval workflow before publication
+  </Step>
+  
+  <Step title="Publish">
+    Late.com publishes to all selected platforms
+  </Step>
+  
+  <Step title="Track status">
+    Monitor publication and engagement
+  </Step>
+</Steps>
+
+**Platform:** Late.com (social media management SaaS)
+
+**Connected Platforms:** LinkedIn, Instagram, Twitter, TikTok, YouTube
+
+## Post Creation
+
+### Content Editor
+
+**Main Input:** Textarea with character counter
+
+**Character Limits (Platform-Specific):**
+- LinkedIn: 3,000 characters
+- Instagram: 2,200 characters (caption)
+- Twitter: 280 characters (or 4,000 for Blue)
+- TikTok: 2,200 characters
+- YouTube: 5,000 characters (description)
+
+**Formatting Support:**
+- Plain text (all platforms)
+- Line breaks (preserved on most)
+- Emojis (full Unicode support)
+- Hashtags (auto-linked)
+- @mentions (platform-dependent)
+
+<Note>
+Late.com automatically adjusts formatting for each platform's requirements (e.g., truncates text if over limit).
+</Note>
+
+### Media Attachments
+
+**Supported Types:**
+- Images (PNG, JPG, GIF)
+- Videos (MP4, MOV)
+- Documents (PDF - LinkedIn only)
+
+**Upload Methods:**
+- File picker
+- Drag and drop
+- URL input (hotlink)
+- Media library (from Sanity or Late.com)
+
+**Per-Platform Limits:**
+- LinkedIn: Up to 9 images or 1 video
+- Instagram: Up to 10 images/videos (carousel) or 1 video (Reel)
+- Twitter: Up to 4 images or 1 video
+- TikTok: 1 video only
+- YouTube: 1 video (as upload) or thumbnail image
+
+**Image Editor (Future):**
+- Crop, resize, filters
+- Text overlays
+- Brand watermarking
+
+### Platform Selection
+
+**Multi-Platform Posting:**
+Select which platforms to publish to:
+
+- Checkboxes for each connected platform
+- Account dropdown per platform (if multiple accounts)
+- Preview of how post will appear per platform
+- Warning if content exceeds platform limits
+
+**Account Management:**
+Connect social accounts via Late.com OAuth:
+
+1. Navigate to Settings → Connected Accounts
+2. Click "Connect {Platform}"
+3. Authorize via OAuth flow
+4. Account appears in post composer
+
+<Info>
+You can post to multiple accounts on the same platform simultaneously (e.g., personal + company LinkedIn).
+</Info>
+
+### Tags and Hashtags
+
+**Tags (Internal):**
+- Free-form text tags for organization
+- Example: `episode:123`, `guest:john-doe`, `promo`
+- Used for filtering and grouping in calendar
+- Not visible to audience
+
+**Hashtags (Public):**
+- Included in post content
+- Auto-completion suggestions
+- Platform-specific best practices shown
+
+## Scheduling Options
+
+### Publish Now
+
+**Immediate Publication:**
+- Sends to platforms within seconds
+- No scheduling required
+- Use for time-sensitive content
+
+**Process:**
+1. Write post
+2. Select platforms
+3. Click "Publish Now"
+4. Confirm
+5. Late.com submits to APIs immediately
+
+### Schedule for Later
+
+**Date/Time Picker:**
+- Calendar popup
+- Time selection (15-minute increments)
+- Timezone selector
+
+**Timezone Handling:**
+- Defaults to user's browser timezone
+- Can override per-post
+- Display timezone in calendar view
+
+**Validation:**
+- Must be future date/time
+- Warning if scheduling more than 6 months out
+- Check for conflicts with other posts
+
+### Add to Queue
+
+**Queue-Based Posting:**
+Late.com profiles can have posting schedules (e.g., "Mon/Wed/Fri at 9am").
+
+**Process:**
+1. Select "Add to Queue"
+2. Choose profile (with schedule)
+3. Post automatically schedules to next available slot
+4. View/edit in queue manager
+
+<Note>
+Queue schedules are configured in Late.com dashboard, not in Pulse Content.
+</Note>
+
+### Save as Draft
+
+**Draft Mode:**
+- Save without scheduling
+- Editable anytime
+- Not visible to audience
+- No publication date
+
+**Use Cases:**
+- Work in progress
+- Needs approval before scheduling
+- Template for future posts
+
+## Post Detail Page
+
+**Route:** `/social/post/:id`
+
+Full post management interface:
+
+### Viewing Mode
+
+**Display:**
+- Post content with formatting
+- Media attachments (gallery)
+- Platform badges
+- Scheduled date/time
+- Late status (scheduled, published, failed)
+- Approval status (from Sanity)
+- Tags and hashtags
+- Created/updated timestamps
+
+**Actions:**
+- Edit (switches to editing mode)
+- Delete (with confirmation)
+- Duplicate (create copy)
+- Retry (if failed)
+- View Analytics (if published)
+
+### Editing Mode
+
+**Editable Fields:**
+- Content text
+- Media attachments (add/remove/reorder)
+- Scheduled date/time
+- Tags
+
+**Restrictions:**
+- Cannot change platforms after creation
+- Cannot edit published posts (must delete and recreate)
+- Cannot change Late post ID
+
+**Save Actions:**
+- "Save Changes" - Update and stay on page
+- "Save & Back" - Update and return to calendar
+- "Cancel" - Discard changes
+
+### Approval Workflow
+
+**Status Progression:**
+
+<Steps>
+  <Step title="Draft">
+    Initial state, not submitted for review
+  </Step>
+  
+  <Step title="Pending Approval">
+    Submitted to team lead for review
+  </Step>
+  
+  <Step title="Changes Requested">
+    Requires edits before approval
+  </Step>
+  
+  <Step title="Approved">
+    Ready to publish (Late.com will post at scheduled time)
+  </Step>
+</Steps>
+
+**Approval Actions:**
+- "Submit for Approval" (Draft → Pending)
+- "Approve" (Pending → Approved)
+- "Request Changes" (Pending → Changes Requested)
+- "Reject" (Delete post)
+
+**Approval Metadata (Stored in Sanity):**
+```typescript
+{
+  latePostId: string
+  approvalStatus: 'draft' | 'pending_approval' | 'changes_requested' | 'approved'
+  approvedBy?: string
+  approvedAt?: string
+  autoApprove: boolean
+  notes?: string
+}
+```
+
+<Info>
+Approval workflow is internal to YBH and does not affect Late.com. Late.com will publish any scheduled post regardless of Sanity approval status.
+</Info>
+
+## Publication Status
+
+### Late.com Statuses
+
+**draft**
+- Saved in Late.com but not scheduled
+- Editable
+- Not queued for publication
+
+**scheduled**
+- Queued for future publication
+- Late.com will post at specified time
+- Still editable (updates sync to Late.com)
+
+**publishing**
+- Currently being submitted to platform APIs
+- Brief state (seconds to minutes)
+- Not editable
+
+**published**
+- Successfully posted to all platforms
+- Immutable (cannot edit)
+- View-only with analytics
+
+**failed**
+- Error during publication
+- Error message displayed
+- Retry option available
+
+**partial**
+- Posted to some platforms, failed on others
+- Shows which succeeded/failed
+- Retry failed platforms
+
+**cancelled**
+- Scheduled post cancelled before publication
+- Kept in history
+- Can be rescheduled
+
+### Status Tracking
+
+**Real-Time Updates:**
+- Polling (every 30 seconds) for posts near scheduled time
+- Webhook callbacks from Late.com (optional)
+- Manual refresh button
+
+**Notifications:**
+- Browser notification when post publishes
+- Email summary of daily publications (optional)
+- Slack integration for failures (optional)
+
+## Error Handling
+
+### Publication Failures
+
+**Common Causes:**
+- Account disconnected or permissions revoked
+- Platform API outage
+- Content violates platform policies
+- Media file too large or wrong format
+- Rate limit exceeded
+
+**Error Display:**
+- Red alert banner on post detail page
+- Error message from Late.com/platform
+- Troubleshooting suggestions
+- "Retry" button
+
+**Retry Process:**
+1. Review error message
+2. Fix issue (e.g., reconnect account, edit content)
+3. Click "Retry"
+4. Late.com re-attempts publication
+5. Status updates to "publishing" → "published" or "failed" again
+
+### Validation Errors
+
+**Pre-Submission Checks:**
+- Content not empty
+- At least one platform selected
+- Scheduled time is future
+- Media files within size limits
+- Character counts per platform
+
+**User Feedback:**
+- Inline validation messages
+- Disabled "Schedule" button until valid
+- Tooltip hints for fixes
+
+## Batch Actions
+
+**Planned Features (Not Yet Implemented):**
+- Multi-select posts in calendar
+- Bulk delete
+- Bulk reschedule
+- Bulk approval
+- Copy content across posts
+
+## Integration with Episodes
+
+**Episode Tagging:**
+Posts can be tagged with episode numbers:
+
+```typescript
+tags: ['episode:348', 'guest:john-doe', 'promo']
+```
+
+**Auto-Tagging (Future):**
+- Generate posts from episode assets
+- Pre-populate tags
+- Link to episode in Sanity
+
+**Episode Post Templates:**
+- Announcement post (recording day)
+- Teaser post (pre-release)
+- Release post (publish day)
+- Promo posts (with quotes/clips)
+- Guest spotlight
+
+## Late.com API Reference
+
+**Service Functions:**
+
+**`createPost(request)`**
+
+Create and schedule a new post.
+
+**Parameters:**
+```typescript
+{
+  content: string
+  platforms: Array<{ platform: LatePlatform; accountId: string }>
+  title?: string
+  mediaItems?: Array<{ url: string; type: 'image' | 'video' | 'document' }>
+  scheduledFor?: string  // ISO timestamp
+  publishNow?: boolean
+  isDraft?: boolean
+  tags?: string[]
+  hashtags?: string[]
+}
+```
+
+**Returns:** `Promise<LatePost>`
+
+---
+
+**`updatePost(postId, request)`**
+
+Update existing post (if not published).
+
+**Parameters:**
+```typescript
+{
+  title?: string
+  content?: string
+  scheduledFor?: string
+  status?: 'draft' | 'scheduled'
+  mediaItems?: Array<{ url: string; type: 'image' | 'video' | 'document' }>
+}
+```
+
+**Returns:** `Promise<LatePost>`
+
+---
+
+**`deletePost(postId)`**
+
+Delete post permanently.
+
+**Parameters:** `postId: string`
+
+**Returns:** `Promise<void>`
+
+---
+
+**`retryPost(postId)`**
+
+Retry failed post publication.
+
+**Parameters:** `postId: string`
+
+**Returns:** `Promise<LatePost>`
+
+---
+
+**Helper Functions:**
+
+- `schedulePost()` - Shorthand for creating scheduled post
+- `publishNow()` - Shorthand for immediate publication
+- `saveDraft()` - Shorthand for draft creation
+- `addToQueue()` - Shorthand for queue posting
+
+See `src/services/late.ts` for full API.
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Social Calendar" icon="calendar" href="/features/social/calendar">
+    View all scheduled posts in calendar
+  </Card>
+  
+  <Card title="Social Analytics" icon="chart-line" href="/features/social/analytics">
+    Track post performance and metrics
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Post Not Appearing in Calendar
+
+**Causes:**
+- Scheduled for far future
+- Draft status
+- Filter hiding post
+- Date range not including post date
+
+**Solution:** Clear filters, expand date range, check post status
+
+### Cannot Edit Scheduled Post
+
+**Cause:** Post already in "publishing" or "published" state
+
+**Solution:** Delete and recreate, or create new post with updated content
+
+### Media Upload Fails
+
+**Causes:**
+- File too large (>10MB images, >500MB videos)
+- Unsupported format
+- Network timeout
+
+**Solution:** Resize/compress media, check format, retry upload
+
+### Account Disconnected Error
+
+**Cause:** Social account authorization expired or revoked
+
+**Solution:** Reconnect account in Settings → Connected Accounts

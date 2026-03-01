@@ -1,0 +1,294 @@
+---
+title: System Architecture
+description: Technical architecture and data flow of YBH Pulse Content platform
+---
+
+## Tech Stack Overview
+
+| Layer | Technology | Purpose |
+|-------|------------|----------|
+| **Frontend** | React 18 + TypeScript | UI components and state management |
+| **Build Tool** | Vite 5.1 | Fast development and optimized builds |
+| **Backend** | Cloudflare Workers | Serverless API endpoints |
+| **Hosting** | Cloudflare Pages | Static site hosting with edge functions |
+| **CMS** | Sanity.io | Content management (episodes + generated assets) |
+| **Vector DB** | Pinecone | RAG for design templates and brand guidelines |
+| **Editor** | TipTap | Rich text editing (Notion-like) |
+| **Image Generation** | Kie.ai (Nano Banana Pro) | AI-powered infographic generation |
+| **Testing** | Vitest + Testing Library | Unit and integration tests |
+| **Styling** | Tailwind CSS + Emotion | Utility-first CSS with styled components |
+
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  CLIENT (React + TypeScript)                                    │
+├─────────────────────────────────────────────────────────────────┤
+│  • Episode List & Detail Pages                                  │
+│  • TipTap Rich Text Editor                                      │
+│  • Design Page (Infographic Generator)                          │
+│  • State Management (Zustand)                                   │
+│  • React Query (API caching)                                    │
+└──────────────────────┬──────────────────────────────────────────┘
+                       │ HTTPS
+┌──────────────────────▼──────────────────────────────────────────┐
+│  CLOUDFLARE PAGES FUNCTIONS (Edge Runtime)                      │
+├─────────────────────────────────────────────────────────────────┤
+│  /api/episodes/*        - Episode CRUD                          │
+│  /api/generate/*        - AI content generation                 │
+│  /api/design/*          - Infographic spec & generation         │
+│  /api/media/*           - Transcription (AssemblyAI)            │
+│  /api/auth/*            - JWT authentication                    │
+└──────────┬──────┬──────┬──────┬──────────────────────────────┘
+           │      │      │      │
+     ┌─────▼──┐ ┌─▼───┐ ┌▼────┐ ┌▼─────────┐
+     │Sanity │ │Pine-│ │Kie  │ │RapidAPI  │
+     │  CMS  │ │cone │ │.ai  │ │LinkedIn  │
+     └───────┘ └─────┘ └─────┘ └──────────┘
+```
+
+## Data Flow
+
+### 1. Upload & Generate Pipeline
+
+<Steps>
+  <Step title="Upload Transcript">
+    User uploads edited transcript from Adobe Podcast
+    - Stored in Sanity "Content Production" bucket
+    - Triggers automatic PRF generation
+  </Step>
+
+  <Step title="Generate PRF (Auto)">
+    **Podcast Repurposing Framework** document generated using:
+    - Transcript as input
+    - RAG from Pinecone (brand guidelines, past examples)
+    - AI (Anthropic Claude or OpenRouter)
+    - Opens in TipTap rich text editor for refinement
+  </Step>
+
+  <Step title="Generate Viral Hooks (Auto)">
+    After PRF validation, system auto-generates:
+    - 5-10 viral hooks from key moments
+    - Editable in TipTap editor
+  </Step>
+
+  <Step title="Generate Metadata (Manual)">
+    Click to generate episode metadata:
+    - Title, description, tags
+    - Guest credentials
+    - Pushes to Sanity "Episodes" bucket
+  </Step>
+
+  <Step title="Generate Social Posts (Manual)">
+    Generate platform-specific content:
+    - LinkedIn posts (3-5 variations)
+    - Instagram captions
+    - Twitter/X threads
+    - Each editable before export
+  </Step>
+</Steps>
+
+### 2. Design Page Flow (Infographics)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ENTRY POINTS                                                   │
+├─────────────────────────────────────────────────────────────────┤
+│  1. Right-click selected text → "Create Visual"                │
+│  2. Navigate directly to Design page from episode               │
+└──────────────────────┬──────────────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────────────┐
+│  DESIGN PAGE                                                    │
+├─────────────────────────────────────────────────────────────────┤
+│  • AI Spec Generator (analyzes text + history)                  │
+│  • Suggests: layout, colors, content template, icon style       │
+│  • Preview panel with generated image                           │
+│  • History panel (tracks variety)                               │
+└──────────────────────┬──────────────────────────────────────────┘
+                       │
+┌──────────────────────▼──────────────────────────────────────────┐
+│  SPECIAL GENERATORS                                             │
+├─────────────────────────────────────────────────────────────────┤
+│  • Guest Career Timeline (LinkedIn → 3D isometric)              │
+│  • YouTube Thumbnail Generator                                  │
+│  • Image Transformation (edit existing via Nano Banana Pro)     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Sanity Schema Structure
+
+### Bucket 1: Episodes (Existing)
+
+Used for public podcast website:
+
+```typescript
+{
+  _type: 'episode',
+  episodeNumber: number,
+  title: string,
+  description: string,
+  guest: reference,
+  publishDate: datetime,
+  transcript: text,
+  audioUrl: string,
+  // ... other podcast metadata
+}
+```
+
+### Bucket 2: Content Production (New)
+
+Used for content generation workflow:
+
+```typescript
+{
+  _type: 'contentProduction',
+  episodeId: reference,          // Links to Episode
+  prf: richText,                 // Podcast Repurposing Framework
+  viralHooks: array<richText>,   // 5-10 hooks
+  socialPosts: {
+    linkedin: array<richText>,
+    instagram: array<richText>,
+    twitter: array<richText>
+  },
+  infographics: array<{
+    spec: object,                // Full generation spec
+    imageUrl: string,            // From Kie.ai
+    type: string,                // Layout type
+    createdAt: datetime
+  }>,
+  history: array<{               // For variety tracking
+    type: string,
+    spec: object,
+    generatedAt: datetime
+  }>
+}
+```
+
+## Key Components
+
+### Rich Text Editor (TipTap)
+
+**Features:**
+- Formatting: Bold, italic, headings, lists
+- Tables, images, colors, highlights
+- Custom blocks (quote cards, infographic previews)
+- Slash commands: `/heading`, `/quote`, `/image`
+- Context menu: "Create Infographic", "Create Quote Card"
+- Drag-and-drop block reordering
+
+**Implementation:**
+```typescript
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import Table from '@tiptap/extension-table'
+import Image from '@tiptap/extension-image'
+import Color from '@tiptap/extension-color'
+import Highlight from '@tiptap/extension-highlight'
+```
+
+### AI Content Generation
+
+**RAG Pipeline (via Pinecone):**
+1. Query design database for relevant templates
+2. Retrieve brand guidelines
+3. Check generation history for variety
+4. Construct prompt with context
+5. Generate using Anthropic Claude
+6. Return structured output
+
+**Design Database (28 layouts + 10 templates):**
+- Circular: Doom Loop, Hub & Spoke, Concentric Circles
+- Linear: Timeline, Staircase, Pipeline/Funnel
+- Comparison: Split Screen, Quadrant Matrix, Spectrum
+- Hierarchical: Pyramid, Tree, Pillars
+- Grid: Card Grid, Dashboard Panels
+- Network: Node Network, Workflow, Sankey Diagram
+
+### Image Generation (Kie.ai)
+
+**Endpoint:** `POST https://api.kie.ai/api/v1/jobs/createTask`
+
+**Request:**
+```json
+{
+  "model": "nano-banana-pro",
+  "callBackUrl": "https://pulse-content.ybh.com/api/callback",
+  "input": {
+    "prompt": "...",
+    "image_input": [],          // Optional: transform existing images
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  }
+}
+```
+
+**Supported Formats:**
+- Aspect Ratios: 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9, auto
+- Resolutions: 1K, 2K, 4K
+- Key Feature: `image_input` allows transforming up to 8 existing images
+
+## Security & Authentication
+
+**JWT-based authentication:**
+- Restricted to `@popularit.net` email addresses
+- 24-hour session expiration
+- Password reset via Resend email service
+- All team members have equal access
+- Guest brand kit pages (`/share/:token`) remain public
+
+**Environment secrets managed via:**
+- Local: `.dev.vars` file (gitignored)
+- Production: Cloudflare Pages environment variables
+- Wrangler CLI: `wrangler secret put SECRET_NAME`
+
+## Performance Optimizations
+
+### Code Splitting (Vite)
+
+```javascript
+// vite.config.ts
+manualChunks(id) {
+  if (id.includes('@tiptap')) return 'tiptap'        // Lazy load editor
+  if (id.includes('react-dom')) return 'react-vendor'
+  if (id.includes('@sanity')) return 'sanity'
+  if (id.includes('lucide-react')) return 'ui'
+}
+```
+
+### API Caching (React Query)
+
+```typescript
+import { useQuery } from '@tanstack/react-query'
+
+// Cache episodes for 5 minutes
+const { data } = useQuery({
+  queryKey: ['episodes'],
+  queryFn: fetchEpisodes,
+  staleTime: 5 * 60 * 1000
+})
+```
+
+### Edge Computing (Cloudflare)
+
+- API responses served from 200+ global edge locations
+- Static assets cached at edge
+- Sub-100ms response times worldwide
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Setup" icon="wrench" href="/development/setup">
+    Get your local environment running
+  </Card>
+  <Card title="Testing" icon="flask" href="/development/testing">
+    Learn the testing strategy
+  </Card>
+  <Card title="Deployment" icon="rocket" href="/development/deployment/cloudflare">
+    Deploy to Cloudflare Pages
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing/guidelines">
+    Contribution guidelines
+  </Card>
+</CardGroup>

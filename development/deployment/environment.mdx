@@ -1,0 +1,399 @@
+---
+title: Environment Configuration
+description: Manage environment variables and secrets for YBH Pulse Content
+---
+
+## Environment Overview
+
+Pulse Content uses environment variables to configure:
+- External service credentials (Sanity, Pinecone, Kie.ai)
+- API keys for AI providers
+- Authentication secrets
+- Feature flags and service URLs
+
+## Environment Files
+
+### Local Development (.dev.vars)
+
+Create `.dev.vars` in project root (gitignored):
+
+```bash
+# Sanity CMS
+SANITY_PROJECT_ID=your-project-id
+SANITY_DATASET=production
+SANITY_API_TOKEN=your-token-with-editor-role
+
+# AI Providers
+ANTHROPIC_API_KEY=sk-ant-xxx
+OPENROUTER_API_KEY=sk-or-xxx
+
+# Vector Database
+PINECONE_API_KEY=your-pinecone-key
+PINECONE_HOST=https://your-index.svc.region.pinecone.io
+
+# Image Generation
+KIEAI_API_KEY=your-kie-api-key
+
+# LinkedIn Scraper
+RAPIDAPI_KEY=your-rapidapi-key
+
+# Authentication
+JWT_SECRET=your-random-32-byte-hex-string
+
+# Email (Password Reset)
+RESEND_API_KEY=re_xxx
+RESEND_FROM_EMAIL="Pulse Studio <noreply@yourdomain.com>"
+APP_BASE_URL=http://localhost:5173
+
+# Media Processing
+ASSEMBLYAI_API_KEY=your-assemblyai-key
+GOOGLE_DRIVE_SA_KEY=base64-encoded-service-account-json
+
+# Optional: YBH Sales Integration
+YBH_SALES_API_URL=https://api.youvebeenheard.com
+YBH_SALES_API_KEY=your-shared-api-key
+YBH_BACKFILL_API_KEY=your-backfill-key
+PULSE_BOT_API_KEY=your-bot-key
+```
+
+<Warning>
+  Never commit `.dev.vars` to version control. It's listed in `.gitignore`.
+</Warning>
+
+### Production (Cloudflare Pages)
+
+Set via Cloudflare dashboard or Wrangler CLI:
+
+**Dashboard:** Workers & Pages > pulse-content > Settings > Environment Variables
+
+**CLI:**
+```bash
+wrangler secret put JWT_SECRET
+wrangler secret put SANITY_API_TOKEN
+wrangler secret put ANTHROPIC_API_KEY
+```
+
+## Required Variables
+
+### Sanity CMS
+
+<ParamField path="SANITY_PROJECT_ID" type="string" required>
+  Project ID from [sanity.io/manage](https://sanity.io/manage)
+</ParamField>
+
+<ParamField path="SANITY_DATASET" type="string" required>
+  Dataset name (typically `production`)
+</ParamField>
+
+<ParamField path="SANITY_API_TOKEN" type="string" required>
+  API token with **Editor** role for write access
+  
+  **Generate:**
+  1. Go to [sanity.io/manage](https://sanity.io/manage)
+  2. Select project > API > Tokens
+  3. Add token with **Editor** permissions
+</ParamField>
+
+### AI Services
+
+<ParamField path="ANTHROPIC_API_KEY" type="string" required>
+  Claude API key for content generation
+  
+  **Get key:** [console.anthropic.com](https://console.anthropic.com)
+</ParamField>
+
+<ParamField path="OPENROUTER_API_KEY" type="string" required>
+  OpenRouter API key for multi-model access
+  
+  **Get key:** [openrouter.ai/keys](https://openrouter.ai/keys)
+</ParamField>
+
+### Vector Database
+
+<ParamField path="PINECONE_API_KEY" type="string" required>
+  Pinecone API key for RAG (design templates, brand guidelines)
+  
+  **Get key:** [app.pinecone.io](https://app.pinecone.io) > API Keys
+</ParamField>
+
+<ParamField path="PINECONE_HOST" type="string" required>
+  Full Pinecone host URL
+  
+  **Format:** `https://your-index.svc.region.pinecone.io`
+  
+  **Find:** Pinecone dashboard > Indexes > your-index > Connection
+</ParamField>
+
+### Image Generation
+
+<ParamField path="KIEAI_API_KEY" type="string" required>
+  Kie.ai API key for Nano Banana Pro image generation
+  
+  **Get key:** [kie.ai](https://kie.ai) dashboard
+</ParamField>
+
+### Data Scraping
+
+<ParamField path="RAPIDAPI_KEY" type="string" required>
+  RapidAPI key for LinkedIn profile scraping
+  
+  **Get key:** [rapidapi.com](https://rapidapi.com) > My Apps
+</ParamField>
+
+### Authentication
+
+<ParamField path="JWT_SECRET" type="string" required>
+  Secret key for signing JWT tokens (minimum 32 bytes)
+  
+  **Generate:**
+  ```bash
+  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+  ```
+</ParamField>
+
+### Email Service
+
+<ParamField path="RESEND_API_KEY" type="string" required>
+  Resend API key for password reset emails
+  
+  **Get key:** [resend.com/api-keys](https://resend.com/api-keys)
+</ParamField>
+
+<ParamField path="RESEND_FROM_EMAIL" type="string" required>
+  Email address for sending password resets
+  
+  **Format:** `"Pulse Studio <noreply@yourdomain.com>"`
+</ParamField>
+
+<ParamField path="APP_BASE_URL" type="string" required>
+  Base URL of the application
+  
+  **Local:** `http://localhost:5173`
+  
+  **Production:** `https://production.youvebeenheard.com`
+</ParamField>
+
+### Media Processing
+
+<ParamField path="ASSEMBLYAI_API_KEY" type="string" required>
+  AssemblyAI API key for video transcription
+  
+  **Get key:** [assemblyai.com/dashboard](https://assemblyai.com/dashboard)
+</ParamField>
+
+<ParamField path="GOOGLE_DRIVE_SA_KEY" type="string" required>
+  Base64-encoded Google Cloud service account key JSON
+  
+  **Setup:**
+  1. Create service account at [console.cloud.google.com/iam-admin/serviceaccounts](https://console.cloud.google.com/iam-admin/serviceaccounts)
+  2. Download JSON key file
+  3. Base64 encode:
+     ```bash
+     cat service-account.json | base64
+     ```
+</ParamField>
+
+## Optional Variables
+
+### YBH Sales Integration
+
+<ParamField path="YBH_SALES_API_URL" type="string">
+  Base URL for YBH Sales API (guest auto-sync)
+  
+  **Example:** `https://api.youvebeenheard.com`
+</ParamField>
+
+<ParamField path="YBH_SALES_API_KEY" type="string">
+  Shared API key for YBH Sales integration
+  
+  Must match `WEBHOOK_API_KEY` or one of `KANBAN_API_KEYS` in `ybh-sales-platform`
+</ParamField>
+
+<ParamField path="YBH_BACKFILL_API_KEY" type="string">
+  Protects `/api/ybh/backfill-guests` endpoint
+</ParamField>
+
+<ParamField path="PULSE_BOT_API_KEY" type="string">
+  Allows server-to-server auth for `/api/late/*` via `X-Pulse-Bot-Api-Key` header
+</ParamField>
+
+## Environment-Specific Configuration
+
+### Development vs. Production
+
+| Variable | Development | Production |
+|----------|-------------|------------|
+| `APP_BASE_URL` | `http://localhost:5173` | `https://production.youvebeenheard.com` |
+| `SANITY_DATASET` | `development` or `production` | `production` |
+| API Keys | Test/sandbox keys | Production keys |
+| Logging | Verbose | Error-only |
+
+### Feature Flags
+
+Toggle features based on environment:
+
+```typescript
+// src/config.ts
+export const config = {
+  isDevelopment: import.meta.env.DEV,
+  isProduction: import.meta.env.PROD,
+  apiUrl: import.meta.env.VITE_API_URL || '/api',
+  enableDebugLogs: import.meta.env.DEV,
+  enableYBHSalesSync: !!process.env.YBH_SALES_API_URL
+}
+```
+
+## Managing Secrets
+
+### Local Development
+
+1. Copy example file:
+   ```bash
+   cp .env.example .dev.vars
+   ```
+
+2. Fill in values:
+   ```bash
+   nano .dev.vars
+   ```
+
+3. Source automatically when running:
+   ```bash
+   npm run dev  # Wrangler loads .dev.vars automatically
+   ```
+
+### Production (Cloudflare)
+
+<Tabs>
+  <Tab title="Cloudflare Dashboard">
+    1. Navigate to **Workers & Pages**
+    2. Select **pulse-content** project
+    3. Go to **Settings** > **Environment Variables**
+    4. Click **Add variable**
+    5. Choose **Encrypt** for sensitive values
+    6. Click **Save**
+  </Tab>
+  
+  <Tab title="Wrangler CLI">
+    ```bash
+    # Set encrypted secret
+    wrangler secret put JWT_SECRET
+    # Prompts for value input
+    
+    # Set multiple secrets
+    wrangler secret put SANITY_API_TOKEN
+    wrangler secret put ANTHROPIC_API_KEY
+    wrangler secret put KIEAI_API_KEY
+    ```
+  </Tab>
+  
+  <Tab title="GitHub Actions">
+    Store secrets in GitHub:
+    1. Go to repository **Settings** > **Secrets and variables** > **Actions**
+    2. Click **New repository secret**
+    3. Add each secret
+    
+    Reference in workflow:
+    ```yaml
+    - name: Deploy
+      uses: cloudflare/wrangler-action@v3
+      with:
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    ```
+  </Tab>
+</Tabs>
+
+## Accessing Environment Variables
+
+### In Cloudflare Workers (Backend)
+
+```typescript
+// functions/api/episodes/index.ts
+export const onRequestGet: PagesFunction<Env> = async ({ env }) => {
+  const sanityToken = env.SANITY_API_TOKEN
+  const apiKey = env.ANTHROPIC_API_KEY
+  
+  // Use environment variables
+}
+
+// Type definition
+interface Env {
+  SANITY_API_TOKEN: string
+  ANTHROPIC_API_KEY: string
+  // ... other vars
+}
+```
+
+### In Frontend (Client)
+
+<Warning>
+  **Never expose secrets to the frontend.** Only use public configuration.
+</Warning>
+
+```typescript
+// Use VITE_ prefix for client-side variables
+const publicConfig = {
+  apiUrl: import.meta.env.VITE_API_URL || '/api',
+  environment: import.meta.env.MODE
+}
+```
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Rotate Secrets Regularly" icon="rotate">
+    Change API keys and tokens periodically (every 3-6 months)
+  </Card>
+  
+  <Card title="Use Minimum Permissions" icon="lock">
+    Grant only required permissions (e.g., Editor role, not Admin)
+  </Card>
+  
+  <Card title="Never Commit Secrets" icon="ban">
+    Add `.dev.vars` and `.env*` to `.gitignore`
+  </Card>
+  
+  <Card title="Separate Dev/Prod Keys" icon="split">
+    Use different API keys for development and production
+  </Card>
+</CardGroup>
+
+## Validation
+
+Validate environment variables at startup:
+
+```typescript
+// src/utils/validateEnv.ts
+const requiredEnvVars = [
+  'SANITY_PROJECT_ID',
+  'SANITY_API_TOKEN',
+  'ANTHROPIC_API_KEY',
+  'JWT_SECRET'
+]
+
+export function validateEnv(env: Record<string, string | undefined>) {
+  const missing = requiredEnvVars.filter(key => !env[key])
+  
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`)
+  }
+}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Cloudflare Deployment" icon="cloud" href="/development/deployment/cloudflare">
+    Deploy to Cloudflare Pages
+  </Card>
+  <Card title="CI/CD Pipeline" icon="rocket" href="/development/deployment/ci-cd">
+    Automate deployment with GitHub Actions
+  </Card>
+  <Card title="Setup Guide" icon="wrench" href="/development/setup">
+    Local development setup
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    System architecture overview
+  </Card>
+</CardGroup>

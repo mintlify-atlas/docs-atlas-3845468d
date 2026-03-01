@@ -1,0 +1,310 @@
+---
+title: Guest Brand Kit Sharing
+description: Generate and share personalized brand kits with episode assets, career timelines, and promotional content
+---
+
+Brand kits are premium landing pages that deliver personalized content packages to podcast guests. Each kit includes episode assets, career timeline graphics, viral hooks, and downloadable files—all wrapped in YBH's luxury industrial aesthetic.
+
+## Overview
+
+Guest brand kits serve as:
+- **Deliverable for guests:** Professional assets to promote their episode
+- **Value proposition:** Tangible benefit of appearing on the podcast
+- **Brand showcase:** Demonstrates YBH's production quality
+- **Asset distribution:** Centralized hub for all episode content
+
+## Share URL Structure
+
+Brand kits are accessed via secure token-based URLs:
+
+```
+https://pulse.ybh.com/share/{token}
+```
+
+**Token Properties:**
+- Randomly generated (32+ characters)
+- Stored in Sanity with guest and episode association
+- Never expires (evergreen links)
+- Tracks view analytics (user agent, referrer, timestamp)
+
+## Brand Kit Contents
+
+### 1. Hero Section
+
+Cinematic header with gradient orbs and guest information:
+
+- Episode number
+- Guest name (large display font)
+- Position and company
+- YBH branding
+
+**Visual Style:** Dark background (`#0a0a0f`) with animated gradient orbs in YBH brand colors (yellow `#F7B500`, orange `#F17529`, red `#EF4136`).
+
+### 2. Career Timeline
+
+Isometric 3D visualization of the guest's professional journey:
+
+**Data Source:** LinkedIn profile scraping (see [LinkedIn Integration](/features/guests/linkedin-integration))
+
+**Visual Elements:**
+- Horizontal timeline with stages
+- Year labels and position titles
+- Company names
+- Isometric 3D graphic style
+- 16:9 aspect ratio
+
+**Actions:**
+- Click to view full-size
+- Individual download button
+- Included in full kit download
+
+<Note>
+Career timelines are generated via Kie.ai's Nano Banana Pro API using scraped LinkedIn data.
+</Note>
+
+### 3. Video Clips
+
+Media gallery with episode highlight clips:
+
+**Clip Formats:**
+- Square (1:1) - optimized for Instagram feed
+- Vertical (9:16) - optimized for Stories, Reels, TikTok
+
+**Per-Clip Display:**
+- Video player with controls
+- Thumbnail image
+- Clip number badge
+- Title (auto-generated or custom)
+- Duration
+- Format label (1:1 Square / 9:16 Vertical)
+- Individual download button
+
+**Grid Layout:** Responsive 3-column grid (1 col on mobile, 2 on tablet, 3 on desktop)
+
+### 4. Visual Assets
+
+Masonry grid of generated graphics:
+
+**Asset Types:**
+- Infographics (from PRF content)
+- Quote cards (from viral hooks)
+- Custom graphics
+- Career timeline (if generated)
+
+**Asset Card:**
+- Image preview
+- Title
+- Type badge (infographic, quote card, etc.)
+- Click to open lightbox
+
+**Lightbox Features:**
+- Full-size image view
+- Caption text (if available)
+- Copy caption button
+- Download button
+- Close with ESC key or X button
+
+### 5. PRF Section
+
+Podcast Repurposing Framework content:
+
+**Display Format:**
+- Rich HTML rendering
+- Vector bullet points (SVG icons)
+- Styled headings and sections
+- Responsive typography
+
+**Vector Bullets:** Each bullet point uses a unique SVG shape (circles, squares, arrows) rendered in YBH brand colors.
+
+<Info>
+PRF HTML is sanitized on the server to prevent XSS attacks while preserving formatting.
+</Info>
+
+### 6. Viral Hooks
+
+Social media hooks with oversized quote marks:
+
+**Hook Card Design:**
+- Oversized opening quote mark (decorative)
+- Hook text (prominent, readable)
+- Closing quote mark
+- Card background with subtle gradient
+- Border styling
+
+**Extraction:** Hooks are parsed from the viral hooks document using the `extractViralHooks()` utility.
+
+### 7. Download Options
+
+Two download buttons at the bottom:
+
+<CardGroup cols={2}>
+  <Card title="All Images" icon="image">
+    ZIP file containing all visual assets (career timeline, infographics, quote cards)
+  </Card>
+  
+  <Card title="Full Kit" icon="download">
+    Complete package: all images + PRF and Viral Hooks as PDF files
+  </Card>
+</CardGroup>
+
+**Download Process:**
+1. Client-side ZIP generation (JSZip library)
+2. Images fetched and converted to Blob
+3. Text content converted to styled PDF (jsPDF)
+4. All files added to ZIP
+5. Browser triggers download
+
+**File Naming:**
+```
+YBH-EP{episodeNumber}-{assetType}-{title}.png
+YBH-EP{episodeNumber}-PRF.pdf
+YBH-EP{episodeNumber}-Viral-Hooks.pdf
+```
+
+## Service Rail CTAs
+
+Desktop layout includes sticky sidebar CTAs:
+
+**Left Rail (top-to-bottom rotation):**
+- Community Roundtable card
+- Microsoft Licensing card
+
+**Right Rail (top-to-bottom rotation):**
+- Network SD-WAN card
+- Mobile MDM card
+
+**Mobile/Tablet:** CTAs appear inline between sections (Career Timeline → Community, Visuals → Network, PRF → Microsoft, Hooks → Mobile)
+
+<Note>
+CTA cards link to YBH service offerings with episode context for attribution tracking.
+</Note>
+
+## Navigation
+
+Sticky header with:
+- YBH logo (links to main site)
+- Scroll-triggered visibility
+- Download button (triggers full kit download)
+- Minimalist dark design
+
+**Anchor Links:**
+Jump to sections via URL hash:
+- `#timeline` - Career Timeline
+- `#videos` - Video Clips
+- `#visuals` - Visual Assets
+- `#prf` - PRF Section
+- `#hooks` - Viral Hooks
+- `#downloads` - Download Options
+
+## View Tracking
+
+Every brand kit view is logged to Sanity:
+
+```typescript
+{
+  viewedAt: string      // ISO timestamp
+  userAgent: string     // Browser/device info
+  referrer: string      // Where they came from
+  token: string         // Share link token
+}
+```
+
+**Implementation:**
+Fire-and-forget POST to `/api/share/{token}/view` on page load.
+
+## Empty States
+
+If no assets are ready:
+
+**Display:**
+- Centered icon (image placeholder)
+- "Brand Kit In Progress" heading
+- Message: "Your visual assets are being prepared. Please check back soon or contact the YBH team for updates."
+
+**PRF/Hooks:** If missing, section is omitted entirely.
+
+## Error States
+
+### Invalid Token
+
+**Trigger:** Token not found in database or expired
+
+**Display:**
+- Alert icon (red)
+- "Link Not Valid" heading
+- Error message
+- "Contact YBH" CTA button
+
+### Load Failure
+
+**Trigger:** API error fetching brand kit data
+
+**Display:**
+- Error message
+- Retry button (if temporary)
+- Contact information
+
+## Design System
+
+**Color Palette:**
+- Background: `#0a0a0f` (void black)
+- Elevated surfaces: `#12121a`
+- Text primary: `#FFFFFF`
+- Text secondary: `#A4BFC1` (Tower Gray)
+- Accent gradient: Yellow → Orange → Red
+
+**Typography:**
+- Display: Fonseca (episode numbers, headings)
+- Body: Montserrat (content, descriptions)
+- Mono: Font-mono (labels, metadata)
+
+**Spacing:**
+- Section padding: `py-24` (96px)
+- Card padding: `p-5` to `p-8`
+- Gap between elements: `gap-6` to `gap-12`
+
+**Borders:**
+- Subtle: `border-white/[0.06]`
+- Visible: `border-white/10`
+- Accent: `border-[#F7B500]/20`
+
+## Implementation Details
+
+**Page Component:** `GuestBrandKitPage.tsx`
+
+**API Route:** `GET /api/share/:token`
+
+**Response Schema:**
+```typescript
+{
+  episode: { number: number; title: string }
+  guest: { name: string; position: string; company: string }
+  prf: string  // HTML
+  viralHooks: string  // Plain text
+  careerTimeline: { imageUrl: string } | null
+  videoClips: BrandKitVideoClip[]
+  assets: BrandKitAsset[]
+}
+```
+
+**Image Handling:**
+- Lazy loading with `loading="lazy"`
+- Hover effects with scale transforms
+- Optimized delivery via CDN (Sanity image URLs)
+
+**Download Service:** `src/services/download.ts`
+- `downloadAllAssets()` - Full kit or images-only
+- `downloadImage()` - Single image download
+- `sanitizeFilename()` - Prevent path traversal attacks
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Guest Management" icon="users" href="/features/guests/overview">
+    Manage guest profiles and share links
+  </Card>
+  
+  <Card title="LinkedIn Integration" icon="linkedin" href="/features/guests/linkedin-integration">
+    Auto-generate career timelines from LinkedIn
+  </Card>
+</CardGroup>

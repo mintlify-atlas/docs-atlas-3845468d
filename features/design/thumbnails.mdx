@@ -1,0 +1,497 @@
+---
+title: YouTube Thumbnail Generation
+description: Create eye-catching video thumbnails optimized for YouTube and social media
+icon: image
+---
+
+## Overview
+
+YouTube thumbnail generation creates bold, attention-grabbing visuals designed for video content. Thumbnails use high-contrast designs, bold typography, and strategic color placement to maximize click-through rates.
+
+<Info>
+  Thumbnails are optimized for the YouTube player and social media embeds, with special attention to mobile viewing and small preview sizes.
+</Info>
+
+## Getting Started
+
+<Steps>
+  <Step title="Access Thumbnail Designer">
+    Navigate to Design Studio and select the **Thumbnail** design type.
+  </Step>
+  
+  <Step title="Link Episode">
+    Select an episode to pull guest name, episode number, and key topics automatically.
+  </Step>
+  
+  <Step title="Enter Core Message">
+    Describe the main hook or topic for the video. This becomes the thumbnail's headline.
+  </Step>
+  
+  <Step title="Generate Spec">
+    AI analyzes your message and creates a thumbnail specification optimized for visibility and engagement.
+  </Step>
+  
+  <Step title="Generate & Customize">
+    Create the image, then use Logo Compositor to add branding before saving.
+  </Step>
+</Steps>
+
+## Design Characteristics
+
+### Aspect Ratio
+
+**16:9 Landscape** (1280×720 minimum)
+- Standard YouTube thumbnail format
+- Visible in search results, recommendations, embeds
+- Critical safe zone: Center 50% (visible in all contexts)
+
+<Warning>
+  Avoid placing text near edges. YouTube player controls can obscure the bottom 15% of thumbnails.
+</Warning>
+
+### Visual Style
+
+Thumbnails use a distinct style optimized for small displays:
+
+```typescript
+const thumbnailStyle = {
+  typography: 'Extra bold, high contrast, 60-80pt',
+  background: 'Solid color or subtle gradient',
+  elements: 'Minimal - 1-2 key visual elements',
+  textLayout: 'Left or right alignment for face crop compatibility',
+  colors: 'High saturation for visibility in feeds'
+}
+```
+
+## AI Specification Process
+
+Thumbnail generation follows a specialized workflow:
+
+### Input Analysis
+
+```typescript
+// AI analyzes episode context for thumbnail generation
+const spec = await generateInfographicSpec(
+  selectedText,      // Main message/hook
+  transcript,        // For context
+  prf,              // For key insights
+  episodeNumber,
+  guestName,
+  history,
+  'thumbnail'       // Design type flag
+)
+```
+
+### Thumbnail-Specific Prompts
+
+AI generates prompts optimized for video content:
+
+```
+16:9 YouTube thumbnail in bold, high-contrast style.
+
+Background: Vibrant gradient (${primaryColor} to ${secondaryColor}) 
+or solid color (#${colorHex}).
+
+Main headline: "${headline}" in ultra-bold sans-serif, 70-80pt.
+Text aligned ${alignment} with high contrast stroke/shadow for readability.
+
+Visual element: ${iconOrImagery} (${iconStyle} style) positioned ${position}.
+
+Episode badge: Small "EP ${episodeNum}" tag in corner.
+Guest name: "${guestName}" in subtitle size.
+
+Optimized for mobile preview - text must be readable at 320px width.
+
+NO logo (added post-generation).
+```
+
+<Note>
+  The AI automatically adjusts text size and layout based on headline length. Longer headlines get smaller text and stacked layouts.
+</Note>
+
+## Thumbnail Templates
+
+AI selects from proven thumbnail patterns:
+
+### 1. Bold Statement
+
+<CardGroup cols={1}>
+  <Card title="Bold Statement" icon="comment-exclamation">
+    Large, punchy text with minimal background elements. Best for controversial takes or surprising insights.
+    
+    **Example**: "Tech Debt Is A Choice" with subtle isometric code blocks
+  </Card>
+</CardGroup>
+
+**Best For**:
+- Opinion pieces
+- Contrarian viewpoints
+- Provocative questions
+
+**Color System**: High Contrast or YBH Gradient
+
+### 2. Question Format
+
+<CardGroup cols={1}>
+  <Card title="Question Format" icon="circle-question">
+    Poses a question to create curiosity. Uses question mark visual element or icon.
+    
+    **Example**: "Is Your Cloud Strategy Failing?" with cloud/storm imagery
+  </Card>
+</CardGroup>
+
+**Best For**:
+- How-to content
+- Problem-solving videos
+- Audience engagement
+
+**Color System**: Problem/Solution or Corporate Professional
+
+### 3. Guest Spotlight
+
+<CardGroup cols={1}>
+  <Card title="Guest Spotlight" icon="user-tie">
+    Features guest name and credentials prominently. Often includes role/company badge.
+    
+    **Example**: "[Guest Name] | CTO of [Company]" with title overlay
+  </Card>
+</CardGroup>
+
+**Best For**:
+- Interview episodes
+- Celebrity/expert guests
+- Authority content
+
+**Color System**: Corporate Professional or YBH Gradient
+
+### 4. Data/Stats Highlight
+
+<CardGroup cols={1}>
+  <Card title="Data/Stats" icon="chart-line">
+    Emphasizes a key statistic or data point from the episode.
+    
+    **Example**: "73% of IT Leaders Report..." with chart visualization
+  </Card>
+</CardGroup>
+
+**Best For**:
+- Research findings
+- Industry reports
+- Survey results
+
+**Color System**: Blueprint Light or Corporate Professional
+
+### 5. VS Comparison
+
+<CardGroup cols={1}>
+  <Card title="VS Comparison" icon="code-compare">
+    Split-screen comparison of two concepts, tools, or approaches.
+    
+    **Example**: "Build vs. Buy" or "Cloud vs. On-Prem" with split colors
+  </Card>
+</CardGroup>
+
+**Best For**:
+- Comparison episodes
+- Debate-style content
+- Decision frameworks
+
+**Color System**: Problem/Solution (split)
+
+## Color Strategy for Thumbnails
+
+### High Visibility Palettes
+
+Thumbnails use colors optimized for YouTube's interface:
+
+#### 1. YBH Signature
+
+```css
+--primary: #F7B500 (Selective Yellow)
+--secondary: #EF4136 (Sunset Orange)
+--text: #1A1A2E (Dark, high contrast on yellow)
+```
+
+**Stands out against**: YouTube's white/dark interface
+
+#### 2. Tech Blue Bold
+
+```css
+--primary: #0F3460 (Deep Blue)
+--accent: #F17529 (Crusta Orange)
+--text: #FFFFFF (White)
+```
+
+**Stands out against**: Red YouTube branding, creates premium feel
+
+#### 3. Energy Gradient
+
+```css
+--gradient: linear-gradient(135deg, #EF4136 0%, #F17529 50%, #F7B500 100%)
+--text: #FFFFFF with dark stroke
+```
+
+**Stands out against**: All backgrounds, maximum energy
+
+#### 4. Monochrome Punch
+
+```css
+--primary: #1A1A2E (Dark)
+--accent: #F17529 (Orange) for text only
+--contrast: High (7:1 minimum)
+```
+
+**Stands out against**: Busy feeds, creates authority
+
+<Warning>
+  Avoid colors that blend with YouTube's interface: light gray (#F1F1F1), medium red (#FF0000), or pure white. These reduce thumbnail visibility in feeds.
+</Warning>
+
+## Typography for Thumbnails
+
+### Size Guidelines
+
+| Context | Font Size | Line Height | Max Characters |
+|---------|-----------|-------------|----------------|
+| **Primary Headline** | 60-80pt | 1.1 | 25-35 |
+| **Secondary Text** | 36-48pt | 1.2 | 40-50 |
+| **Episode Badge** | 24-30pt | 1.0 | 10-15 |
+| **Guest Name** | 28-36pt | 1.2 | 20-30 |
+
+### Font Characteristics
+
+- **Weight**: Extra Bold (800) or Black (900)
+- **Style**: Sans-serif, condensed or wide depending on content
+- **Stroke**: 4-6px dark outline for light text on any background
+- **Shadow**: Optional 2-3px drop shadow for depth
+
+### Text Readability Test
+
+<Steps>
+  <Step title="Generate at 2K">
+    Create thumbnail at 2560×1440 resolution
+  </Step>
+  
+  <Step title="Test at Mobile Size">
+    Scale preview to 320×180 (mobile feed size)
+  </Step>
+  
+  <Step title="Verify Readability">
+    All text must be clearly readable at mobile size
+  </Step>
+  
+  <Step title="Check Contrast">
+    Use contrast checker - aim for 7:1 minimum ratio
+  </Step>
+</Steps>
+
+<Info>
+  YBH's target audience (IT leaders) often browses YouTube on mobile during commutes. Mobile readability is critical.
+</Info>
+
+## Layout Patterns
+
+### Left-Heavy Layout
+
+```
+┌─────────────────────────────────┐
+│ TEXT TEXT        [ICON/IMAGERY] │
+│ TEXT TEXT                        │
+│                                  │
+│ Episode 348      Guest Name      │
+└─────────────────────────────────┘
+```
+
+**Best For**: Guest photo on right (face crop compatible)
+
+### Center-Dominant Layout
+
+```
+┌─────────────────────────────────┐
+│                                  │
+│       TEXT TEXT TEXT             │
+│       TEXT TEXT TEXT             │
+│                                  │
+│ EP 348                Guest Name │
+└─────────────────────────────────┘
+```
+
+**Best For**: Text-only thumbnails, bold statements
+
+### Split Layout
+
+```
+┌─────────────────────────────────┐
+│ TEXT TEXT   │   TEXT TEXT        │
+│ [COLOR A]   │   [COLOR B]        │
+│             │                    │
+│ Episode 348 │ Guest Name         │
+└─────────────────────────────────┘
+```
+
+**Best For**: VS comparisons, before/after
+
+### Top-Heavy Layout
+
+```
+┌─────────────────────────────────┐
+│ TEXT TEXT TEXT TEXT TEXT         │
+│                                  │
+│ [LARGE ICON/IMAGERY]             │
+│                                  │
+│ Episode 348      Guest Name      │
+└─────────────────────────────────┘
+```
+
+**Best For**: Icon-driven concepts, visual metaphors
+
+## Integration with Kie.ai
+
+Thumbnails use the same Kie.ai generation pipeline:
+
+```typescript
+// src/hooks/useGeneration.ts
+export function useGenerateImage() {
+  return useMutation({
+    mutationFn: async ({ prompt, aspectRatio, resolution }) => {
+      const task = await createTask({ 
+        prompt, 
+        aspectRatio: '16:9',  // Fixed for thumbnails
+        resolution: '2K'       // 2560×1440
+      })
+      
+      const result = await waitForTask(task.taskId)
+      return result.imageUrl
+    }
+  })
+}
+```
+
+### Generation Settings
+
+- **Aspect Ratio**: Always 16:9
+- **Recommended Resolution**: 2K (2560×1440)
+- **Max Resolution**: 4K (3840×2160) for future-proofing
+- **Output Format**: PNG (better for text rendering)
+
+<Note>
+  YouTube recommends minimum 1280×720 but accepts up to 3840×2160. Generate at 2K for balance of quality and file size.
+</Note>
+
+## A/B Testing Thumbnails
+
+Create multiple variations for testing:
+
+<Steps>
+  <Step title="Generate Baseline">
+    Create primary thumbnail with AI-selected style
+  </Step>
+  
+  <Step title="Edit Prompt for Variation">
+    Manually adjust colors, text placement, or visual elements in prompt
+  </Step>
+  
+  <Step title="Generate Alternatives">
+    Create 2-3 variations with different approaches
+  </Step>
+  
+  <Step title="Test & Analyze">
+    Upload to YouTube, track CTR, select winner
+  </Step>
+</Steps>
+
+### Variation Ideas
+
+- **Color Shift**: Try different background colors
+- **Text Treatment**: Bold vs. outlined vs. shadowed
+- **Icon Style**: Isometric vs. flat 2D
+- **Layout**: Left-heavy vs. center-dominant
+- **Face Crop**: With vs. without guest photo
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Front-Load Keywords" icon="magnifying-glass">
+    Put important words at the beginning of headlines. YouTube's search algorithm indexes thumbnail text.
+  </Card>
+  
+  <Card title="Emotion > Information" icon="face-smile">
+    Thumbnails should evoke curiosity or emotion, not convey complete information.
+  </Card>
+  
+  <Card title="Test at Scale" icon="mobile">
+    Always preview at 320×180 (mobile feed size) before finalizing.
+  </Card>
+  
+  <Card title="Avoid Clickbait" icon="triangle-exclamation">
+    Bold ≠ misleading. Thumbnails should accurately represent content.
+  </Card>
+</CardGroup>
+
+## Common Mistakes to Avoid
+
+<Warning>
+  **Too Much Text**: More than 6-7 words becomes unreadable at small sizes. Use short, punchy phrases.
+</Warning>
+
+<Warning>
+  **Low Contrast**: Text must have 7:1 contrast ratio minimum. Always use stroke or shadow on text.
+</Warning>
+
+<Warning>
+  **Generic Stock Imagery**: Avoid cliché business photos. Use isometric illustrations or bold graphics instead.
+</Warning>
+
+<Warning>
+  **Tiny Episode Numbers**: Make episode badges 24pt minimum or they disappear on mobile.
+</Warning>
+
+## Example Prompts
+
+### Bold Statement Thumbnail
+
+```
+16:9 YouTube thumbnail, high-contrast bold style.
+
+Background: Solid YBH gradient (#F7B500 to #EF4136).
+
+Main headline: "Tech Debt Is A Choice" in ultra-bold condensed sans-serif, 
+75pt, left-aligned. Text in dark navy (#1A1A2E) with 2px white stroke.
+
+Subtle isometric code blocks scattered in background (low opacity).
+
+Bottom left: "EP 348" badge in white box.
+Bottom right: "John Doe, CTO" in white text.
+
+Optimized for mobile - text clear at 320px width.
+NO logo.
+```
+
+### Question Format Thumbnail
+
+```
+16:9 YouTube thumbnail, question format.
+
+Background: Deep blue (#0F3460) to teal gradient.
+
+Main headline: "Is Your Cloud Strategy Failing?" in ultra-bold sans-serif,
+68pt, center-aligned. Text in white (#FFFFFF) with 3px dark stroke.
+
+Large question mark icon (isometric style, orange #F17529) on right side.
+
+Bottom left: "EP 348" badge.
+Bottom center: "Guest: Sarah Chen | AWS Expert"
+
+NO logo.
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Create Infographics" icon="chart-network" href="/features/design/infographics">
+    Learn about framework and data visualizations
+  </Card>
+  <Card title="Career Timelines" icon="timeline" href="/features/design/career-timelines">
+    Generate guest career journey graphics
+  </Card>
+</CardGroup>

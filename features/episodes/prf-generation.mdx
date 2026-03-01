@@ -1,0 +1,344 @@
+---
+title: PRF generation
+description: Generate strategic Podcast Repurposing Framework documents to analyze and structure episode content for social distribution
+---
+
+The PRF (Podcast Repurposing Framework) is the strategic foundation of your episode content. It analyzes the conversation, extracts key insights, and structures content for repurposing across social media and marketing channels.
+
+## What is a PRF?
+
+A PRF is an AI-generated document that:
+
+- **Identifies key themes** - Main topics and discussion points
+- **Extracts insights** - Actionable takeaways and quotable moments
+- **Structures content** - Organizes information for easy repurposing
+- **Highlights virality** - Flags content with social media potential
+- **Provides context** - Summarizes guest expertise and episode narrative
+
+<Tip>
+The PRF serves as the "source of truth" for all downstream content generation. High-quality PRFs lead to better hooks, posts, and visuals.
+</Tip>
+
+## How PRF generation works
+
+### Automatic generation
+
+PRF generation starts automatically when you upload a transcript:
+
+<Steps>
+  <Step title="Transcript uploaded">
+    The system receives your transcript via file upload or paste.
+  </Step>
+  
+  <Step title="AI agent activated">
+    The PRF agent analyzes the transcript using the configured AI model (default: Claude 3.5 Sonnet).
+  </Step>
+  
+  <Step title="RAG search performed">
+    The agent searches Pinecone for relevant brand guidelines, past PRF examples, and content templates.
+  </Step>
+  
+  <Step title="PRF document created">
+    A structured analysis document is generated and saved to the episode.
+  </Step>
+  
+  <Step title="Status updated">
+    Episode status changes to "In Progress" and guest status updates to "In Production".
+  </Step>
+</Steps>
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:218-255`
+
+### Agentic mode with RAG
+
+YBH Pulse Content uses **agentic AI** for PRF generation:
+
+<Info>
+**Agentic AI** means the system:
+- Uses semantic search to find relevant context
+- Applies brand voice guidelines automatically
+- Tracks status updates in real-time
+- Verifies facts against the transcript
+</Info>
+
+During generation, you'll see status updates:
+
+1. **Analyzing transcript** - Reading conversation structure
+2. **Retrieving context** - Searching brand guidelines and examples
+3. **Generating PRF** - Creating structured analysis
+4. **Verifying facts** - Cross-checking claims against transcript
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:223-238`
+
+## PRF structure
+
+A typical PRF document includes:
+
+### Executive summary
+
+A 2-3 paragraph overview of the episode:
+
+- Guest background and expertise
+- Main topics covered
+- Key insights or controversial takes
+
+### Core themes
+
+Major discussion themes with supporting quotes:
+
+```markdown
+## Theme: IT Governance as Enablement
+
+**Key Insight**: Governance doesn't mean bureaucracy—it's about enabling teams to move faster with confidence.
+
+**Supporting Quote**: "The best governance frameworks are invisible. Teams don't feel constrained; they feel supported."
+
+**Repurposing Angle**: Contrast "governance as red tape" vs. "governance as acceleration" for LinkedIn infographic.
+```
+
+### Viral moments
+
+Sections flagged for high social media potential:
+
+- Contrarian statements
+- Surprising statistics
+- Memorable analogies
+- Quotable one-liners
+
+### Content opportunities
+
+Suggested content formats:
+
+- Infographic ideas (data points, frameworks, comparisons)
+- Quote cards (pull quotes with context)
+- Video clips (timestamped segments)
+- LinkedIn posts (angles and hooks)
+
+## Editing the PRF
+
+PRFs are fully editable using the TipTap rich text editor:
+
+### Editor features
+
+- **Rich formatting** - Bold, italic, headings, lists
+- **Structure** - Headings, subheadings, bullet points
+- **Highlights** - Mark key sections for easy reference
+- **Comments** - Add inline notes (team collaboration)
+- **Version history** - Sanity tracks all changes
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:470-474`
+
+### When to edit the PRF
+
+<AccordionGroup>
+  <Accordion title="Before generating hooks">
+    Edit the PRF to:
+    - Add missing insights the AI overlooked
+    - Remove off-topic sections
+    - Strengthen viral moments with better framing
+    - Ensure brand voice consistency
+    
+    Hooks are generated from the PRF, so improvements here cascade downstream.
+  </Accordion>
+  
+  <Accordion title="After generating hooks">
+    You can still edit the PRF, but changes won't affect existing hooks unless you regenerate them.
+  </Accordion>
+</AccordionGroup>
+
+<Warning>
+If you make major edits to the PRF (e.g., changing themes or insights), regenerate Hooks and Posts to ensure consistency.
+</Warning>
+
+## Regenerating the PRF
+
+To regenerate the PRF with updated settings or a different model:
+
+<Steps>
+  <Step title="Navigate to PRF tab">
+    Open the episode detail page and click the PRF tab.
+  </Step>
+  
+  <Step title="Click 'Generate PRF' button">
+    The button appears at the top of the tab (even if a PRF already exists).
+  </Step>
+  
+  <Step title="Wait for generation">
+    The existing PRF is replaced. This takes 30-60 seconds depending on transcript length.
+  </Step>
+</Steps>
+
+<Note>
+Regenerating the PRF does **not** automatically regenerate hooks or posts. You'll need to regenerate those separately if you want them to reflect the new PRF.
+</Note>
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:218-255`
+
+## PRF approval workflow
+
+Approve the PRF when it's ready for downstream content generation:
+
+### Approval process
+
+1. **Review content** - Read through the PRF for accuracy and completeness
+2. **Make edits** - Fix any issues or add missing insights
+3. **Click 'Approve'** - Green checkmark appears with timestamp
+4. **Generate downstream** - Hooks and posts can now be generated
+
+### Approval bar states
+
+- **Unapproved** (yellow warning icon): "This PRF hasn't been approved yet."
+- **Approved** (green checkmark): "Approved on [timestamp] by [user]"
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:565-577`
+
+<Info>
+Approval is a **tracking mechanism**, not a lock. You can still edit approved PRFs—the approval status simply helps teams coordinate.
+</Info>
+
+### Revoking approval
+
+If you make significant edits after approval:
+
+1. Click **"Revoke Approval"** in the approval bar
+2. Make your edits
+3. Re-approve when ready
+
+This signals to the team that the PRF is back in draft state.
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:571-577`
+
+## Customizing PRF generation
+
+Control how PRFs are generated through Settings:
+
+### AI model selection
+
+Choose your preferred model:
+
+- **Claude 3.5 Sonnet** (default) - Best balance of quality and speed
+- **GPT-4 Turbo** - Alternative with different writing style
+- **Claude 3 Opus** - Highest quality, slower
+
+**Settings path**: Settings > AI Model
+
+### PRF agent prompt
+
+Customize the PRF generation prompt:
+
+1. Go to **Settings > Agents**
+2. Select **PRF Agent**
+3. Edit the **System Prompt**
+4. Use preset fields like `{episodeNumber}` and `{guestName}`
+5. Save changes
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:130-141`
+
+<Tip>
+Preset fields allow dynamic prompt customization:
+- `{episodeNumber}` - Episode number (e.g., "348")
+- `{guestName}` - Guest name (e.g., "Mark Baker")
+- `{recentStyles}` - Recently used visual styles (for variety)
+</Tip>
+
+## What happens after PRF generation?
+
+Once the PRF is created:
+
+<Steps>
+  <Step title="Episode status updates">
+    Status changes from "Draft" to "In Progress".
+  </Step>
+  
+  <Step title="Guest status updates">
+    Linked guest status changes to "In Production".
+  </Step>
+  
+  <Step title="Hooks generation triggers">
+    The system automatically generates viral hooks from the PRF.
+  </Step>
+  
+  <Step title="Tabs unlock">
+    Posts, Videos, and Visual suggestions become available for generation.
+  </Step>
+</Steps>
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:241-254`
+
+## Fact verification
+
+The PRF agent includes automatic fact-checking:
+
+### What gets verified
+
+- **Statistics and numbers** - Cross-checked against transcript
+- **Direct quotes** - Verified for accuracy
+- **Claims and assertions** - Confirmed the guest actually said it
+
+### Verification process
+
+The agent:
+
+1. Extracts fact-checkable items from generated PRF
+2. Searches the transcript for supporting evidence
+3. Flags unverified or misattributed content
+4. Includes confidence scores
+
+<Warning>
+If fact verification finds critical issues, you'll see a warning notification. Review flagged content before generating downstream assets.
+</Warning>
+
+**File reference**: `src/services/ai.ts:27-49`
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="PRF generation fails">
+    **Possible causes**:
+    - Transcript too short (< 500 words)
+    - AI model API error
+    - Network timeout
+    
+    **Solution**: Check transcript length, try regenerating, or switch AI models in Settings.
+  </Accordion>
+  
+  <Accordion title="PRF quality is poor">
+    **Possible causes**:
+    - Transcript has major transcription errors
+    - Episode lacks clear structure or themes
+    - Default prompt doesn't match content style
+    
+    **Solution**: 
+    - Clean up transcript before regenerating
+    - Customize the PRF agent prompt in Settings
+    - Manually edit the PRF to strengthen weak sections
+  </Accordion>
+  
+  <Accordion title="PRF doesn't match brand voice">
+    **Possible causes**:
+    - Default prompt uses generic language
+    - RAG search didn't find relevant brand examples
+    
+    **Solution**:
+    - Customize the PRF agent system prompt with YBH brand voice examples
+    - Add brand voice guidelines to Pinecone vector database
+    - Manually edit the PRF to match brand tone
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Hooks generation" icon="bolt" href="/features/episodes/hooks-generation">
+    Generate viral hooks from your PRF
+  </Card>
+  <Card title="Social posts" icon="message-square" href="/features/content/social-posts">
+    Create LinkedIn and Instagram content
+  </Card>
+  <Card title="Visual suggestions" icon="image" href="/features/design/infographics">
+    Generate infographics and quote cards
+  </Card>
+  <Card title="Episode overview" icon="folder-open" href="/features/episodes/overview">
+    Return to episode workflow overview
+  </Card>
+</CardGroup>

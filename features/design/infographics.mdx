@@ -1,0 +1,470 @@
+---
+title: Creating Infographics with AI
+description: Generate data visualizations, frameworks, and quote cards from episode content using AI-powered design specifications
+icon: chart-network
+---
+
+## Overview
+
+The Infographic generator transforms complex podcast insights into visual diagrams perfect for LinkedIn, Twitter, and Instagram. The AI analyzes your content and selects optimal layouts, templates, and color systems to communicate ideas effectively.
+
+## Design Types
+
+<CardGroup cols={2}>
+  <Card title="Infographics" icon="chart-network">
+    Data visualizations, frameworks, and concept diagrams for explaining complex ideas, processes, or methodologies
+  </Card>
+  <Card title="Quote Cards" icon="quote-left">
+    Memorable quotes and insights transformed into bold, shareable typographic visuals
+  </Card>
+</CardGroup>
+
+## Getting Started
+
+<Steps>
+  <Step title="Access Design Studio">
+    Navigate to an episode's Assets tab and click **Design Studio**, or right-click text in any editor and select **"Create Visual"**.
+  </Step>
+  
+  <Step title="Enter Content">
+    Paste the text, framework, or quote you want to visualize. You can select text from collapsible panels (Transcript, PRF, Hooks) and copy it to your prompt.
+  </Step>
+  
+  <Step title="Configure Options">
+    Select aspect ratio (16:9 for LinkedIn, 1:1 for Instagram) and resolution (2K recommended).
+  </Step>
+  
+  <Step title="Generate Spec">
+    Click **Generate Spec** to let AI analyze your content and propose a complete design specification.
+  </Step>
+  
+  <Step title="Generate Image">
+    Review the spec (edit the prompt if needed) and click **Generate Image** to create your visual.
+  </Step>
+</Steps>
+
+## AI Specification Generator
+
+The AI analyzes your content using episode context to generate a complete design specification.
+
+### Input Data
+
+```typescript
+// src/hooks/useGeneration.ts
+export interface EpisodeContext {
+  episodeNumber: string
+  guestName: string
+  transcript: string
+  prf?: string
+  hooks?: string
+}
+
+const spec = await generateInfographicSpec(
+  selectedText,      // Your content
+  transcriptText,    // Full transcript for context
+  prfText,          // PRF for insights
+  episodeNumber,
+  guestName,
+  generatedHistory, // Past designs for variety
+  designType        // 'infographic' | 'quote'
+)
+```
+
+### Output Specification
+
+```typescript
+interface InfographicSpec {
+  layout: string           // e.g., "Hub & Spoke", "Pyramid", "Split Screen"
+  template: string         // e.g., "Strategic Framework", "Data Story"
+  title: string           // Main headline (under 10 words)
+  colorSystem: string     // e.g., "ybh_gradient", "blueprint_dark"
+  iconStyle: 'isometric' | 'flat2d'
+  aspectRatio: string     // e.g., "16:9", "1:1"
+  prompt: string          // Complete Nano Banana Pro prompt
+}
+```
+
+<Info>
+  The AI prompt is fully editable before image generation. Customize colors, add specific elements, or adjust the composition to match your vision.
+</Info>
+
+## Infographic Design Database
+
+AI selects from a curated design database stored in Pinecone for semantic retrieval.
+
+### Layout Structures (28 Types)
+
+#### Circular & Cyclical
+
+Ideal for processes, cycles, and continuous workflows.
+
+<CardGroup cols={2}>
+  <Card title="Doom Loop" icon="arrows-spin">
+    Vicious cycles, organizational traps, negative feedback loops
+  </Card>
+  <Card title="Continuous Process Circle" icon="rotate">
+    Ongoing workflows, iterative processes
+  </Card>
+  <Card title="Concentric Circles" icon="bullseye">
+    Layered priorities, nested concepts, target models
+  </Card>
+  <Card title="Hub & Spoke" icon="diagram-project">
+    Central idea with connected elements, ecosystem diagrams
+  </Card>
+</CardGroup>
+
+#### Linear & Sequential
+
+Perfect for step-by-step processes, timelines, and progressions.
+
+<CardGroup cols={2}>
+  <Card title="Horizontal Stage Journey" icon="arrow-right">
+    Multi-stage processes, transformation journeys
+  </Card>
+  <Card title="Vertical Timeline" icon="timeline">
+    Historical progression, career paths
+  </Card>
+  <Card title="Stepped Staircase" icon="stairs">
+    Progressive achievement, maturity models
+  </Card>
+  <Card title="Snake/Zigzag Path" icon="route">
+    Non-linear journeys, complex paths
+  </Card>
+  <Card title="Pipeline/Funnel" icon="filter">
+    Conversion processes, filtering stages
+  </Card>
+</CardGroup>
+
+#### Comparison
+
+Great for evaluating options, showing contrasts, or presenting spectrums.
+
+<CardGroup cols={2}>
+  <Card title="Split Screen" icon="columns">
+    Before/after, this vs. that, two perspectives
+  </Card>
+  <Card title="Quadrant Matrix" icon="grid-2">
+    2×2 decision frameworks (Eisenhower, BCG Matrix)
+  </Card>
+  <Card title="Multi-Column Comparison" icon="table-columns">
+    Feature comparison, vendor evaluation
+  </Card>
+  <Card title="Spectrum/Scale" icon="gauge">
+    Ranges, gradients, intensity levels
+  </Card>
+</CardGroup>
+
+#### Hierarchical
+
+Excellent for organizational structures, priorities, and dependencies.
+
+<CardGroup cols={2}>
+  <Card title="Pyramid (Bottom-Up)" icon="triangle">
+    Foundation-first models, Maslow's hierarchy
+  </Card>
+  <Card title="Inverted Pyramid" icon="triangle">
+    Priority models, decision trees
+  </Card>
+  <Card title="Tree/Branching" icon="sitemap">
+    Decision trees, organizational charts
+  </Card>
+  <Card title="Pillars/Columns" icon="table-columns">
+    Supporting elements, multi-pillar strategies
+  </Card>
+</CardGroup>
+
+#### Grid & Network
+
+Ideal for showing relationships, dashboards, and interconnected systems.
+
+<CardGroup cols={2}>
+  <Card title="Card Grid" icon="grip">
+    Feature sets, capability maps, skill matrices
+  </Card>
+  <Card title="Dashboard Panels" icon="table-cells">
+    KPI displays, metrics overviews
+  </Card>
+  <Card title="Node Network" icon="network-wired">
+    Connected systems, relationship maps
+  </Card>
+  <Card title="Workflow with Decision Points" icon="code-branch">
+    Complex processes with conditional logic
+  </Card>
+</CardGroup>
+
+### Content Templates (10 Types)
+
+AI matches your content to one of these proven templates:
+
+| Template | Best For | Example Use Cases |
+|----------|----------|------------------|
+| **A: Doom Loop / Problem Cycle** | Vicious cycles, organizational traps | Tech debt spiral, vendor lock-in cycle, meeting overload |
+| **B: Strategic Framework** | Methodologies, governance models | IT governance framework, DevOps principles, cloud adoption model |
+| **C: Journey Map** | Transformation stories, career progressions | Digital transformation journey, cloud migration path |
+| **D: Reality Check** | Vendor promises vs. reality, myth-busting | "What vendors say" vs. "What really happens" |
+| **E: Data Story** | Research findings, statistics | "73% of IT leaders report..." with visual breakdown |
+| **F: Comparison Matrix** | Tool selection, vendor evaluation | AWS vs. Azure vs. GCP feature comparison |
+| **G: Workflow Optimization** | Process improvement, automation | Before/after automation workflows |
+| **H: Leadership Playbook** | Best practices, communication strategies | 5 principles of effective IT leadership |
+| **I: Communication Sins** | Pitfalls, anti-patterns | Common mistakes in stakeholder management |
+| **J: System Architecture** | Tech stacks, infrastructure | Modern data platform architecture |
+
+<Warning>
+  The AI considers both content semantics and episode context when selecting templates. A framework mentioned in passing might become a Strategic Framework, while a recurring problem could become a Doom Loop.
+</Warning>
+
+## Quote Cards
+
+Quote cards use a specialized typographic blueprint style optimized for social sharing.
+
+### Design Characteristics
+
+- **Aspect Ratio**: 1:1 (Square) for Instagram, LinkedIn
+- **Color System**: Blueprint Dark (#0F2A44 background)
+- **Typography**: Bold, condensed sans-serif with orange (#F17529) highlights
+- **Style**: Flat 2D, no glow, no 3D effects
+- **Focus**: Quote as sole focal point
+
+### Quote Card Prompt Template
+
+```typescript
+// From DesignStudioPage.tsx:131-141
+const quotePrompt = `1:1 square format quote card in flat 2D typographic blueprint style. 
+Blue-Dark mode background (#0F2A44) with optional subtle alternate band (#123455).
+
+The quote text reads: "${sourceText}" displayed in bold, condensed sans-serif.
+Text color is white (#FFFFFF) with key impactful words highlighted in orange (#F17529).
+The quote is broken into multiple lines for rhythm and readability.
+
+Below the quote, attribution reads "— ${guestName}" in light gray (#B8C7D6).
+
+Footer: "Subscribe and share with your peers" (orange), "Episode ${episodeNum}" (gray),
+"We don't sell. We unsell." (gray).
+
+NO logo in the design.`
+```
+
+<Info>
+  Logo is added post-generation using the Logo Compositor to maintain flexibility in logo placement and size.
+</Info>
+
+## Infographic Prompt Engineering
+
+AI generates different prompts based on visual type:
+
+### Cinematic Style (Default for Infographics)
+
+```typescript
+// Blueprint framework style with isometric elements
+const cinematicPrompt = `16:9 landscape infographic in flat 2D blueprint framework style.
+Blue-Dark mode background (#0F2A44) with header bar (#123455).
+
+Title "${title}" in bold white condensed sans-serif at the top, 
+with key words highlighted in orange (#F17529). No 3D. No glow. No rim lighting.
+
+Content based on: ${sourceText}
+
+Footer: "Subscribe and share with your peers" (orange), 
+"Episode ${episodeNum}" (gray), "When IT leaders rise... so does everything else." (gray).
+
+NO logo in the design.`
+```
+
+### Data Visualization Style
+
+```typescript
+// Editorial style for data-heavy content
+const datavizPrompt = `16:9 landscape infographic with light gray background (#F5F5F5).
+Title "${title}" in bold dark text (#333333) at the top.
+
+Professional data visualization with white content panels (#FFFFFF), 
+clean editorial style. Orange (#F17529) accent for key data points.
+
+Content based on: ${sourceText}
+
+Footer: "Subscribe and share with your peers" (orange), 
+"Episode ${episodeNum}" (gray), "Real IT leaders. Real talk." (gray).
+
+NO logo in the design.`
+```
+
+<Note>
+  The AI automatically selects between cinematic (dark, framework-focused) and dataviz (light, data-focused) styles based on content analysis.
+</Note>
+
+## Generation History & Variety
+
+AI tracks generation history to ensure visual diversity across an episode's assets.
+
+### History Tracking
+
+```typescript
+// From DesignStudioPage.tsx:254-259
+const generatedHistory = episode?.generatedAssets?.map(a => {
+  const spec = a.spec
+  if (!spec) return null
+  return `${spec.template || 'unknown'}|${spec.layout || 'unknown'}|${spec.colorSystem || 'unknown'}`
+}).filter(Boolean) as string[] || []
+```
+
+### Variety Algorithm
+
+1. **First Asset**: AI has full creative freedom
+2. **Subsequent Assets**: AI avoids repeating template+layout+colorSystem combinations
+3. **After 5+ Assets**: AI prioritizes least-used templates
+
+<Info>
+  If you need to regenerate with the same style, you can manually edit the spec prompt before generating the image.
+</Info>
+
+## Color System Reference
+
+AI selects from these predefined color systems:
+
+### 1. YBH Gradient (Primary)
+
+```css
+--ybh-yellow: #F7B500
+--ybh-orange: #F17529
+--ybh-red: #EF4136
+```
+
+Best for: Brand-forward content, announcements, highlights
+
+### 2. Blueprint Dark (Cinematic)
+
+```css
+--bg-primary: #0F2A44
+--bg-secondary: #123455
+--text-primary: #FFFFFF
+--accent: #F17529
+```
+
+Best for: Frameworks, technical diagrams, quote cards
+
+### 3. Blueprint Light (Editorial)
+
+```css
+--bg-primary: #F5F5F5
+--text-primary: #333333
+--content-panel: #FFFFFF
+--accent: #F17529
+```
+
+Best for: Data visualizations, statistics, research findings
+
+### 4. Problem/Solution
+
+```css
+--problem: #EF4136 → #F17529 (red to orange)
+--solution: #27AE60 → #3498DB (green to blue)
+```
+
+Best for: Before/after, problem/solution, transformation journeys
+
+### 5. Corporate Professional
+
+```css
+--primary: #16213E (navy)
+--secondary: #0F3460 (teal)
+--accent: #F17529 (orange)
+```
+
+Best for: Enterprise content, professional frameworks, leadership topics
+
+## Editing Generated Images
+
+After generation, you can refine images using Nano Banana Pro's transformation feature.
+
+### Transformation Workflow
+
+```typescript
+// src/services/kieai.ts
+await createTask({
+  prompt: "Adjust colors to be more vibrant",
+  imageInput: [generatedImageUrl],  // Up to 8 reference images
+  aspectRatio: '16:9',
+  resolution: '2K'
+})
+```
+
+<Steps>
+  <Step title="Download Original">
+    Click the download icon on the generated image
+  </Step>
+  
+  <Step title="Describe Changes">
+    Write a prompt describing modifications: "Make text larger", "Change background to light gray", "Add more contrast"
+  </Step>
+  
+  <Step title="Upload as Reference">
+    Future update will support direct transformation in UI
+  </Step>
+</Steps>
+
+<Warning>
+  Image transformation is currently done via API directly. UI support for transformations is planned for a future release.
+</Warning>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Be Specific" icon="bullseye">
+    Include key terms, numbers, and frameworks in your input text. AI performs semantic analysis on your content.
+  </Card>
+  
+  <Card title="Use Episode Context" icon="link">
+    Always link an episode when possible. AI uses transcript and PRF for richer context and better layouts.
+  </Card>
+  
+  <Card title="Edit the Prompt" icon="pen">
+    Review and customize the AI-generated prompt before image creation. Add specific visual elements or adjust colors.
+  </Card>
+  
+  <Card title="Check History" icon="clock-rotate-left">
+    Review the History panel to see what's already been created and avoid repetitive designs.
+  </Card>
+</CardGroup>
+
+## Common Use Cases
+
+### Framework Visualization
+
+**Input**: "The ITSM maturity model has 5 levels: Ad Hoc, Repeatable, Defined, Managed, and Optimized."
+
+**AI Selection**:
+- Layout: Stepped Staircase
+- Template: Strategic Framework
+- Color: Corporate Professional
+- Icon Style: Isometric
+
+### Data Story
+
+**Input**: "Our research found that 73% of IT leaders struggle with vendor management, 68% report budget overruns, and 54% face technical debt challenges."
+
+**AI Selection**:
+- Layout: Card Grid or Dashboard Panels
+- Template: Data Story
+- Color: Blueprint Light
+- Icon Style: Flat 2D
+
+### Problem Cycle
+
+**Input**: "Tech debt leads to slower delivery, which leads to pressure to cut corners, which creates more tech debt."
+
+**AI Selection**:
+- Layout: Doom Loop
+- Template: Problem Cycle
+- Color: Problem/Solution (red progression)
+- Icon Style: Isometric
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="YouTube Thumbnails" icon="image" href="/features/design/thumbnails">
+    Learn about thumbnail generation for video content
+  </Card>
+  <Card title="Career Timelines" icon="timeline" href="/features/design/career-timelines">
+    Create guest career journey visualizations
+  </Card>
+</CardGroup>

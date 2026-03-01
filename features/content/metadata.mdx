@@ -1,0 +1,264 @@
+---
+title: Episode Metadata Generation
+description: Generate comprehensive episode metadata for podcast pages including titles, descriptions, takeaways, and timestamped show notes
+icon: file-text
+---
+
+## Overview
+
+The Episode Metadata Generator creates publication-ready content for your podcast website (Sanity CMS). It analyzes the episode transcript and PRF to generate:
+
+- Episode title (with episode number and guest name)
+- Short description (1-2 sentences for previews)
+- Long description ("On this episode..." content)
+- 3 key takeaways
+- Timestamped show notes
+
+<Note>
+Metadata generation uses an **agentic AI workflow** with real-time progress updates. The AI analyzes your transcript to extract the most valuable content.
+</Note>
+
+## Generation Workflow
+
+<Steps>
+  <Step title="Navigate to episode">
+    Open the episode detail page for the episode you want to generate metadata for.
+  </Step>
+  
+  <Step title="Ensure prerequisites">
+    - Transcript must be uploaded
+    - PRF generation recommended (provides better context)
+    - Episode number and guest name must be set
+  </Step>
+  
+  <Step title="Generate metadata">
+    Click the **"Generate Metadata"** button in the episode header or metadata section.
+    
+    The AI will:
+    1. Analyze the full transcript
+    2. Extract key topics and insights
+    3. Create timestamped segments
+    4. Generate title variations
+    5. Write descriptions optimized for SEO
+  </Step>
+  
+  <Step title="Review generated content">
+    A modal displays the generated metadata:
+    
+    - **Title**: Episode number, guest name, and topic hook
+    - **Short Description**: Concise 1-2 sentence summary
+    - **Long Description**: Full "On this episode..." paragraph
+    - **Key Takeaways**: Exactly 3 bullet points
+    - **Show Notes**: Timestamped list of topics discussed
+  </Step>
+  
+  <Step title="Edit if needed">
+    All fields are editable. Refine the content to match your brand voice.
+  </Step>
+  
+  <Step title="Push to Sanity">
+    Click **"Push to Podcast CMS"** to save the metadata to your Sanity episode document.
+    
+    This creates or updates the episode page on your podcast website.
+  </Step>
+</Steps>
+
+## Metadata Fields
+
+### Title
+
+Format: `Episode {number}: {Guest Name} - {Hook}`
+
+**Example:**
+```
+Episode 348: Mark Baker - Breaking the Tech Debt Doom Loop
+```
+
+The title hook captures the most compelling angle from the conversation.
+
+### Short Description
+
+1-2 sentences optimized for:
+- Social media previews
+- Email subject lines
+- Episode list pages
+
+**Example:**
+```
+Mark Baker reveals why most IT organizations are trapped in a vicious 
+cycle of technical debt. He shares the proven framework his team used 
+to break free.
+```
+
+### Long Description
+
+A full paragraph (150-250 words) for the episode page. Structured as:
+
+1. **Opening hook** - Most interesting insight
+2. **Context** - Guest's background and credibility
+3. **Discussion topics** - What you covered
+4. **Call to action** - Why listeners should tune in
+
+### Key Takeaways
+
+Exactly **3 bullet points** that:
+- Highlight actionable insights
+- Use specific examples or data points
+- Lead with the benefit or outcome
+
+**Example:**
+```
+• The "doom loop" pattern that keeps 73% of IT teams stuck in 
+  reactive mode
+• Why governance models fail without executive buy-in (and how to get it)
+• Mark's 3-phase transformation framework that reduced incidents by 40%
+```
+
+### Show Notes
+
+Timestamped list of topics discussed. Format:
+
+```
+[00:00] Introduction and Mark's background at Acme Corp
+[05:23] The technical debt crisis in enterprise IT
+[12:45] Breaking the doom loop: phase 1 - visibility
+[18:30] Getting executive buy-in for transformation
+[25:15] Real results: 40% reduction in incidents
+[31:00] Advice for IT leaders starting the journey
+```
+
+<Tip>
+Show notes are AI-generated but **approximate**. Verify timestamps against your actual episode audio before publishing.
+</Tip>
+
+## Progress Tracking
+
+During generation, watch the progress indicator:
+
+<Tabs>
+  <Tab title="Analyzing Transcript">
+    The AI reads through the full transcript to identify:
+    - Key topics and themes
+    - Guest credentials and background
+    - Most compelling insights
+    - Natural segment breaks
+    
+    **Duration:** 10-15 seconds
+  </Tab>
+  
+  <Tab title="Extracting Insights">
+    The AI identifies:
+    - Memorable quotes
+    - Data points and statistics
+    - Actionable frameworks
+    - Story highlights
+    
+    **Duration:** 5-10 seconds
+  </Tab>
+  
+  <Tab title="Generating Metadata">
+    The AI writes:
+    - Title with optimal hook
+    - Both descriptions
+    - 3 key takeaways
+    - Timestamped show notes
+    
+    **Duration:** 15-20 seconds
+  </Tab>
+  
+  <Tab title="Finalizing">
+    The AI:
+    - Validates all required fields
+    - Checks character limits
+    - Ensures brand voice consistency
+    
+    **Duration:** 2-3 seconds
+  </Tab>
+</Tabs>
+
+## Pushing to Podcast CMS
+
+Once metadata is generated and reviewed:
+
+1. Click **"Push to Podcast CMS"**
+2. The system:
+   - Looks up your podcast episode by episode number
+   - Creates a new episode document (if doesn't exist)
+   - Updates existing episode (if already exists)
+   - Preserves any manually added content (audio files, images)
+
+<Info>
+The push operation is **non-destructive**. It only updates metadata fields, leaving other episode content (like audio URLs) intact.
+</Info>
+
+## Best Practices
+
+### Before Generation
+
+- **Edit the transcript** - Remove filler words, fix names, clean up rough spots
+- **Generate PRF first** - Provides richer context for the AI
+- **Set episode number** - Required for proper CMS organization
+- **Set guest name** - Ensures accurate attribution
+
+### After Generation
+
+- **Review the title** - Does it capture the most compelling angle?
+- **Check takeaways** - Are they specific and actionable?
+- **Verify timestamps** - Approximate times should be close but may need adjustment
+- **Match brand voice** - Edit descriptions to sound like your show
+
+### SEO Optimization
+
+- **Title**: Include guest name and key topic (60-70 characters)
+- **Short description**: Front-load the most interesting insight
+- **Long description**: Use natural language, include relevant keywords
+- **Show notes**: Use descriptive phrases, not just topic labels
+
+## Regenerating Metadata
+
+Need to start over?
+
+1. Click **"Generate Metadata"** again
+2. The AI creates fresh content from the transcript
+3. Previous metadata is replaced (local only - not pushed until you save)
+
+<Warning>
+If you've already pushed metadata to Sanity and customized it there, regenerating and pushing again will **overwrite** those changes.
+</Warning>
+
+## Troubleshooting
+
+### "Transcript required" error
+
+Metadata generation requires a transcript. Upload one first.
+
+### "Episode number required" error
+
+Set the episode number in the episode metadata section before generating.
+
+### Timestamps don't match audio
+
+Timestamps are AI-generated estimates. Verify against your actual audio:
+
+1. Play your episode audio
+2. Note actual timestamps for key topics
+3. Edit the show notes to match
+
+### Title too long
+
+Edit the title to 60-70 characters for optimal SEO:
+- Shorten the hook phrase
+- Use guest first name only (if clear who they are)
+- Remove episode number prefix if needed
+
+### Takeaways too generic
+
+Edit to make them more specific:
+- Add data points or statistics
+- Include the guest's name
+- Lead with the outcome or benefit
+
+## Related Features
+
+- [Social Posts](/features/content/social-posts) - Generate LinkedIn and Instagram posts
+- [Rich Text Editor](/features/content/rich-text-editor) - Edit descriptions with formatting

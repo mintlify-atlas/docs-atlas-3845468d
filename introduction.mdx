@@ -1,0 +1,166 @@
+---
+title: Introduction
+description: Transform podcast episodes into social-ready content with AI-powered workflows
+---
+
+<Frame>
+  <img src="/images/hero-pulse-content.png" alt="YBH Pulse Content" />
+</Frame>
+
+## Welcome to YBH Pulse Content
+
+YBH Pulse Content is a centralized content production dashboard that transforms podcast transcripts into production-ready social assets. Built for the You've Been Heard podcast team, it streamlines the entire content pipeline from transcript upload to final brand kit delivery.
+
+<CardGroup cols={2}>
+  <Card title="AI-Powered Generation" icon="sparkles">
+    Generate PRF documents, viral hooks, social posts, and visual assets using advanced AI with fact-checking and brand consistency.
+  </Card>
+  <Card title="Visual Design Studio" icon="image">
+    Create data visualizations, cinematic infographics, quote cards, and career timelines with intelligent spec generation.
+  </Card>
+  <Card title="Rich Text Editing" icon="pen-to-square">
+    Edit all generated content with a Notion-like editor featuring formatting, tables, highlights, and inline approvals.
+  </Card>
+  <Card title="Guest Brand Kits" icon="gift">
+    Deliver premium brand kits to guests with PRF summaries, viral hooks, visual assets, and one-click downloads.
+  </Card>
+</CardGroup>
+
+## What is YBH Pulse Content?
+
+Pulse Content eliminates fragmented workflows by consolidating the entire content production process into a single platform:
+
+- **Upload transcripts** edited from Adobe Podcast
+- **Auto-generate** PRF documents and viral hooks
+- **Create social posts** for LinkedIn, Instagram, and other platforms
+- **Generate visual assets** including infographics, quote cards, and thumbnails
+- **Edit everything inline** with rich text editing before export
+- **Share brand kits** with guests via secure links
+
+<Note>
+  **Transcript is the single source of truth.** All content generation includes fact-checking against the original transcript to prevent hallucinations and ensure accuracy.
+</Note>
+
+## Key Features
+
+### Content Generation Pipeline
+
+Automatic generation workflow triggered by transcript upload:
+
+1. **PRF (Podcast Repurposing Framework)** - Comprehensive episode analysis
+2. **Viral Hooks** - Attention-grabbing soundbites for social media
+3. **Episode Metadata** - Titles, descriptions, key takeaways, and show notes
+4. **Social Posts** - Platform-specific content for LinkedIn and Instagram
+5. **Video Clips** - Short-form clip suggestions with timestamps
+6. **Visual Assets** - AI-designed infographics, quote cards, and thumbnails
+
+### Design Studio
+
+Create professional visual assets with AI assistance:
+
+- **Parallel Suggestions** - Generate 4 data visualizations + 4 cinematic infographics + 2 quote cards simultaneously
+- **Smart Spec Generation** - AI proposes layouts, templates, color systems, and prompts
+- **Variety Tracking** - Ensures visual diversity across episodes by analyzing generation history
+- **Image Generation** - Powered by Kie.ai Nano Banana Pro for high-quality renders
+- **Logo Compositing** - Add YBH branding to assets before brand kit approval
+
+### Brand Consistency
+
+<Info>
+  All generated content follows **YBH Brand Guidelines**:
+  - Voice: "We don't sell. We unsell." - Anti-spin, pro-IT leader
+  - Colors: Selective Yellow (#F7B500), Crusta Orange (#F17529), Sunset Orange Red (#EF4136)
+  - Typography: Fonseca (headlines), Montserrat (body)
+  - Target audience: IT leaders (CIOs, CTOs, IT Directors)
+</Info>
+
+### Approval Workflows
+
+Content review and approval system:
+
+- **PRF Approval** - Mark PRF as approved before generating downstream content
+- **Hooks Approval** - Approve viral hooks for use in social posts
+- **LinkedIn Approval** - Approve posts before scheduling or sharing
+- **Brand Kit Curation** - Select and approve assets for guest delivery
+- **Spell Check** - AI-powered grammar and spelling correction
+- **Fact Check** - Validate content accuracy against transcript
+
+## Tech Stack
+
+Pulse Content is built on modern, scalable technologies:
+
+<CardGroup cols={3}>
+  <Card title="Frontend" icon="react">
+    React + TypeScript deployed on Cloudflare Pages
+  </Card>
+  <Card title="Backend" icon="server">
+    Cloudflare Workers for serverless API endpoints
+  </Card>
+  <Card title="CMS" icon="database">
+    Sanity.io for episodes and generated content
+  </Card>
+  <Card title="Editor" icon="keyboard">
+    TipTap rich text editor with custom extensions
+  </Card>
+  <Card title="AI" icon="brain">
+    Claude, GPT-4, and custom agents via AI SDK
+  </Card>
+  <Card title="Images" icon="image">
+    Kie.ai Nano Banana Pro for visual generation
+  </Card>
+</CardGroup>
+
+## Authentication
+
+Pulse Content uses secure email/password authentication restricted to `@popularit.net` accounts:
+
+- **JWT-based sessions** with 24-hour expiration
+- **Role-based access control** (Admin, Designer, User)
+- **Rate limiting** on login attempts (5 attempts per 15 minutes)
+- **Password reset** via email with Resend API
+- **Public share links** for guest brand kit pages
+
+<Warning>
+  All team members have equal access to episodes and content. Guest brand kit pages (`/share/:token`) remain public and don't require authentication.
+</Warning>
+
+## Use Cases
+
+### Content Production Team
+
+- Upload podcast transcripts and generate content automatically
+- Edit PRF documents and viral hooks with rich formatting
+- Create platform-specific social posts with AI assistance
+- Generate visual assets for social media campaigns
+- Track content status across the production pipeline
+
+### Designers
+
+- Generate visual specs based on episode content
+- Create infographics with intelligent layout suggestions
+- Composite YBH branding onto assets
+- Export high-resolution images for distribution
+- Maintain visual consistency across episodes
+
+### Guests
+
+- Access personalized brand kits via secure share links
+- View PRF summaries and viral hooks from their episode
+- Download visual assets for personal promotion
+- Share career timeline visualizations on LinkedIn
+- Export complete brand kits as ZIP files
+
+## Getting Started
+
+Ready to start creating content? Follow our [Quickstart Guide](/quickstart) to:
+
+1. Sign in to your account
+2. Create your first episode
+3. Upload a transcript
+4. Generate content automatically
+5. Edit and approve your content
+6. Share a brand kit with your guest
+
+<Card title="Next: Quick Start" icon="rocket" href="/quickstart">
+  Follow step-by-step instructions to create your first episode and generate content.
+</Card>

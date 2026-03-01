@@ -1,0 +1,600 @@
+---
+title: Pinecone integration
+description: Configure Pinecone vector database for RAG-powered content generation
+---
+
+Pinecone provides vector database storage for Retrieval-Augmented Generation (RAG). Pulse Content uses Pinecone to store brand guidelines, infographic design patterns, and writing rules, enabling AI to generate content that's consistent with YBH brand standards.
+
+## Overview
+
+**Purpose:** Knowledge base for AI-powered content generation
+
+**Stored content:**
+- Brand manual (voice, colors, typography)
+- Infographic design database (28 layouts, 10 templates)
+- Anti-AI writing guidelines
+- Brand narrative and messaging
+- Past content examples
+
+**Embedding model:** `text-embedding-3-small` via OpenRouter
+
+## Setup
+
+<Steps>
+  <Step title="Create Pinecone account">
+    Sign up at https://www.pinecone.io/
+  </Step>
+  
+  <Step title="Create index">
+    **Index name:** `pulse-content-kb`
+    
+    **Dimensions:** 1536 (for `text-embedding-3-small`)
+    
+    **Metric:** Cosine similarity
+    
+    **Pods:** Starter (1 pod) or scale as needed
+  </Step>
+  
+  <Step title="Get API credentials">
+    Navigate to **API Keys** in Pinecone dashboard:
+    - Copy API key
+    - Copy index host URL
+  </Step>
+  
+  <Step title="Add to environment">
+    **Local development (.dev.vars):**
+    ```bash
+    PINECONE_API_KEY=your-pinecone-api-key-here
+    PINECONE_HOST=https://your-index-name.svc.region.pinecone.io
+    ```
+    
+    **Production:**
+    ```bash
+    wrangler secret put PINECONE_API_KEY
+    # Set PINECONE_HOST in Cloudflare dashboard
+    ```
+  </Step>
+  
+  <Step title="Index knowledge base">
+    Upload brand guidelines and design patterns:
+    ```bash
+    npm run index-knowledge-base
+    ```
+  </Step>
+</Steps>
+
+## API endpoints
+
+### Query knowledge base
+
+**Endpoint:** `POST /api/pinecone/query`
+
+**Request:**
+```json
+{
+  "query": "YBH brand colors and typography",
+  "topK": 5,
+  "filter": {
+    "source": "brand-manual"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "id": "brand-manual-12",
+      "score": 0.92,
+      "text": "Primary YBH colors: Yellow #F7B500, Orange #F17529, Red #EF4136...",
+      "source": "brand-manual",
+      "section": "Color Palette"
+    }
+  ]
+}
+```
+
+### Index documents
+
+**Endpoint:** `POST /api/pinecone/index`
+
+**Request:**
+```json
+{
+  "documents": [
+    {
+      "id": "brand-manual-1",
+      "text": "YBH brand voice: Anti-spin, pro-IT leader...",
+      "source": "brand-manual",
+      "section": "Brand Voice"
+    }
+  ]
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "indexed": 1,
+  "message": "Successfully indexed 1 documents"
+}
+```
+
+### Clear knowledge base
+
+**Endpoint:** `POST /api/pinecone/clear`
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Knowledge base cleared"
+}
+```
+
+<Warning>
+  Clearing the knowledge base deletes all indexed documents. You'll need to reindex before AI generation works properly.
+</Warning>
+
+## Usage in Pulse Content
+
+### Query brand guidelines
+
+```typescript
+import { queryBrandGuidelines } from '@/services/pinecone'
+
+const results = await queryBrandGuidelines(
+  'What are the YBH brand colors and fonts?'
+)
+
+// Returns top 3 relevant sections from brand manual
+```
+
+### Query infographic designs
+
+```typescript
+import { queryInfographicDesign } from '@/services/pinecone'
+
+const results = await queryInfographicDesign(
+  'Show me layouts for process workflows and cycles'
+)
+
+// Returns top 5 relevant design patterns
+```
+
+### Get generation context
+
+```typescript
+import { getGenerationContext } from '@/services/pinecone'
+
+const context = await getGenerationContext(
+  'Generate a LinkedIn post about tech debt',
+  ['brand', 'writing', 'narrative']
+)
+
+// Returns formatted context block with relevant guidelines
+// to include in AI prompt
+```
+
+### Index new content
+
+```typescript
+import { indexDocuments, chunkDocument } from '@/services/pinecone'
+
+const brandManual = await readFile('brand-manual.md', 'utf-8')
+const chunks = chunkDocument(brandManual, 'brand-manual', {
+  maxChunkSize: 800,
+  overlap: 100,
+})
+
+await indexDocuments(chunks)
+```
+
+## Document sources
+
+Knowledge base documents are organized by source:
+
+### Brand manual
+
+**Source ID:** `brand-manual`
+
+**Content:**
+- Brand voice and messaging
+- Color palette (primary, secondary, tertiary)
+- Typography (Fonseca headlines, Montserrat body)
+- UI patterns (buttons, cards, progress bars)
+- Target audience (IT leaders)
+
+**Sections:**
+- Brand Voice
+- Color Palette
+- Typography
+- UI Patterns
+- Target Audience
+
+### Infographic design database
+
+**Source ID:** `infographic-design-database`
+
+**Content:**
+- 28 layout structures (circular, linear, comparison, hierarchical, grid, network)
+- 10 content templates (doom loop, strategic framework, journey map, etc.)
+- Visual style system (icons, color systems, typography, spacing)
+- Quality standards
+
+**Sections:**
+- Circular & Cyclical Layouts
+- Linear & Sequential Layouts
+- Comparison Layouts
+- Hierarchical Layouts
+- Grid Layouts
+- Network & Relationship Layouts
+- Specialized Layouts
+- Content Templates
+- Visual Style System
+- Quality Standards
+
+### Anti-AI writing guide
+
+**Source ID:** `anti-ai-writing-guide`
+
+**Content:**
+- Natural language patterns
+- Conversational tone guidelines
+- Avoid AI tells (overused phrases, corporate jargon)
+- Sentence variety and rhythm
+- Authentic voice preservation
+
+**Sections:**
+- Natural Language
+- Conversational Tone
+- Avoiding AI Tells
+- Sentence Variety
+- Authentic Voice
+
+### Brand narrative
+
+**Source ID:** `brand-narrative`
+
+**Content:**
+- Core messaging ("We don't sell. We unsell.")
+- Value propositions
+- Sound bites and hooks
+- Positioning statements
+
+**Sections:**
+- Core Messaging
+- Value Propositions
+- Sound Bites
+- Positioning
+
+## Vector search
+
+### Semantic similarity
+
+Pinecone uses cosine similarity to find relevant content:
+
+```typescript
+const results = await queryKnowledgeBase(
+  'How should I write LinkedIn posts?',
+  { topK: 5, filter: { source: 'anti-ai-writing-guide' } }
+)
+
+// Returns documents with highest similarity scores:
+// [{ score: 0.95, text: '...' }, { score: 0.87, text: '...' }]
+```
+
+### Filtering
+
+Filter results by source or section:
+
+```typescript
+// Only brand manual results
+await queryKnowledgeBase(query, {
+  filter: { source: 'brand-manual' }
+})
+
+// Only specific section
+await queryKnowledgeBase(query, {
+  filter: { source: 'infographic-design-database', section: 'Circular & Cyclical Layouts' }
+})
+```
+
+### Top-K retrieval
+
+```typescript
+// Get 3 most relevant results
+await queryKnowledgeBase(query, { topK: 3 })
+
+// Get 10 results for comprehensive context
+await queryKnowledgeBase(query, { topK: 10 })
+```
+
+## Document chunking
+
+Large documents are split into chunks for optimal retrieval:
+
+### Chunk parameters
+
+<ParamField path="maxChunkSize" type="number" default="800">
+  Maximum characters per chunk. Keep under 1000 for best embedding quality.
+</ParamField>
+
+<ParamField path="overlap" type="number" default="100">
+  Characters to overlap between consecutive chunks. Preserves context across chunk boundaries.
+</ParamField>
+
+### Chunking algorithm
+
+```typescript
+const chunks = chunkDocument(text, 'brand-manual', {
+  maxChunkSize: 800,
+  overlap: 100,
+})
+
+// Algorithm:
+// 1. Split by single newlines
+// 2. Detect section headers (ALL CAPS, numbered items, markdown headers)
+// 3. Accumulate lines until maxChunkSize reached
+// 4. Save chunk with source and section metadata
+// 5. Keep overlap words from previous chunk
+// 6. Continue with next chunk
+```
+
+### Example chunking
+
+**Input document:**
+```markdown
+BRAND VOICE
+
+YBH brand voice is anti-spin, anti-transactional, and pro-IT leader.
+We don't sell. We unsell. Our target audience is IT leaders: CIOs, CTOs, IT Directors.
+
+COLOR PALETTE
+
+Primary colors:
+- Yellow: #F7B500
+- Orange: #F17529
+- Red: #EF4136
+```
+
+**Output chunks:**
+```javascript
+[
+  {
+    id: 'brand-manual-0',
+    text: 'BRAND VOICE\n\nYBH brand voice is anti-spin...',
+    source: 'brand-manual',
+    section: 'Brand Voice'
+  },
+  {
+    id: 'brand-manual-1',
+    text: 'COLOR PALETTE\n\nPrimary colors:\n- Yellow: #F7B500...',
+    source: 'brand-manual',
+    section: 'Color Palette'
+  }
+]
+```
+
+## Embedding generation
+
+### OpenRouter integration
+
+Pulse Content uses OpenRouter to generate embeddings:
+
+```typescript
+import OpenAI from 'openai'
+
+const openai = new OpenAI({
+  apiKey: env.OPENROUTER_API_KEY,
+  baseURL: 'https://openrouter.ai/api/v1',
+})
+
+const response = await openai.embeddings.create({
+  model: 'openai/text-embedding-3-small',
+  input: 'YBH brand voice is anti-spin...',
+})
+
+const embedding = response.data[0].embedding // [1536 floats]
+```
+
+### Cost optimization
+
+**Embeddings are cheap:**
+- Under $0.01 per 1M tokens
+- Cache query embeddings to avoid repeat costs
+- Batch embed multiple documents
+
+```typescript
+// Batch embed multiple chunks
+const texts = chunks.map(c => c.text)
+const response = await openai.embeddings.create({
+  model: 'openai/text-embedding-3-small',
+  input: texts, // Array of strings
+})
+
+const embeddings = response.data.map(d => d.embedding)
+```
+
+## Upsert to Pinecone
+
+### Single vector
+
+```typescript
+await fetch(`${env.PINECONE_HOST}/vectors/upsert`, {
+  method: 'POST',
+  headers: {
+    'Api-Key': env.PINECONE_API_KEY,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    vectors: [
+      {
+        id: 'brand-manual-0',
+        values: embedding, // [1536 floats]
+        metadata: {
+          text: 'YBH brand voice...',
+          source: 'brand-manual',
+          section: 'Brand Voice',
+        },
+      },
+    ],
+  }),
+})
+```
+
+### Batch upsert
+
+```typescript
+const vectors = chunks.map((chunk, i) => ({
+  id: chunk.id,
+  values: embeddings[i],
+  metadata: {
+    text: chunk.text,
+    source: chunk.source,
+    section: chunk.section,
+  },
+}))
+
+// Upsert in batches of 100
+for (let i = 0; i < vectors.length; i += 100) {
+  const batch = vectors.slice(i, i + 100)
+  await fetch(`${env.PINECONE_HOST}/vectors/upsert`, {
+    method: 'POST',
+    headers: {
+      'Api-Key': env.PINECONE_API_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ vectors: batch }),
+  })
+}
+```
+
+## Query Pinecone
+
+### Similarity search
+
+```typescript
+// 1. Generate query embedding
+const queryResponse = await openai.embeddings.create({
+  model: 'openai/text-embedding-3-small',
+  input: 'YBH brand colors',
+})
+const queryEmbedding = queryResponse.data[0].embedding
+
+// 2. Query Pinecone
+const searchResponse = await fetch(`${env.PINECONE_HOST}/query`, {
+  method: 'POST',
+  headers: {
+    'Api-Key': env.PINECONE_API_KEY,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    vector: queryEmbedding,
+    topK: 5,
+    includeMetadata: true,
+    filter: { source: { $eq: 'brand-manual' } },
+  }),
+})
+
+const { matches } = await searchResponse.json()
+// matches: [{ id, score, metadata: { text, source, section } }]
+```
+
+## Monitoring
+
+### Index statistics
+
+```typescript
+const statsResponse = await fetch(`${env.PINECONE_HOST}/describe_index_stats`, {
+  method: 'POST',
+  headers: {
+    'Api-Key': env.PINECONE_API_KEY,
+    'Content-Type': 'application/json',
+  },
+})
+
+const stats = await statsResponse.json()
+// { dimension: 1536, indexFullness: 0.2, totalVectorCount: 1234 }
+```
+
+### Query performance
+
+```typescript
+import { logger } from '@/utils/logger'
+
+const start = Date.now()
+const results = await queryKnowledgeBase(query)
+const duration = Date.now() - start
+
+logger.info('[Pinecone] Query completed', {
+  query,
+  resultCount: results.length,
+  duration,
+})
+```
+
+## Best practices
+
+- **Chunk strategically:** Keep chunks under 800 characters for focused retrieval
+- **Use overlap:** 100-character overlap preserves context across chunks
+- **Filter by source:** Narrow results to relevant document types
+- **Include metadata:** Store source and section for better context
+- **Cache embeddings:** Avoid regenerating embeddings for the same text
+- **Batch operations:** Upsert and query in batches for better performance
+- **Monitor usage:** Track query counts and latency
+- **Update regularly:** Reindex when brand guidelines or design patterns change
+
+## Troubleshooting
+
+### Connection errors
+
+```
+Error: Failed to connect to Pinecone
+```
+
+**Solution:** Verify `PINECONE_HOST` includes full URL with protocol:
+```bash
+echo $PINECONE_HOST
+# Should be: https://your-index.svc.region.pinecone.io
+```
+
+### Dimension mismatch
+
+```
+Error: Vector dimension 768 does not match index dimension 1536
+```
+
+**Solution:** Ensure embedding model matches index:
+- Index created with 1536 dimensions
+- Use `text-embedding-3-small` (1536 dimensions)
+- Do not use `text-embedding-ada-002` (768 dimensions)
+
+### No results returned
+
+**Causes:**
+- Knowledge base not indexed
+- Query too specific
+- Wrong source filter
+
+**Solutions:**
+```bash
+# Reindex knowledge base
+npm run index-knowledge-base
+
+# Broaden query
+await queryKnowledgeBase('YBH brand', { topK: 10 })
+
+# Remove filters
+await queryKnowledgeBase(query, { topK: 10 }) // No filter
+```
+
+### Slow queries
+
+**Optimization:**
+- Reduce `topK` (fewer results = faster query)
+- Use filters to narrow search space
+- Cache frequent queries
+- Upgrade to performance pods

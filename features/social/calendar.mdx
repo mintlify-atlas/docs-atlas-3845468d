@@ -1,0 +1,302 @@
+---
+title: Social Media Calendar
+description: View, filter, and manage scheduled social posts across all connected platforms
+---
+
+The Social Calendar provides a unified view of all scheduled social media posts across LinkedIn, Instagram, Twitter, TikTok, and YouTube. Review content, check approval status, edit copy, and track publication status from a single interface.
+
+## Overview
+
+The calendar displays posts in two views:
+- **Month View:** Grid calendar with posts by day (desktop default)
+- **Week View:** List view with detailed post cards (mobile default)
+
+**Data Source:** Late.com API (social media scheduling platform)
+
+**Route:** `/social/calendar`
+
+## Calendar Views
+
+### Month View
+
+**Layout:**
+- 7-column grid (Sunday - Saturday)
+- 6 rows (42 days including padding)
+- Previous/next month days shown in muted gray
+- Today highlighted with accent color
+
+**Per Day Cell:**
+- Date number (bold if current month)
+- Up to 3 post previews
+- "+X more" link if >3 posts
+- Empty state if no posts
+
+**Post Preview Card:**
+- Time (12-hour format)
+- Approval status badge
+- Post status label
+- Content preview (2 lines, truncated)
+- Click to open post detail
+
+**Overflow Drawer:**
+Clicking "+X more" opens a side drawer with:
+- All posts for that day
+- Full post cards with actions
+- Scroll for many posts
+- Close with X or backdrop click
+
+<Info>
+Month view automatically switches to week view on mobile (less than 768px) unless manually overridden.
+</Info>
+
+### Week View
+
+**Layout:**
+- Vertical list of 7 days
+- Each day in a card
+- Date displayed as large number + day name
+- Today highlighted
+
+**Per Day Card:**
+- Date indicator (left side)
+- List of all posts for that day
+- Full post details visible
+- No truncation or overflow
+
+**Post Card:**
+- Time (12-hour format with AM/PM)
+- Approval status badge
+- Late status label
+- Platform icons (colored badges)
+- Content preview (2 lines with ellipsis)
+- Hover effect to accent color
+- Click to open post detail
+
+## Navigation
+
+**Date Navigation:**
+- Previous/Next buttons (chevron icons)
+- "Today" button to jump to current date
+- View mode toggles (Grid for month, List for week)
+- Refresh button with loading spinner
+
+**Header Display:**
+- Month view: "Month Year" (e.g., "March 2026")
+- Week view: "Week of Start Date" (e.g., "Week of 3/1/2026")
+
+**URL Persistence:**
+Calendar state is not persisted in URL (ephemeral navigation).
+
+## Filters
+
+**Filter Panel:** Card above calendar with 4 dropdowns
+
+<CardGroup cols={2}>
+  <Card title="Platform" icon="hashtag">
+    Filter by social platform: LinkedIn, Instagram, Twitter, TikTok, YouTube, or all
+  </Card>
+  
+  <Card title="Late Status" icon="clock">
+    Filter by posting status: Draft, Scheduled, Publishing, Published, Failed, Partial, Cancelled, or all
+  </Card>
+  
+  <Card title="Approval Status" icon="check-circle">
+    Filter by internal approval: Draft, Pending Approval, Changes Requested, Approved, or all
+  </Card>
+  
+  <Card title="Episode" icon="microphone">
+    Filter by associated episode number (extracted from tags)
+  </Card>
+</CardGroup>
+
+**Filter Behavior:**
+- Multiple filters combine with AND logic
+- Default: All filters set to "all"
+- Real-time filtering (no "Apply" button)
+- Post count updates in header
+
+**Episode Filter:**
+Posts tagged with `episode:123` format are grouped by episode. Dropdown shows all unique episode numbers in descending order (most recent first).
+
+## Status Indicators
+
+### Late Status
+
+Indicates publication state from Late.com:
+
+- **Draft:** Not yet scheduled, editable
+- **Scheduled:** Queued for future publication
+- **Publishing:** Currently being posted
+- **Published:** Successfully posted to platforms
+- **Failed:** Error during publication
+- **Partial:** Posted to some platforms, failed on others
+- **Cancelled:** Scheduled post cancelled
+
+**Visual:** Small text label in muted color
+
+### Approval Status
+
+Internal YBH approval workflow:
+
+- **Draft:** Not submitted for approval (gray)
+- **Pending Approval:** Awaiting review (yellow)
+- **Changes Requested:** Needs revision (red)
+- **Approved:** Ready to publish (green)
+
+**Visual:** Colored pill badge with border
+
+**Auto-Approval:** Posts with `autoApprove: true` in metadata always show "Approved"
+
+<Note>
+Approval status is stored in Sanity social metadata, not Late.com. Use Post Detail page to change approval state.
+</Note>
+
+## Platform Icons
+
+**Display:** Colored badge pills showing first letter of platform name
+
+**Colors:**
+- LinkedIn: `#0A66C2`
+- Instagram: `#E4405F` (gradient implied)
+- Twitter: `#1DA1F2`
+- TikTok: `#000000`
+- YouTube: `#FF0000`
+
+**Multi-Platform Posts:**
+Shows multiple badges side-by-side (e.g., LinkedIn + Instagram).
+
+## Post Actions
+
+**Primary Action:** Click any post card to open Post Detail page
+
+**Post Detail Page:**
+- Full content with formatting
+- Media attachments (images, videos)
+- Edit copy and media
+- Change scheduled time
+- Update approval status
+- Retry failed posts
+- Delete post
+
+**See:** [Post Detail Documentation](/features/social/scheduling) for full actions.
+
+## Responsive Design
+
+**Desktop (≥768px):**
+- Month view by default
+- Side-by-side filter dropdowns
+- Wide calendar grid
+- Sticky header
+
+**Tablet (768px - 1024px):**
+- Month or week view (user choice)
+- Stacked filter dropdowns (2x2 grid)
+- Scrollable calendar
+
+**Mobile (under 768px):**
+- Week view by default (more readable)
+- Single-column filters
+- Full-width day cards
+- Touch-friendly tap targets
+
+<Info>
+Users can manually switch view modes on any device. Choice persists until page refresh.
+</Info>
+
+## Empty States
+
+**No Posts in Range:**
+- Calendar/week view displays with no content
+- Message: "No posts" in each day
+
+**No Posts After Filtering:**
+- Empty day cells
+- Footer shows "0 posts"
+
+**Loading State:**
+- Spinner overlay
+- "Loading..." message
+- Skeleton UI (optional enhancement)
+
+**Error State:**
+- Red alert card above calendar
+- Error message displayed
+- Retry button
+
+## Data Loading
+
+**Query Strategy:**
+
+1. Fetch posts for current month/week from Late.com API
+2. Fetch social metadata for all post IDs from Sanity
+3. Merge data client-side
+4. Filter and group by date
+5. Render calendar
+
+**Caching:**
+- React Query with 5-minute stale time
+- Refetch on window focus disabled
+- Manual refresh via button
+
+**Pagination:**
+- Limit: 100 posts per date range
+- Month view: Max ~3000 posts/month (30 days × 100)
+- Week view: Max ~700 posts/week (7 days × 100)
+
+<Note>
+If you have more than 100 posts in a single day, increase the API limit or implement pagination.
+</Note>
+
+## View Analytics
+
+Calendar does not display analytics directly. For post performance metrics, use:
+
+<CardGroup cols={1}>
+  <Card title="Social Analytics Dashboard" icon="chart-line" href="/features/social/analytics">
+    View impressions, engagement, and follower growth
+  </Card>
+</CardGroup>
+
+## Keyboard Shortcuts
+
+**Planned (Not Yet Implemented):**
+- `←` / `→` - Navigate previous/next period
+- `T` - Go to today
+- `M` - Switch to month view
+- `W` - Switch to week view
+- `R` - Refresh data
+- `ESC` - Close drawer/modal
+
+## Technical Details
+
+**Component:** `SocialCalendarPage.tsx`
+
+**API Routes:**
+- `GET /api/late/posts` - List posts with date range
+- `GET /api/sanity/social-meta` - Batch fetch metadata
+
+**Key Libraries:**
+- React Query for data fetching
+- Day.js (implied) for date manipulation
+- Lucide React for icons
+
+**State Management:**
+- React useState for view mode, filters, drawer
+- URL params not used (ephemeral state)
+
+**Performance:**
+- Memoized filtered posts
+- Memoized calendar days computation
+- Debounced filter changes (optional)
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Social Analytics" icon="chart-bar" href="/features/social/analytics">
+    Track post performance and engagement
+  </Card>
+  
+  <Card title="Post Scheduling" icon="calendar-plus" href="/features/social/scheduling">
+    Create and schedule new social posts
+  </Card>
+</CardGroup>

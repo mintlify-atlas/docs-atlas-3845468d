@@ -1,0 +1,376 @@
+---
+title: Hooks generation
+description: Generate viral social media hooks from your PRF to capture attention and drive engagement
+---
+
+Viral hooks are attention-grabbing snippets designed to stop the scroll and drive engagement on social media. YBH Pulse Content generates 3-5 hooks automatically from your PRF, optimized for LinkedIn, Instagram, and Twitter.
+
+## What are viral hooks?
+
+Hooks are short, punchy statements that:
+
+- **Capture attention** - Make people stop scrolling
+- **Promise value** - Hint at insight or controversy
+- **Drive engagement** - Encourage clicks, shares, and comments
+- **Maintain brand voice** - Align with YBH's "unsell" philosophy
+
+<Tip>
+Great hooks combine curiosity with credibility. They tease insight without clickbait.
+</Tip>
+
+## Hook types
+
+The hooks generator produces different formats:
+
+### Pattern interrupt hooks
+
+Challenge common assumptions:
+
+> "Everyone talks about 'digital transformation.' Mark Baker says that's the problem."
+
+### Contrarian hooks
+
+Take an unpopular stance:
+
+> "IT governance doesn't slow teams down. It's the excuse teams use when they don't want accountability."
+
+### Specificity hooks
+
+Lead with concrete numbers or facts:
+
+> "After interviewing 380 IT leaders, one pattern stood out: the vendors they trusted most were the ones who told them 'no.'"
+
+### Curiosity hooks
+
+Promise a surprising insight:
+
+> "The fastest way to lose your IT team's trust? Mark Baker explains what most CIOs get wrong."
+
+### Pain point hooks
+
+Call out a familiar frustration:
+
+> "Your IT budget is being held hostage by vendors. Here's how Mark Baker helps companies break free."
+
+## How hooks generation works
+
+### Automatic generation
+
+Hooks are generated automatically after PRF creation:
+
+<Steps>
+  <Step title="PRF created">
+    The system generates the PRF from your transcript.
+  </Step>
+  
+  <Step title="Hooks agent activated">
+    The hooks agent analyzes the PRF for viral moments, key insights, and quotable content.
+  </Step>
+  
+  <Step title="RAG search performed">
+    The agent searches for successful hook patterns from past episodes.
+  </Step>
+  
+  <Step title="3-5 hooks generated">
+    A mix of hook types is created, formatted in HTML for the rich text editor.
+  </Step>
+  
+  <Step title="Saved to episode">
+    Hooks appear in the Hooks tab, ready for editing or approval.
+  </Step>
+</Steps>
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:257-296`
+
+### Fact verification
+
+Hooks are verified against the transcript to prevent hallucinations:
+
+<Info>
+The hooks agent receives both the PRF **and** the original transcript. This ensures all claims, quotes, and statistics in hooks are grounded in what the guest actually said.
+</Info>
+
+**File reference**: `src/services/ai.ts:52-90`
+
+## Hook structure
+
+Each hook follows a pattern:
+
+### Opening statement
+
+The attention-grabber (1 sentence):
+
+> "Mark Baker doesn't believe in 'vendor partnerships.'"
+
+### Context or proof
+
+Why this matters or evidence (1-2 sentences):
+
+> "After 15 years in IT procurement, he's seen the same pattern: vendors promise collaboration, then optimize for their own revenue."
+
+### Payoff or CTA
+
+What the audience gains (1 sentence):
+
+> "On episode 348, he reveals the 3 questions that expose whether a vendor is actually aligned with your goals."
+
+### Example hook
+
+Complete hook format:
+
+```markdown
+**Mark Baker doesn't believe in "vendor partnerships."**
+
+After 15 years in IT procurement, he's seen the same pattern: vendors promise collaboration, then optimize for their own revenue.
+
+On episode 348 of You've Been Heard, he reveals the 3 questions that expose whether a vendor is actually aligned with your goals.
+```
+
+## Editing hooks
+
+Hooks are fully editable in the TipTap rich text editor:
+
+### Editor features
+
+- **Bold, italic** - Emphasize key words
+- **Line breaks** - Adjust pacing and readability
+- **Reordering** - Drag and drop hooks to rearrange
+- **Deletion** - Remove weak hooks
+- **Duplication** - Copy a hook and create variations
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:470-474`
+
+### Editing best practices
+
+<AccordionGroup>
+  <Accordion title="Strengthen weak openings">
+    If a hook starts generically ("IT leaders face many challenges..."), replace with specificity:
+    
+    **Before**: "IT leaders face many challenges in vendor selection."
+    
+    **After**: "Mark Baker walked away from a $2M software deal. Here's why."
+  </Accordion>
+  
+  <Accordion title="Add episode numbers">
+    Always reference the episode number and guest name for attribution:
+    
+    "On episode 348, Mark Baker explains..."
+  </Accordion>
+  
+  <Accordion title="Test on social first">
+    Post the hook on LinkedIn or Twitter to see what resonates before using it in other content.
+  </Accordion>
+</AccordionGroup>
+
+## Regenerating hooks
+
+To create a fresh set of hooks:
+
+<Steps>
+  <Step title="Navigate to Hooks tab">
+    Open the episode detail page and click the Hooks tab.
+  </Step>
+  
+  <Step title="Click 'Generate Hooks'">
+    The button appears at the top of the tab. Existing hooks are replaced.
+  </Step>
+  
+  <Step title="Wait for generation">
+    Takes 20-40 seconds. You'll see a status indicator.
+  </Step>
+  
+  <Step title="Review new hooks">
+    Compare to the previous version (use Sanity history if needed).
+  </Step>
+</Steps>
+
+<Warning>
+Regenerating hooks **replaces** all existing hooks. If you want to keep some, copy them to a text file first.
+</Warning>
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:257-296`
+
+## Approval workflow
+
+Approve hooks when they're ready for use in social content:
+
+### Approval process
+
+1. **Review hooks** - Check for accuracy, brand voice, and engagement potential
+2. **Edit if needed** - Strengthen weak hooks or remove off-brand content
+3. **Click 'Approve'** - Green checkmark appears with timestamp
+4. **Generate social posts** - LinkedIn and Instagram posts now reference approved hooks
+
+### Approval states
+
+- **Unapproved** (yellow warning): "These hooks haven't been approved yet."
+- **Approved** (green checkmark): "Approved on [timestamp]"
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:579-591`
+
+<Info>
+Approving hooks doesn't prevent editing. It's a team coordination signal, not a lock.
+</Info>
+
+## Using hooks in other content
+
+Hooks serve as the foundation for:
+
+### LinkedIn posts
+
+Hooks become opening lines for LinkedIn posts:
+
+> **Hook**: "Mark Baker doesn't believe in 'vendor partnerships.'"
+> 
+> **LinkedIn post**: Expands the hook into a 3-paragraph post with a CTA to the episode.
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:299-355`
+
+### Instagram captions
+
+Hooks are adapted for Instagram's visual-first format:
+
+> **Hook**: "After 15 years in IT procurement, Mark Baker has seen every vendor trick."
+> 
+> **Instagram caption**: Pairs with a quote card or infographic, condensed to fit Instagram's tone.
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:357-406`
+
+### Video clips
+
+Hooks identify segments worth clipping for YouTube Shorts or TikTok:
+
+> **Hook**: "The 3 questions that expose bad vendor alignment."
+> 
+> **Video clip**: Finds the transcript segment where Mark explains these questions, includes timestamps.
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:408-468`
+
+### Quote cards
+
+Hooks suggest pull quotes for visual content:
+
+> **Hook**: "Governance doesn't slow teams down—it's the excuse they use."
+> 
+> **Quote card**: Designed as a 1:1 Instagram graphic with the guest's name and episode number.
+
+## Customizing hooks generation
+
+Control hook style and tone through Settings:
+
+### Hooks agent prompt
+
+1. Go to **Settings > Agents**
+2. Select **Hooks Agent**
+3. Edit the **System Prompt**
+4. Add brand-specific examples or tone guidance
+5. Save and regenerate hooks
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:130-141`
+
+### Prompt variables
+
+Use these dynamic fields in your custom prompt:
+
+- `{episodeNumber}` - Episode number
+- `{guestName}` - Guest's full name
+
+### Example custom prompt
+
+```markdown
+Generate 4 viral hooks for episode {episodeNumber} with {guestName}.
+
+Brand voice: Anti-spin, pro-IT leader. We "unsell" vendors.
+
+Hook formula:
+1. Contrarian statement or surprising fact
+2. Why it matters (1 sentence)
+3. Payoff ("On episode {episodeNumber}, {guestName} explains...")
+
+Avoid:
+- Generic marketing language
+- Clickbait without substance
+- Claims not supported by transcript
+```
+
+## Agentic AI features
+
+The hooks agent uses RAG (Retrieval-Augmented Generation) to:
+
+### Learn from past success
+
+Searches Pinecone for high-performing hooks from previous episodes:
+
+- Hooks with high LinkedIn engagement
+- Quote cards that drove Instagram saves
+- Video clips with strong watch time
+
+### Ensure variety
+
+Tracks recently used hook patterns to avoid repetition:
+
+- Doesn't overuse "After interviewing X people..."
+- Varies sentence structure and opening formats
+- Balances contrarian vs. curiosity vs. specificity hooks
+
+### Maintain brand voice
+
+Retrieves YBH brand guidelines from vector search:
+
+- "Unsell" philosophy
+- Anti-spin tone
+- Pro-IT leader perspective
+
+**File reference**: `src/pages/EpisodeDetailPage.tsx:262-275`
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Hooks generation fails">
+    **Possible causes**:
+    - PRF is missing or too short
+    - Transcript not available for fact verification
+    - AI model API timeout
+    
+    **Solution**: Ensure PRF exists and is at least 500 words. Regenerate PRF if needed, then retry hooks.
+  </Accordion>
+  
+  <Accordion title="Hooks are too generic">
+    **Possible causes**:
+    - PRF lacks specific insights or viral moments
+    - Default prompt is too conservative
+    
+    **Solution**:
+    - Edit PRF to highlight contrarian takes or surprising facts
+    - Customize hooks agent prompt to encourage bolder angles
+    - Manually rewrite hooks after generation
+  </Accordion>
+  
+  <Accordion title="Hooks contain false claims">
+    **Possible causes**:
+    - AI hallucination despite fact-checking
+    - Transcript has transcription errors
+    
+    **Solution**:
+    - Always review hooks against the original transcript
+    - Use spell check and fact verification tools in Posts tab
+    - Report persistent issues to improve fact-checker training
+  </Accordion>
+</AccordionGroup>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="LinkedIn posts" icon="linkedin" href="/features/content/social-posts">
+    Generate LinkedIn posts using your hooks
+  </Card>
+  <Card title="Visual suggestions" icon="image" href="/features/design/infographics">
+    Create quote cards from viral hooks
+  </Card>
+  <Card title="Video clips" icon="video" href="/features/design/overview">
+    Generate short-form video suggestions
+  </Card>
+  <Card title="PRF generation" icon="sparkles" href="/features/episodes/prf-generation">
+    Return to PRF generation overview
+  </Card>
+</CardGroup>

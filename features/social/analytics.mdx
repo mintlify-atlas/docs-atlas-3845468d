@@ -1,0 +1,399 @@
+---
+title: Social Analytics Dashboard
+description: Track post performance, engagement trends, and follower growth across all connected social platforms
+---
+
+The Social Analytics Dashboard provides comprehensive performance metrics for all published social media content. Track impressions, engagement, follower growth, and identify top-performing posts with AI-powered insights.
+
+## Overview
+
+Analytics are powered by Late.com's Analytics Add-on, which automatically syncs metrics from connected social platforms (LinkedIn, Instagram, Twitter, TikTok, YouTube).
+
+**Route:** `/social/analytics`
+
+**Data Source:** Late.com API + Sanity metadata
+
+**Refresh Rate:** Metrics sync every 12-24 hours (platform-dependent)
+
+<Note>
+The Analytics Add-on must be enabled in your Late.com account to display real metrics. Without the add-on, computed metrics (post counts, scheduling data) are shown instead.
+</Note>
+
+## Dashboard Layout
+
+### Header Controls
+
+**Date Range Selector:**
+- 7 Days
+- 14 Days
+- 30 Days (default)
+- 90 Days
+- Custom (date picker)
+
+**Comparison Toggle:**
+Enable to compare current period vs. previous period of equal length.
+
+**Platform Filter:**
+Multi-select dropdown to filter by platforms:
+- LinkedIn
+- Instagram
+- Twitter
+- TikTok  
+- YouTube
+
+**Export CSV:** Download all metrics as spreadsheet
+
+**Refresh Button:** Manual sync (with loading spinner)
+
+**Last Sync Timestamp:** Shows when Late.com last synced data
+
+### Summary Sentence
+
+Natural language summary at top of dashboard:
+
+**Example:**
+> "In the last 30 days, you published 42 posts with 285K impressions and 12.4K engagements, averaging 6.8K impressions and 296 engagements per post."
+
+**Comparison Mode:**
+> "In the last 30 days, you published 42 posts with 285K impressions (↑15% vs. previous period) and 12.4K engagements (↑8%), averaging 6.8K impressions and 296 engagements per post."
+
+### AI Insights
+
+AI-generated analysis of performance trends:
+
+**Insights Include:**
+- Best performing content types
+- Optimal posting times/days
+- Engagement rate trends
+- Platform-specific recommendations
+- Anomaly detection (viral posts, dips)
+
+**Display:** Collapsible card with bullet points and highlights
+
+<Info>
+AI insights are only shown when real Late.com analytics data is available (not for computed metrics).
+</Info>
+
+## KPI Cards
+
+**Primary Metrics (4 cards):**
+
+<CardGroup cols={2}>
+  <Card title="Impressions" icon="eye">
+    Total times content was displayed to users
+  </Card>
+  
+  <Card title="Engagements" icon="heart">
+    Likes, comments, shares, clicks, saves
+  </Card>
+  
+  <Card title="Engagement Rate" icon="percent">
+    (Engagements / Impressions) × 100
+  </Card>
+  
+  <Card title="Followers Gained" icon="user-plus">
+    Net new followers across all platforms
+  </Card>
+</CardGroup>
+
+**Card Features:**
+- Large metric value
+- Change indicator (↑5.2% vs. previous period)
+- Sparkline mini-chart
+- Click to drill down (if available)
+
+**Comparison Mode:**
+Shows previous period value and percentage change in green (up) or red (down).
+
+**Computed Fallback:**
+If Late Analytics Add-on is not enabled:
+- Impressions → Post count
+- Engagements → Activity (scheduled + published)
+- Engagement Rate → Hidden
+- Followers → Hidden
+
+## Time Series Charts
+
+### Impressions Chart
+
+**Display:** Line chart with daily data points
+
+**Metrics:**
+- Impressions per day (blue line)
+- Comparison period (gray line, if enabled)
+
+**Interactions:**
+- Hover for exact value
+- Zoom/pan (optional)
+
+**Empty State:** "No impression data available for this period"
+
+### Engagement Chart
+
+**Display:** Line chart with daily data points
+
+**Metrics:**
+- Total engagements per day (orange line)
+- Breakdown by type (likes, comments, shares) in tooltip
+- Comparison period (gray line, if enabled)
+
+**Computed Fallback:** Shows "Activity" (number of posts scheduled/published per day)
+
+### Follower Growth Chart
+
+**Display:** Area chart with cumulative follower count
+
+**Metrics:**
+- Total followers over time
+- Net change per day (tooltip)
+- Platform breakdown (stacked, optional)
+
+**Empty State:** Hidden if follower data unavailable
+
+<Note>
+Follower data requires platforms to provide historical follower counts, which varies by platform and API access level.
+</Note>
+
+## Best Time Heatmap
+
+Visual heatmap showing optimal posting times:
+
+**Layout:** 7 rows (days of week) × 24 columns (hours)
+
+**Color Intensity:** Represents average engagement per post at that time
+
+**Colors:**
+- Low engagement: Light blue
+- Medium: Yellow/orange
+- High: Red/pink
+
+**Minimum Data:** Requires at least 10 published posts in date range
+
+**Interactions:**
+- Hover for exact metrics
+- Click cell to filter posts by that time slot (planned)
+
+**Empty State:** Hidden if insufficient data
+
+## Top Posts List
+
+**Display:** Ranked list of highest performing posts
+
+**Ranking Options:**
+- Most impressions
+- Most engagements
+- Highest engagement rate
+
+**Per Post Card:**
+- Rank number (1-10)
+- Platform icon(s)
+- Post content preview (2 lines)
+- Impressions count
+- Engagements count
+- Engagement rate percentage
+- Published date
+- Click to view full Post Detail
+
+**Empty State:** "No posts published in this period"
+
+**Computed Fallback:** Shows post list without metrics (impressions/engagements hidden)
+
+## Platform Breakdown
+
+**Display:** Donut chart with table
+
+**Metrics per Platform:**
+- Total posts
+- Impressions (if available)
+- Engagements (if available)
+- Engagement rate (if available)
+- Percentage of total
+
+**Chart:**
+- Each platform color-coded
+- Hover for exact numbers
+- Legend with platform names
+
+**Table:**
+- Platform name + icon
+- All metrics in columns
+- Sorted by post count (default)
+
+**Empty State:** "No data to display"
+
+## Drilldown Modals
+
+### KPI Drilldown
+
+Click any KPI card to see detailed breakdown:
+
+**Modal Content:**
+- Platform-by-platform metrics
+- Post-by-post contribution
+- Trend chart for that metric
+- Export to CSV option
+
+**Example:** Clicking "Impressions" shows:
+- LinkedIn: 120K impressions (42%)
+- Instagram: 98K (34%)
+- Twitter: 67K (24%)
+
+### Post Detail Modal
+
+Click any top post to see full details:
+
+**Modal Content:**
+- Full post content
+- All media attachments
+- Complete metrics:
+  - Impressions, reach, clicks
+  - Likes, comments, shares, saves
+  - Engagement rate
+- Platform-specific metrics
+- Link to edit post
+- Published timestamp
+
+## Data Modes
+
+### Real Analytics (Late Add-on Enabled)
+
+**Data Source:** Late.com Analytics API
+
+**Metrics:**
+- Actual impressions from platforms
+- Actual engagement data
+- Follower counts
+- Detailed breakdowns
+
+**Badge:** "Analytics Powered by Late.com"
+
+### Computed Metrics (Fallback)
+
+**Data Source:** Late.com Posts API + Sanity
+
+**Metrics:**
+- Post count (instead of impressions)
+- Activity count (instead of engagements)
+- Scheduling data
+
+**Notice:** Banner at top:
+> "Analytics Add-on Required: Upgrade your Late.com plan to see real performance metrics. Currently showing computed metrics based on post data."
+
+**CTA Button:** "Learn More" (links to Late.com pricing)
+
+## Export Functionality
+
+**CSV Export Includes:**
+- KPI summary row
+- Daily metrics table:
+  - Date
+  - Impressions
+  - Engagements
+  - Engagement rate
+  - Posts published
+  - Followers gained
+- Top posts table
+- Platform breakdown table
+
+**Filename:** `ybh-social-analytics-{dateRange}.csv`
+
+**Trigger:** Click "Export CSV" button in header
+
+## Empty States
+
+### No Data
+
+**Trigger:** No posts published in selected date range
+
+**Display:**
+- Icon (chart with X)
+- Heading: "No Data Available"
+- Message: "No posts published during this period. Adjust your date range or publish content to see analytics."
+- CTA: "View Calendar" button
+
+### Error State
+
+**Trigger:** API error fetching analytics
+
+**Display:**
+- Alert icon (red)
+- Heading: "Failed to Load Analytics"
+- Error message from API
+- CTA: "Retry" button
+
+### Loading State
+
+**Display:**
+- Skeleton UI for KPI cards
+- Gray placeholder charts
+- Pulsing animation
+- "Loading analytics..." text
+
+## Technical Details
+
+**Component:** `SocialAnalyticsPage.tsx`
+
+**API Routes:**
+- `GET /api/late/analytics` - Fetch metrics from Late.com
+- `GET /api/late/analytics/followers` - Follower stats
+- `GET /api/late/posts` - Fallback for computed metrics
+
+**State Management:**
+- React Query for data fetching (5-minute stale time)
+- Local state for filters, drilldowns
+
+**Key Services:**
+- `src/services/analytics.ts` - Metrics aggregation
+- `src/services/analyticsExport.ts` - CSV generation
+
+**Charts Library:** Recharts (or similar React chart library)
+
+**Performance:**
+- Memoized computed metrics
+- Lazy-loaded chart components
+- Virtualized top posts list (if >50 posts)
+
+## Related Features
+
+<CardGroup cols={2}>
+  <Card title="Social Calendar" icon="calendar" href="/features/social/calendar">
+    View and manage scheduled posts
+  </Card>
+  
+  <Card title="Post Scheduling" icon="clock" href="/features/social/scheduling">
+    Create and schedule social content
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+### Analytics Not Updating
+
+**Causes:**
+- Late.com sync delay (up to 24h)
+- Platform API rate limits
+- Disconnected social accounts
+
+**Solution:**
+- Check last sync timestamp
+- Verify accounts are connected in Late.com
+- Wait for next scheduled sync
+- Contact Late.com support
+
+### Missing Platform Data
+
+**Causes:**
+- Platform doesn't provide analytics (e.g., some Twitter accounts)
+- Account lacks permissions
+- Recent platform policy changes
+
+**Solution:**
+- Verify account type and permissions
+- Reconnect account in Late.com
+- Check Late.com platform compatibility docs
+
+### Comparison Period Mismatch
+
+**Cause:** Previous period has different number of days due to month boundaries
+
+**Solution:** Use custom date ranges with equal day counts for accurate comparison

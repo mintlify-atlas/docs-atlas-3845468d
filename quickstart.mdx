@@ -1,80 +1,271 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quick start
+description: Create your first episode and generate production-ready content in minutes
 ---
 
-## Get started in three steps
+## Get started with YBH Pulse Content
 
-Get your documentation site running locally and make your first customization.
+This guide walks you through creating an episode, uploading a transcript, generating content, and sharing a brand kit with your guest.
 
-### Step 1: Set up your local environment
+<Steps>
+  <Step title="Sign in to Pulse Content">
+    Navigate to the login page and sign in with your `@popularit.net` email address.
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    <Info>
+      If you don't have an account, contact your team administrator. Only `@popularit.net` email addresses are allowed for security.
+    </Info>
 
-### Step 2: Deploy your changes
+    Your session will remain active for 24 hours before requiring re-authentication.
+  </Step>
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+  <Step title="Create a new episode">
+    From the Episodes page, click **New Episode** in the top-right corner.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    <Tabs>
+      <Tab title="With Guest">
+        Select a guest from the Guest Directory:
+        - Choose an existing guest to link career data and LinkedIn profile
+        - Guest status automatically updates as you progress through the workflow
+        - Share links can be sent directly to the guest later
+      </Tab>
+      <Tab title="Without Guest">
+        Skip guest selection to create a standalone episode:
+        - Add guest details manually via episode metadata
+        - Link a guest later from the episode detail page
+        - Useful for quick testing or draft episodes
+      </Tab>
+    </Tabs>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    You'll be redirected to the episode detail page after creation.
+  </Step>
 
-### Step 3: Go live
+  <Step title="Upload your transcript">
+    On the **Transcript** tab, upload your edited transcript from Adobe Podcast:
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    ```text
+    Supported formats:
+    - Plain text (.txt)
+    - Microsoft Word (.docx)
+    - PDF documents (.pdf)
+    - Drag & drop or paste directly into editor
+    ```
+
+    <Note>
+      The transcript becomes the **single source of truth** for all generated content. AI fact-checking validates against this transcript to prevent hallucinations.
+    </Note>
+
+    ### Auto-format option
+
+    Enable "Auto-format" to clean up transcript formatting:
+    - Remove speaker labels (e.g., "Doug:", "Guest:")
+    - Fix line breaks and spacing
+    - Preserve paragraph structure
+  </Step>
+
+  <Step title="Set episode metadata">
+    Click **Edit Metadata** to configure:
+
+    - **Episode Number** - Required for share links and file naming
+    - **Guest Name** - Used in content generation prompts
+    - **Episode Title** - Optional, can be generated with AI
+    - **Guest LinkedIn URL** - Enables career timeline generation
+
+    <Tip>
+      You can generate episode metadata automatically after PRF is created. Click **Generate Metadata** to create title, descriptions, key takeaways, and show notes based on the transcript.
+    </Tip>
+  </Step>
+
+  <Step title="Generate PRF document">
+    Switch to the **PRF** tab and click **Generate PRF**.
+
+    The AI analyzes your transcript and creates a Podcast Repurposing Framework including:
+
+    - Executive summary of key insights
+    - Main themes and discussion topics
+    - Quotable soundbites from the guest
+    - Business frameworks or methodologies discussed
+    - Practical takeaways for IT leaders
+
+    <Warning>
+      **Review before approving:** AI-generated content should be fact-checked against the transcript. Use the **Fact Check** feature to validate claims.
+    </Warning>
+
+    Edit the PRF using the rich text editor:
+    - Format with headings, bold, italics, lists
+    - Add tables or highlights for emphasis
+    - Use slash commands (`/heading`, `/quote`) for quick formatting
+
+    When satisfied, click **Approve PRF** to enable downstream content generation.
+  </Step>
+
+  <Step title="Generate viral hooks">
+    On the **Hooks** tab, click **Generate Hooks**.
+
+    Viral hooks are short, attention-grabbing statements designed for social media:
+
+    <CodeGroup>
+      ```text Hook Example 1
+      After interviewing 380 IT professionals, one pattern stands out: 
+      IT leaders who demand respect before crisis get better results.
+      ```
+
+      ```text Hook Example 2
+      "The challenge isn't finding a vendor. It's finding the one who 
+      sucks the least." - Mark Baker on vendor selection reality.
+      ```
+
+      ```text Hook Example 3
+      Most CIOs focus on uptime. The best ones focus on why systems 
+      go down in the first place.
+      ```
+    </CodeGroup>
+
+    Review and edit hooks, then **Approve Hooks** to use them in social posts.
+  </Step>
+
+  <Step title="Generate social posts">
+    Navigate to the **Posts** tab to create platform-specific content.
+
+    ### LinkedIn Posts
+
+    Click **Generate LinkedIn Posts** to create:
+    - **Release Day Post** - Announcement when the episode goes live
+    - **Follow-Up Post** - Additional insight shared days later
+
+    Both posts include:
+    - Verified facts bank (quotes, numbers, frameworks extracted from transcript)
+    - Platform-optimized formatting
+    - Hashtag suggestions
+    - Character counts for LinkedIn's limits
+
+    <Tip>
+      Use the **Spell Check** button to run AI grammar and spelling correction on your posts before approving.
+    </Tip>
+
+    ### Instagram Captions
+
+    Click **Generate Instagram Posts** for:
+    - Story-style captions with hooks
+    - Emoji usage for engagement
+    - Hashtag recommendations
+    - Call-to-action prompts
+
+    Edit captions in the rich text editor and approve when ready.
+  </Step>
+
+  <Step title="Generate visual assets">
+    Switch to the **Assets** tab to create infographics and visual content.
+
+    Click **Generate Visual Suggestions** to create 10 suggestions:
+    - **4 Data Visualizations** - Charts, frameworks, statistics
+    - **4 Cinematic Infographics** - Editorial designs with bold visuals
+    - **2 Quote Cards** - Guest quotes with YBH branding
+
+    <Info>
+      AI generates complete specs for each suggestion including layout, template, color system, icon style, and image prompt. You can edit prompts before generating images.
+    </Info>
+
+    ### Generate images
+
+    For each suggestion:
+    1. Review the spec (layout, colors, content breakdown)
+    2. Edit the image prompt if needed
+    3. Click **Generate Image** to render with Kie.ai
+    4. Add YBH logo composite if desired
+    5. Approve to add to brand kit
+
+    ### Career timeline
+
+    If guest LinkedIn URL is set, generate a career timeline:
+    - Fetches career history from LinkedIn
+    - Creates isometric 3D timeline visualization
+    - Includes position titles, companies, and dates
+    - Automatically added to brand kit
+  </Step>
+
+  <Step title="Curate brand kit assets">
+    On the **Assets** tab, select which assets to include in the guest's brand kit:
+
+    - Drag to reorder assets (guest sees them in this order)
+    - Toggle visibility for each asset
+    - Add captions to provide context
+    - Preview the guest view with **Preview Brand Kit**
+
+    When satisfied, click **Lock Brand Kit** to finalize curation.
+
+    <Warning>
+      Once locked, assets cannot be edited. Unlock to make changes, but note that guests with the share link will see updates immediately.
+    </Warning>
+  </Step>
+
+  <Step title="Generate and share brand kit link">
+    Click **Generate Share Link** to create a unique URL for your guest.
+
+    The share link provides:
+    - Episode metadata and guest information
+    - PRF summary in an editorial layout
+    - Viral hooks with premium typography
+    - Career timeline (if available)
+    - Visual assets in a masonry grid with lightbox
+    - Download buttons for images and full kit ZIP
+
+    ### Share the link
+
+    Copy the link and send it to your guest:
+
+    ```text
+    https://pulse.youvebeenheard.com/share/ep-348-mark-baker
+    ```
+
+    <Tip>
+      Track link views and downloads in the episode analytics dashboard. You'll see when guests access their brand kit and which assets they download.
+    </Tip>
+  </Step>
+</Steps>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Understanding the Workflow" icon="diagram-project" href="/concepts/workflow">
+    Learn the complete content production workflow from upload to delivery
+  </Card>
+  <Card title="Content Pipeline Details" icon="conveyor-belt" href="/concepts/content-pipeline">
+    Deep dive into each stage of the content generation pipeline
+  </Card>
+  <Card title="AI Generation Concepts" icon="brain" href="/concepts/ai-generation">
+    Understand how AI generates content with fact-checking and brand consistency
+  </Card>
+  <Card title="Authentication Guide" icon="lock" href="/authentication">
+    Manage users, sessions, and access control
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+## Tips for best results
+
+### Transcript quality
+
+- Use Adobe Podcast transcript as your starting point
+- Remove irrelevant content (ads, intros, outros)
+- Fix speaker attribution if needed
+- Ensure guest name is spelled correctly throughout
+
+### Content review
+
+- Always review AI-generated content before approving
+- Run fact-check on suggestions to catch hallucinations
+- Use spell check on social posts before scheduling
+- Test share links before sending to guests
+
+### Visual assets
+
+- Generate 2-3 rounds of suggestions to get variety
+- Edit image prompts to emphasize specific elements
+- Add logos to final assets for brand consistency
+- Preview assets in brand kit before locking
+
+### Guest experience
+
+- Set episode metadata before generating share link
+- Include career timeline if LinkedIn URL available
+- Write captions for context on visual assets
+- Lock brand kit before sharing to prevent draft content from being visible

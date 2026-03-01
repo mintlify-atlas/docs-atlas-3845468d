@@ -1,0 +1,464 @@
+---
+title: CI/CD Pipeline
+description: Automated testing and deployment with GitHub Actions
+---
+
+## Overview
+
+Pulse Content uses **GitHub Actions** for continuous integration and deployment:
+
+- ✅ **Automated testing** on every push and pull request
+- 🚀 **Automatic deployment** to Cloudflare Pages on main branch
+- 🔍 **Type checking** to catch errors before deployment
+- 📦 **Dependency caching** for faster builds
+
+## Workflow Configuration
+
+### File Location
+
+`.github/workflows/deploy.yml`
+
+### Workflow Structure
+
+```yaml
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:run
+
+      - name: Type check
+        run: npm run typecheck
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name=pulse-content
+```
+
+## Pipeline Stages
+
+### Stage 1: Test Job
+
+<Steps>
+  <Step title="Checkout code">
+    Clones repository to GitHub Actions runner
+    
+    ```yaml
+    - uses: actions/checkout@v4
+    ```
+  </Step>
+
+  <Step title="Setup Node.js">
+    Installs Node.js 20 with npm caching
+    
+    ```yaml
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    Uses `npm ci` for clean, reproducible installs
+    
+    ```bash
+    npm ci  # Faster than npm install, uses package-lock.json
+    ```
+  </Step>
+
+  <Step title="Run tests">
+    Executes Vitest test suite
+    
+    ```bash
+    npm run test:run  # Runs tests once, exits with code
+    ```
+    
+    <Info>
+      **Test failures block deployment.** Fix all tests before merging.
+    </Info>
+  </Step>
+
+  <Step title="Type check">
+    Validates TypeScript types without emitting files
+    
+    ```bash
+    npm run typecheck  # tsc --noEmit
+    ```
+  </Step>
+</Steps>
+
+### Stage 2: Deploy Job
+
+<Info>
+  **Conditional execution:** Only runs if:
+  - Test job passes
+  - Push is to `main` branch
+</Info>
+
+<Steps>
+  <Step title="Checkout code">
+    Clones repository again (jobs run in isolation)
+  </Step>
+
+  <Step title="Setup Node.js">
+    Installs Node.js 20 with npm caching
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    npm ci
+    ```
+  </Step>
+
+  <Step title="Build for production">
+    Compiles TypeScript and bundles with Vite
+    
+    ```bash
+    npm run build
+    # Output: dist/ directory
+    ```
+  </Step>
+
+  <Step title="Deploy to Cloudflare Pages">
+    Uses official Cloudflare Wrangler action
+    
+    ```yaml
+    - uses: cloudflare/wrangler-action@v3
+      with:
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        command: pages deploy dist --project-name=pulse-content
+    ```
+    
+    <Note>
+      Deployment URL is output in GitHub Actions logs
+    </Note>
+  </Step>
+</Steps>
+
+## GitHub Secrets
+
+### Required Secrets
+
+Add these in GitHub repository settings:
+
+**Location:** Settings > Secrets and variables > Actions > New repository secret
+
+<ParamField path="CLOUDFLARE_API_TOKEN" type="string" required>
+  Cloudflare API token with Cloudflare Pages:Edit permissions
+  
+  **Generate:**
+  1. Go to [dash.cloudflare.com/profile/api-tokens](https://dash.cloudflare.com/profile/api-tokens)
+  2. Click **Create Token**
+  3. Use **Edit Cloudflare Workers** template
+  4. Add **Cloudflare Pages:Edit** permission
+  5. Copy token (only shown once)
+</ParamField>
+
+<ParamField path="CLOUDFLARE_ACCOUNT_ID" type="string" required>
+  Your Cloudflare account ID
+  
+  **Find:**
+  1. Go to [dash.cloudflare.com](https://dash.cloudflare.com)
+  2. Copy Account ID from sidebar
+</ParamField>
+
+### Optional Secrets
+
+For additional features:
+
+```yaml
+SLACK_WEBHOOK_URL       # Deployment notifications
+DISCORD_WEBHOOK_URL     # Deployment notifications
+SENTRY_AUTH_TOKEN       # Error tracking integration
+```
+
+## Workflow Triggers
+
+### On Push to Main
+
+Automatic deployment:
+
+```yaml
+on:
+  push:
+    branches:
+      - main
+```
+
+**Workflow:**
+1. Developer merges PR to `main`
+2. GitHub Actions runs test job
+3. If tests pass, deploy job runs
+4. Code deploys to production
+
+### On Pull Request
+
+Tests only (no deployment):
+
+```yaml
+on:
+  pull_request:
+    branches:
+      - main
+```
+
+**Workflow:**
+1. Developer opens PR
+2. GitHub Actions runs test job
+3. PR shows test status ✅ or ❌
+4. No deployment occurs
+
+### Manual Trigger (Optional)
+
+Add workflow_dispatch for manual runs:
+
+```yaml
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # Enable manual trigger
+```
+
+**Usage:** Actions tab > Deploy to Cloudflare Pages > Run workflow
+
+## Build Artifacts
+
+### Caching Strategy
+
+**Node modules cache:**
+```yaml
+- uses: actions/setup-node@v4
+  with:
+    cache: 'npm'  # Caches ~/.npm directory
+```
+
+**Benefits:**
+- 50-70% faster dependency installation
+- Reduced GitHub Actions minutes usage
+
+### Build Output
+
+**Directory:** `dist/`
+
+**Contents:**
+- Compiled JavaScript bundles
+- Optimized CSS
+- Static assets (fonts, images)
+- Source maps
+
+**Size:** ~2-3 MB (uncompressed)
+
+## Deployment Previews
+
+Cloudflare Pages automatically creates preview deployments:
+
+### For Pull Requests
+
+- **Unique URL** per PR
+- **Automatic updates** on new commits
+- **No production impact**
+
+**Example:** `https://a1b2c3d4.pulse-content.pages.dev`
+
+### Preview Comments
+
+Cloudflare bot comments on PR with preview URL:
+
+```
+✅ Deploy Preview ready!
+🔗 https://a1b2c3d4.pulse-content.pages.dev
+
+View the full deployment details: https://dash.cloudflare.com/...
+```
+
+## Monitoring Deployments
+
+### GitHub Actions UI
+
+**View workflow runs:**
+1. Go to repository **Actions** tab
+2. See all workflow runs with status
+3. Click run for detailed logs
+
+**Status badges:**
+- ✅ Success (tests passed, deployed)
+- ❌ Failure (tests failed, not deployed)
+- 🟡 In Progress
+
+### Cloudflare Dashboard
+
+**View deployments:**
+1. Go to [dash.cloudflare.com](https://dash.cloudflare.com)
+2. Navigate to **Workers & Pages** > **pulse-content**
+3. See deployment history, logs, analytics
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Tests fail in CI but pass locally">
+    **Common causes:**
+    - Environment variables missing
+    - Different Node.js versions
+    - Race conditions in async tests
+    
+    **Fix:**
+    ```bash
+    # Match CI Node version
+    nvm use 20
+    
+    # Run tests in CI mode locally
+    npm run test:run
+    ```
+  </Accordion>
+
+  <Accordion title="Deployment fails with authentication error">
+    **Verify:**
+    - `CLOUDFLARE_API_TOKEN` is set correctly
+    - Token has **Cloudflare Pages:Edit** permission
+    - Token hasn't expired
+    
+    **Regenerate token:**
+    1. Create new token in Cloudflare
+    2. Update GitHub secret
+    3. Re-run workflow
+  </Accordion>
+
+  <Accordion title="Build succeeds but deployment fails">
+    **Check:**
+    - `dist/` directory exists and contains files
+    - `wrangler.toml` configuration is correct
+    - Project name matches: `pulse-content`
+    
+    **Debug:**
+    ```bash
+    # Test build locally
+    npm run build
+    ls -la dist/
+    
+    # Test deployment locally
+    npm run deploy
+    ```
+  </Accordion>
+
+  <Accordion title="Workflow runs but doesn't deploy">
+    **Verify conditions:**
+    - Push is to `main` branch (not `develop` or other)
+    - Test job passed successfully
+    - `needs: test` dependency is correct
+    
+    **Check workflow file:**
+    ```yaml
+    if: github.ref == 'refs/heads/main'
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Performance Optimization
+
+### Parallel Jobs
+
+Run independent jobs in parallel:
+
+```yaml
+jobs:
+  test:
+    # ...
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run lint
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - run: npm run typecheck
+```
+
+### Matrix Testing
+
+Test across multiple Node versions:
+
+```yaml
+jobs:
+  test:
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Cloudflare Deployment" icon="cloud" href="/development/deployment/cloudflare">
+    Manual deployment guide
+  </Card>
+  <Card title="Environment Config" icon="gear" href="/development/deployment/environment">
+    Manage environment variables
+  </Card>
+  <Card title="Testing Strategy" icon="flask" href="/development/testing">
+    Learn about testing
+  </Card>
+  <Card title="Contributing" icon="code-pull-request" href="/development/contributing/guidelines">
+    Contribution guidelines
+  </Card>
+</CardGroup>

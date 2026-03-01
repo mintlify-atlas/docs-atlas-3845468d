@@ -1,0 +1,454 @@
+---
+title: Kie.ai Image Generation Service
+description: TypeScript service for Kie.ai Nano Banana Pro image generation
+---
+
+# Kie.ai Image Generation Service
+
+Client-side TypeScript service for Kie.ai image generation. Provides functions for creating and polling image generation tasks.
+
+**Location**: `src/services/kieai.ts`
+
+## Overview
+
+The Kie.ai service provides:
+
+- **Task Creation** - Initiate image generation jobs
+- **Status Polling** - Check task completion status
+- **Wait Utilities** - Automated polling until completion
+- **Image Transformation** - Modify existing images
+
+All requests proxy through `/api/images/*` endpoints, which handle API keys and authentication.
+
+## createTask()
+
+Create a new image generation task.
+
+```typescript
+function createTask(
+  params: KieAiCreateTaskParams
+): Promise<KieAiTaskResponse>
+```
+
+### Parameters
+
+```typescript
+interface KieAiCreateTaskParams {
+  prompt: string
+  aspectRatio?: '1:1' | '2:3' | '3:2' | '3:4' | '4:3' | '4:5' | '5:4' | '9:16' | '16:9' | '21:9' | 'auto'
+  resolution?: '1K' | '2K' | '4K'
+  outputFormat?: 'png' | 'jpg'
+  imageInput?: string[]  // Input images for transformation (max 8)
+}
+```
+
+<ParamField path="prompt" type="string" required>
+  Image generation prompt
+</ParamField>
+
+<ParamField path="aspectRatio" type="string" default="16:9">
+  Image aspect ratio
+</ParamField>
+
+<ParamField path="resolution" type="string" default="2K">
+  Image resolution: `1K`, `2K`, or `4K`
+</ParamField>
+
+<ParamField path="outputFormat" type="string" default="png">
+  Output format: `png` or `jpg`
+</ParamField>
+
+<ParamField path="imageInput" type="string[]" default="[]">
+  Input image URLs for transformation (max 8 images)
+</ParamField>
+
+### Returns
+
+```typescript
+interface KieAiTaskResponse {
+  taskId: string  // Unique task ID for polling
+}
+```
+
+### Example
+
+```typescript
+import { createTask } from '@/services/kieai'
+
+const { taskId } = await createTask({
+  prompt: 'Create a professional isometric 3D infographic showing the three pillars of IT leadership...',
+  aspectRatio: '16:9',
+  resolution: '2K'
+})
+
+console.log('Task created:', taskId)
+```
+
+## queryTask()
+
+Check the status of a generation task.
+
+```typescript
+function queryTask(taskId: string): Promise<KieAiTaskResult>
+```
+
+### Parameters
+
+<ParamField path="taskId" type="string" required>
+  Task ID from createTask()
+</ParamField>
+
+### Returns
+
+```typescript
+interface KieAiTaskResult {
+  taskId: string
+  state: 'pending' | 'processing' | 'success' | 'fail'
+  imageUrl?: string | null       // Available when state = 'success'
+  failMsg?: string               // Available when state = 'fail'
+  costTime?: number              // Generation time in milliseconds
+}
+```
+
+### Example
+
+```typescript
+import { queryTask } from '@/services/kieai'
+
+const result = await queryTask(taskId)
+
+if (result.state === 'success') {
+  console.log('Image ready:', result.imageUrl)
+} else if (result.state === 'fail') {
+  console.error('Generation failed:', result.failMsg)
+} else {
+  console.log('Still processing...', result.state)
+}
+```
+
+## waitForTask()
+
+Poll for task completion with automatic retries.
+
+```typescript
+function waitForTask(
+  taskId: string,
+  maxAttempts?: number,
+  intervalMs?: number,
+  onProgress?: (attempt: number, maxAttempts: number, state: string) => void
+): Promise<KieAiTaskResult>
+```
+
+### Parameters
+
+<ParamField path="taskId" type="string" required>
+  Task ID to poll
+</ParamField>
+
+<ParamField path="maxAttempts" type="number" default="90">
+  Maximum polling attempts
+</ParamField>
+
+<ParamField path="intervalMs" type="number" default="3000">
+  Polling interval in milliseconds
+</ParamField>
+
+<ParamField path="onProgress" type="function">
+  Progress callback: `(attempt, maxAttempts, state) => void`
+</ParamField>
+
+### Returns
+
+```typescript
+KieAiTaskResult  // Final result when state = 'success' or 'fail'
+```
+
+### Example
+
+```typescript
+import { createTask, waitForTask } from '@/services/kieai'
+
+try {
+  // Create task
+  const { taskId } = await createTask({
+    prompt: spec.prompt,
+    aspectRatio: spec.aspectRatio,
+    resolution: '2K'
+  })
+  
+  // Wait for completion with progress
+  const result = await waitForTask(
+    taskId,
+    90,
+    3000,
+    (attempt, maxAttempts, state) => {
+      const progress = (attempt / maxAttempts) * 100
+      console.log(`[${progress.toFixed(0)}%] State: ${state}`)
+    }
+  )
+  
+  console.log('Image URL:', result.imageUrl)
+  console.log('Generated in:', result.costTime, 'ms')
+  
+} catch (error) {
+  console.error('Generation failed:', error.message)
+}
+```
+
+### Default Timeouts
+
+- **Max attempts**: 90
+- **Interval**: 3 seconds
+- **Total timeout**: 4.5 minutes (90 × 3 seconds)
+
+<Note>
+  **Generation Time**: Most images complete in 30-90 seconds. Complex infographics may take 2-3 minutes.
+</Note>
+
+## Image Transformation
+
+Modify existing images by providing them as `imageInput`.
+
+### Example: Recolor
+
+```typescript
+import { createTask, waitForTask } from '@/services/kieai'
+
+// Recolor existing infographic
+const { taskId } = await createTask({
+  prompt: 'Convert this infographic to YBH brand colors (yellow #F7B500, orange #F17529, red #EF4136) on dark background #1A1A2E',
+  imageInput: [
+    'https://kie.ai/cdn/images/original-infographic.png'
+  ],
+  aspectRatio: '16:9',
+  resolution: '2K'
+})
+
+const result = await waitForTask(taskId)
+console.log('Recolored image:', result.imageUrl)
+```
+
+### Example: Add Elements
+
+```typescript
+// Add episode number to existing image
+const { taskId } = await createTask({
+  prompt: 'Add "EP 385" in the top-left corner in white Fonseca Bold font, and YBH logo in bottom-right',
+  imageInput: [
+    'https://kie.ai/cdn/images/base-infographic.png'
+  ],
+  aspectRatio: '16:9'
+})
+```
+
+### Example: Merge Images
+
+```typescript
+// Combine multiple images
+const { taskId } = await createTask({
+  prompt: 'Arrange these three infographics in a horizontal triptych layout with subtle dividers',
+  imageInput: [
+    'https://kie.ai/cdn/images/infographic-1.png',
+    'https://kie.ai/cdn/images/infographic-2.png',
+    'https://kie.ai/cdn/images/infographic-3.png'
+  ],
+  aspectRatio: '21:9',
+  resolution: '4K'
+})
+```
+
+<ParamField path="imageInput" type="string[]">
+  **Limit**: Max 8 images
+  
+  **Use cases**:
+  - Recolor/restyle existing images
+  - Add text or branding elements
+  - Merge multiple images
+  - Change layout or composition
+</ParamField>
+
+## Task States
+
+| State | Description | Action |
+|-------|-------------|--------|
+| `pending` | Task queued, not started | Continue polling |
+| `processing` | Image being generated | Continue polling |
+| `success` | Generation complete | Retrieve `imageUrl` |
+| `fail` | Generation failed | Check `failMsg` |
+
+### State Mapping
+
+Kie.ai uses different state names internally, which are mapped to standard states:
+
+```typescript
+const stateMap = {
+  'waiting': 'pending',
+  'queuing': 'pending',
+  'generating': 'processing',
+  'success': 'success',
+  'fail': 'fail'
+}
+```
+
+## Error Handling
+
+All functions throw errors that should be caught:
+
+```typescript
+try {
+  const result = await waitForTask(taskId)
+  console.log('Image URL:', result.imageUrl)
+  
+} catch (error) {
+  if (error.message.includes('Task timed out')) {
+    // Exceeded 4.5 minutes
+    console.error('Generation took too long')
+    console.log('Check Kie.ai dashboard for task status')
+    
+  } else if (error.message.includes('Image generation failed')) {
+    // Task failed
+    console.error('Generation failed:', error.message)
+    
+  } else {
+    // Network or API error
+    console.error('API error:', error.message)
+  }
+}
+```
+
+### Common Errors
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `Task timed out` | Exceeded 4.5 minutes | Check Kie.ai dashboard, increase maxAttempts |
+| `Image generation failed` | Kie.ai rejected request | Simplify prompt, check content policy |
+| `API error: 401` | Not authenticated | Login again |
+| `API error: 500` | Kie.ai service error | Retry later, contact Kie.ai support |
+
+## Response Parsing
+
+### parseResultUrls()
+
+Parse result URLs from Kie.ai's resultJson (legacy compatibility).
+
+```typescript
+function parseResultUrls(resultJson: string): string[]
+```
+
+### Example
+
+```typescript
+import { parseResultUrls } from '@/services/kieai'
+
+const resultJson = '{"resultUrls": ["https://kie.ai/cdn/images/abc123.png"]}'
+const urls = parseResultUrls(resultJson)
+
+console.log('URLs:', urls)  // ["https://kie.ai/cdn/images/abc123.png"]
+```
+
+<Note>
+  **Automatic Parsing**: The `queryTask()` function automatically parses `imageUrl` from the response. You don't need to use `parseResultUrls()` unless working with raw API responses.
+</Note>
+
+## Integration with AI Service
+
+Common workflow: Generate spec → Create image:
+
+```typescript
+import { generateInfographicSpec } from '@/services/ai'
+import { createTask, waitForTask } from '@/services/kieai'
+
+// 1. Generate infographic spec
+const spec = await generateInfographicSpec(
+  selectedText,
+  transcript,
+  prf,
+  episodeNumber,
+  guestName,
+  history
+)
+
+// 2. Create image generation task
+const { taskId } = await createTask({
+  prompt: spec.prompt,
+  aspectRatio: spec.aspectRatio,
+  resolution: '2K'
+})
+
+// 3. Wait for completion
+const result = await waitForTask(taskId)
+
+// 4. Save to episode
+await updateEpisode(episodeId, {
+  assets: [
+    ...episode.assets,
+    {
+      _key: crypto.randomUUID(),
+      type: spec.layout,
+      status: 'generated',
+      imageUrl: result.imageUrl,
+      spec,
+      createdAt: new Date().toISOString()
+    }
+  ]
+})
+```
+
+## Logging
+
+The service uses debug logging (dev only):
+
+```typescript
+import { logger } from '@/utils/logger'
+
+logger.debug('[kieai] Task succeeded')
+logger.debug('[kieai] waitForTask complete')
+logger.warn('[kieai] Task succeeded but imageUrl is missing')
+logger.warn(`[kieai] Poll attempt ${i + 1} failed, retrying`)
+```
+
+Logs only appear in development mode.
+
+## Performance
+
+| Operation | Time | Notes |
+|-----------|------|-------|
+| createTask() | ~500ms | Returns immediately with taskId |
+| queryTask() | ~200ms | Quick status check |
+| waitForTask() | 30-180s | Depends on image complexity |
+
+### Generation Times
+
+- **Simple quote cards**: 30-60 seconds
+- **Standard infographics**: 60-120 seconds
+- **Complex 4K infographics**: 120-180 seconds
+- **Image transformations**: 45-90 seconds
+
+## Cost Estimates
+
+<Warning>
+  **Kie.ai Pricing**: Image generation incurs costs:
+  
+  - **2K resolution**: ~$0.10-0.15 per image
+  - **4K resolution**: ~$0.20-0.30 per image
+  - **Transformations**: Same cost as generation
+  
+  Monitor usage via Kie.ai dashboard.
+</Warning>
+
+## TypeScript Types
+
+All types are exported:
+
+```typescript
+import type { 
+  KieAiCreateTaskParams, 
+  KieAiTaskResponse, 
+  KieAiTaskResult 
+} from '@/services/kieai'
+
+function MyComponent() {
+  const [result, setResult] = useState<KieAiTaskResult | null>(null)
+  // ...
+}
+```

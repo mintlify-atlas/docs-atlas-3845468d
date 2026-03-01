@@ -1,0 +1,603 @@
+---
+title: Guest Career Timeline Visualization
+description: Generate isometric 3D career journey graphics by scraping LinkedIn profiles and analyzing episode content
+icon: timeline
+---
+
+## Overview
+
+Career Timeline generation creates stunning isometric 3D visualizations of guest career journeys, combining LinkedIn data with podcast insights to tell compelling professional stories. These graphics are perfect for LinkedIn posts, episode announcements, and guest spotlights.
+
+<Info>
+  Career timelines use a specialized AI agent that scrapes LinkedIn profiles, analyzes episode transcripts, and generates comprehensive visual specifications automatically.
+</Info>
+
+## Getting Started
+
+<Steps>
+  <Step title="Link Episode with Guest LinkedIn URL">
+    Ensure the episode has a guest with LinkedIn URL in metadata. The URL is extracted from transcript headers or set on the guest record.
+  </Step>
+  
+  <Step title="Open Timeline Designer">
+    Navigate to Design Studio and select **Timeline** design type. The system automatically detects LinkedIn URL availability.
+  </Step>
+  
+  <Step title="Generate Career Timeline">
+    Click **Generate Career Timeline** to start the AI agent. This scrapes LinkedIn, analyzes transcript, and creates a complete specification.
+  </Step>
+  
+  <Step title="Generate Image">
+    Review the generated spec and click **Generate Image** to create the isometric 3D visualization.
+  </Step>
+  
+  <Step title="Add Logo & Save">
+    Use Logo Compositor to add YBH branding and save to episode assets.
+  </Step>
+</Steps>
+
+## LinkedIn Integration
+
+### LinkedIn URL Detection
+
+The system checks multiple sources for LinkedIn URLs:
+
+```typescript
+// From DesignStudioPage.tsx:323-327
+const linkedinUrl = 
+  linkedEpisode.metadata?.guestLinkedinUrl ||  // Transcript metadata
+  linkedEpisode.guest?.linkedinUrl             // Guest record
+
+if (!linkedinUrl) {
+  toast.error('LinkedIn URL required', 
+    'The guest\'s LinkedIn URL must be set on the guest record or in the episode metadata.')
+}
+```
+
+### Data Extraction
+
+LinkedIn profiles are scraped via RapidAPI to extract:
+
+- **Career Positions**: Role, company, dates, location
+- **Headline**: Current title and company
+- **Summary**: Professional bio
+- **Education**: Degrees and institutions
+- **Skills**: Expertise areas
+- **Achievements**: Notable accomplishments
+
+<Warning>
+  LinkedIn scraping requires a valid RapidAPI key with LinkedIn Scraper access. Scraping is subject to LinkedIn's terms of service and rate limits.
+</Warning>
+
+## AI Agent Architecture
+
+Career timeline generation uses a specialized multi-step agent:
+
+### Agent Workflow
+
+```typescript
+// From useAgentGeneration.ts:423-425
+export function useTimelineAgent() {
+  return useAgentGeneration<CareerTimelineResult>('timeline')
+}
+
+const result = await timelineAgent.generate({
+  episodeNumber: episode.metadata.episodeNumber.toString(),
+  guestName: episode.metadata.guestName,
+  guestLinkedinUrl: linkedinUrl,
+  transcript: transcriptText,
+  prf: prfText,
+  // Model selection is server-side (Gemini primary, Claude fallback)
+})
+```
+
+### Agent Steps (with SSE Status Updates)
+
+<Steps>
+  <Step title="Reading Context" icon="book-open">
+    Agent reads episode transcript, PRF document, and LinkedIn URL
+    
+    **Status**: `reading_context` | **Progress**: 10%
+  </Step>
+  
+  <Step title="Scraping LinkedIn" icon="globe">
+    Fetches and parses LinkedIn profile data via RapidAPI
+    
+    **Status**: `reading_context` | **Progress**: 30%
+  </Step>
+  
+  <Step title="Querying Knowledge Base" icon="database">
+    Searches Pinecone for relevant career visualization templates and examples
+    
+    **Status**: `querying_kb` | **Progress**: 40%
+  </Step>
+  
+  <Step title="Analyzing Career Path" icon="route">
+    AI identifies key career stages, transitions, and achievements
+    
+    **Status**: `generating` | **Progress**: 60%
+  </Step>
+  
+  <Step title="Extracting Quotes" icon="quote-left">
+    Finds relevant quotes from transcript for each career stage
+    
+    **Status**: `generating` | **Progress**: 75%
+  </Step>
+  
+  <Step title="Generating Visual Spec" icon="palette">
+    Creates complete timeline specification with layout, colors, and prompt
+    
+    **Status**: `generating` | **Progress**: 90%
+  </Step>
+  
+  <Step title="Complete" icon="check">
+    Returns CareerTimelineResult ready for image generation
+    
+    **Status**: `complete` | **Progress**: 100%
+  </Step>
+</Steps>
+
+<Note>
+  The agent streams status updates in real-time via Server-Sent Events (SSE), providing live progress feedback in the UI.
+</Note>
+
+## Career Timeline Result Schema
+
+The AI agent returns a comprehensive structured result:
+
+```typescript
+// From useAgentGeneration.ts:367-420
+export interface CareerTimelineResult {
+  meta: {
+    episodeNumber: string
+    guestName: string
+    currentRole: string
+    currentCompany: string
+  }
+  
+  header: {
+    title: string           // e.g., "The Journey of [Guest Name]"
+    subtitle: string        // e.g., "From Developer to CTO"
+    tagline: string         // e.g., "20 Years of IT Leadership"
+  }
+  
+  timelinePoints: TimelinePoint[]
+  
+  skillsPanel: {
+    categories: Array<{
+      name: string          // e.g., "Technical", "Leadership"
+      skills: string[]      // e.g., ["Cloud", "DevOps", "Security"]
+    }>
+  }
+  
+  evolutionInsight: {
+    title: string           // Key career theme
+    text: string            // 2-3 sentence insight
+  }
+  
+  featuredQuote: {
+    text: string            // Most impactful quote from episode
+    attribution: string     // e.g., "— John Doe, CTO"
+  }
+  
+  visualStyle: {
+    layout: string          // e.g., "Isometric 3D Timeline"
+    direction: string       // "left-to-right" or "bottom-to-top"
+    colorPalette: {
+      background: string    // Hex color
+      primary: string       // Hex color
+      accent: string        // Hex color (usually YBH orange)
+      secondary: string     // Hex color
+    }
+    pathStyle: string       // e.g., "Curved road with milestones"
+    buildingStyle: string   // e.g., "3D isometric buildings for companies"
+  }
+  
+  prompt: string            // Complete Nano Banana Pro prompt
+}
+```
+
+### Timeline Point Schema
+
+```typescript
+export interface TimelinePoint {
+  index: number             // Sequential position (0-based)
+  stage: string             // Career stage name
+  period: string            // Date range (e.g., "2015-2018")
+  location?: string         // City/country if available
+  role: string              // Job title
+  company: string           // Company name
+  keyAchievement: string    // Main accomplishment
+  visualElements: string[]  // Icons/imagery suggestions
+  quote?: string | null     // Relevant quote from transcript
+}
+```
+
+## Visual Design System
+
+### Isometric 3D Style
+
+Career timelines use isometric projection for depth and visual interest:
+
+- **Angle**: 30° isometric perspective
+- **Buildings**: Represent companies/organizations
+- **Path**: Career progression route (road, steps, or line)
+- **Icons**: Role-specific imagery (laptop, server, team, etc.)
+- **Milestones**: Key achievements marked along path
+
+### Layout Patterns
+
+#### 1. Horizontal Journey (Default)
+
+```
+┌─────────────────────────────────────────────────────┐
+│ [Guest Name Career Timeline]                        │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  [Building 1] ──→ [Building 2] ──→ [Building 3]   │
+│   2010-2015       2015-2018       2018-Present     │
+│   Developer       Sr. Engineer     CTO             │
+│                                                     │
+│  Skills: [Cloud] [DevOps] [Leadership]             │
+│  Quote: "..."                                       │
+└─────────────────────────────────────────────────────┘
+```
+
+**Best For**: 3-6 career stages, clear progression
+
+#### 2. Vertical Ascent
+
+```
+┌────────────────────────┐
+│ [Guest Career Journey] │
+├────────────────────────┤
+│                        │
+│   ┌─────────┐         │
+│   │ CTO     │  2020+  │
+│   └────↑────┘         │
+│        │              │
+│   ┌────┴────┐         │
+│   │VP Eng   │  2018   │
+│   └────↑────┘         │
+│        │              │
+│   ┌────┴────┐         │
+│   │Director │  2015   │
+│   └────↑────┘         │
+│        │              │
+│   ┌────┴────┐         │
+│   │Engineer │  2010   │
+│   └─────────┘         │
+│                        │
+└────────────────────────┘
+```
+
+**Best For**: Clear hierarchical progression, leadership focus
+
+#### 3. Winding Path
+
+```
+┌─────────────────────────────────────┐
+│ [Non-Linear Career Journey]         │
+├─────────────────────────────────────┤
+│                                     │
+│      ┌──[Stage 3]                  │
+│     /                               │
+│    /                                │
+│   [Stage 2]──┐                     │
+│               \                     │
+│                \                    │
+│              [Stage 4]              │
+│             /                       │
+│            /                        │
+│    [Stage 1]                        │
+│                                     │
+└─────────────────────────────────────┘
+```
+
+**Best For**: Non-linear careers, career pivots, diverse roles
+
+### Color Palette Selection
+
+AI selects color palette based on career story:
+
+#### Blueprint Dark (Technical Careers)
+
+```css
+--background: #0F2A44   /* Deep blue */
+--primary: #F17529      /* YBH orange */
+--accent: #F7B500       /* YBH yellow */
+--secondary: #A4BFC1    /* Tower gray */
+```
+
+**Used For**: Technical roles, engineering leaders, CTOs
+
+#### Blueprint Light (Executive Careers)
+
+```css
+--background: #F5F5F5   /* Light gray */
+--primary: #16213E      /* Navy */
+--accent: #F17529       /* YBH orange */
+--secondary: #0F3460    /* Teal */
+```
+
+**Used For**: Executive roles, consultants, advisors
+
+#### Progression Journey
+
+```css
+--gradient: 
+  #EF4136 (start) →     /* Red: Early career */
+  #F17529 (mid-early) → /* Orange: Growth */
+  #F7B500 (mid-late) →  /* Yellow: Achievement */
+  #27AE60 (end)         /* Green: Current success */
+```
+
+**Used For**: Clear progression stories, transformation journeys
+
+<Info>
+  The AI infers color palette from visual style suggestions and career narrative. You can override by editing the generated prompt.
+</Info>
+
+## Prompt Engineering for Timelines
+
+AI generates highly detailed prompts for career timelines:
+
+### Example Generated Prompt
+
+```
+16:9 landscape isometric 3D career timeline visualization.
+
+Background: Dark blue (#0F2A44) blueprint style with subtle grid pattern.
+
+Header:
+- Title: "The Journey of Sarah Chen" (bold white, 36pt)
+- Subtitle: "From Developer to Cloud Architect" (orange #F17529, 24pt)
+- Tagline: "15 Years of Cloud Innovation" (light gray, 18pt)
+
+Timeline (left to right, isometric 3D buildings):
+
+1. [2008-2012] Junior Developer @ Tech Startup
+   - Small isometric office building (blue-gray)
+   - Icon: Laptop
+   - Achievement: "Built first production API"
+   - Quote: "I learned the hard way that scaling isn't optional"
+
+2. [2012-2015] Senior Engineer @ Enterprise Corp
+   - Medium isometric corporate building (navy)
+   - Icon: Server racks
+   - Achievement: "Led cloud migration"
+
+3. [2015-2018] Engineering Manager @ Cloud Company
+   - Large isometric tech campus (teal)
+   - Icon: Team/people
+   - Achievement: "Grew team from 5 to 50"
+
+4. [2018-2023] Director of Engineering @ Fortune 500
+   - Tall isometric headquarters (dark blue)
+   - Icon: Network/architecture
+   - Achievement: "$2M cost savings through optimization"
+
+5. [2023-Present] Cloud Architect @ Current Company
+   - Modern isometric building with orange accents
+   - Icon: Cloud architecture
+   - Achievement: "Leading multi-cloud strategy"
+
+Path: Orange curved road (#F17529) connecting all buildings, 
+with milestone markers at each transition point.
+
+Skills Panel (bottom right corner):
+- Technical: AWS, Kubernetes, Terraform, Python
+- Leadership: Team Building, Strategy, Communication
+
+Evolution Insight (bottom left):
+"From Code to Strategy: Sarah's journey shows the evolution 
+from individual contributor to architectural leadership."
+
+Featured Quote (center bottom):
+"The best architectures are built on hard-earned lessons."
+— Sarah Chen, Cloud Architect
+
+Footer:
+- "Subscribe and share with your peers" (small orange)
+- "Episode 348" (small gray)
+- "YBH: When IT leaders rise, so does everything else" (small gray)
+
+NO logo in the design.
+
+Isometric projection, 30° angle, clean professional style, 
+optimized for LinkedIn sharing.
+```
+
+<Note>
+  Prompts are fully editable before image generation. Adjust building styles, add visual elements, or change colors to match your vision.
+</Note>
+
+## Agent Status Panel
+
+During generation, a real-time status panel shows progress:
+
+```tsx
+// From DesignStudioPage.tsx:786-798
+{designType === 'timeline' && timelineAgent.isLoading && (
+  <AgentStatusPanel
+    isLoading={timelineAgent.isLoading}
+    status={timelineAgent.status}         // reading_context, querying_kb, generating
+    statusDetail={timelineAgent.statusDetail}  // Detailed message
+    progress={timelineAgent.progress}     // 0-100
+    error={timelineAgent.error}
+    agentName="Career Timeline"
+    onRetry={handleGenerateTimeline}
+    onCancel={timelineAgent.cancel}
+  />
+)}
+```
+
+### Status Messages
+
+- **Reading Context** (10%): "Loading episode transcript and PRF..."
+- **Reading Context** (30%): "Scraping LinkedIn profile..."
+- **Querying KB** (40%): "Searching design templates..."
+- **Generating** (60%): "Analyzing career path..."
+- **Generating** (75%): "Extracting relevant quotes..."
+- **Generating** (90%): "Creating visual specification..."
+- **Complete** (100%): "Timeline ready to generate"
+
+<Info>
+  You can cancel generation at any time using the Cancel button. The agent will abort gracefully and return partial results if available.
+</Info>
+
+## Model Selection & Fallback
+
+Career timeline agent uses a sophisticated model selection strategy:
+
+```typescript
+// From DesignStudioPage.tsx:337-338
+const result = await timelineAgent.generate({
+  // ...
+  // Model is now determined server-side (Gemini primary, Claude fallback)
+})
+```
+
+### Server-Side Model Selection
+
+1. **Primary**: Gemini 2.0 Flash Thinking (best for structured output)
+2. **Fallback**: Claude Sonnet (if Gemini unavailable)
+3. **Error Handling**: Automatic retry with fallback model
+
+<Warning>
+  If both models fail, the agent returns an error with retry option. Check API quotas and network connectivity.
+</Warning>
+
+## Spec to Image Conversion
+
+After agent completes, the timeline result is converted to a standard spec:
+
+```typescript
+// From DesignStudioPage.tsx:340-357
+if (result?.prompt) {
+  const timelineLayout = result.visualStyle?.layout || 'Isometric 3D Timeline'
+  const timelineTemplate = 'Career Timeline'
+  const bg = result.visualStyle?.colorPalette?.background || ''
+  const inferredColorSystem =
+    typeof bg === 'string' && /0F2A44|123455/i.test(bg) 
+      ? 'blueprint_dark' 
+      : 'blueprint_light'
+
+  // Convert timeline result to standard spec format
+  const spec: InfographicSpec = {
+    layout: timelineLayout,
+    template: timelineTemplate,
+    title: result.header?.title || `${guestName} Career Timeline`,
+    colorSystem: inferredColorSystem,
+    iconStyle: 'isometric',
+    aspectRatio: '16:9',
+    prompt: result.prompt,
+  }
+  setGeneratedSpec(spec)
+  toast.success('Timeline spec generated', 
+    `${result.timelinePoints?.length || 0} career stages identified`)
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Verify LinkedIn URL" icon="link">
+    Always check that LinkedIn URL is correct before generation. Invalid URLs will cause agent to fail.
+  </Card>
+  
+  <Card title="Review Transcript" icon="file-lines">
+    Ensure transcript has substantive career discussion. Agent extracts quotes and insights from transcript content.
+  </Card>
+  
+  <Card title="Edit Before Generating" icon="pen">
+    Review the generated spec and prompt. Add or remove timeline points, adjust visual style, or change colors.
+  </Card>
+  
+  <Card title="Consider Career Stages" icon="chart-line">
+    AI works best with 3-6 distinct career stages. Too few is boring, too many is cluttered.
+  </Card>
+</CardGroup>
+
+## Common Issues
+
+### LinkedIn URL Not Found
+
+**Problem**: Error "LinkedIn URL required"
+
+**Solution**: 
+1. Check episode metadata for `guestLinkedinUrl` field
+2. Ensure guest record has `linkedinUrl` populated
+3. Add LinkedIn URL to transcript header (format: `LinkedIn: https://linkedin.com/in/username`)
+
+### Agent Timeout
+
+**Problem**: Timeline generation exceeds 2-minute timeout
+
+**Solution**:
+1. Check network connectivity
+2. Verify API keys (Gemini, Claude, RapidAPI)
+3. Retry generation - agent has automatic fallback
+
+### Poor Timeline Quality
+
+**Problem**: Generated timeline is generic or missing key stages
+
+**Solution**:
+1. Ensure transcript has career discussion (not just technical content)
+2. Add career context to PRF document
+3. Manually edit the generated prompt to add missing stages
+
+## Example Use Cases
+
+### Technical Leadership Journey
+
+**Guest**: CTO who started as developer
+
+**Timeline Points**: 
+- Junior Developer (2010-2013)
+- Senior Engineer (2013-2016)
+- Tech Lead (2016-2018)
+- Engineering Manager (2018-2020)
+- VP Engineering (2020-2022)
+- CTO (2022-Present)
+
+**Visual Style**: Horizontal journey, isometric buildings growing in size, blue-to-orange gradient path
+
+### Career Pivot Story
+
+**Guest**: Former developer turned security consultant
+
+**Timeline Points**:
+- Software Engineer (2012-2015)
+- DevOps Engineer (2015-2017)
+- Security Incident (2017) - Turning Point
+- Security Analyst (2017-2019)
+- Security Consultant (2019-2021)
+- CISO (2021-Present)
+
+**Visual Style**: Winding path with dramatic turn at 2017, red-to-green color progression
+
+### Multi-Company Journey
+
+**Guest**: Executive with diverse experience
+
+**Timeline Points**:
+- Startup A (2008-2011)
+- Enterprise Corp (2011-2015)
+- Consulting (2015-2017)
+- Startup B (2017-2020)
+- Current Company (2020-Present)
+
+**Visual Style**: Horizontal journey, varied building styles reflecting company types, consistent orange accent
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Design Studio Overview" icon="palette" href="/features/design/overview">
+    Learn about all Design Studio capabilities
+  </Card>
+  <Card title="Create Infographics" icon="chart-network" href="/features/design/infographics">
+    Explore framework and data visualizations
+  </Card>
+</CardGroup>

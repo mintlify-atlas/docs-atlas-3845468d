@@ -1,0 +1,490 @@
+---
+title: LinkedIn integration
+description: Configure RapidAPI LinkedIn scraper for guest profile data
+---
+
+The LinkedIn integration pulls guest career history, profile data, and professional summary from LinkedIn using RapidAPI. This data powers career timeline generation and enriches episode metadata.
+
+## Overview
+
+**Provider:** RapidAPI LinkedIn Scraper
+
+**Data retrieved:**
+- Guest name and headline
+- Professional summary
+- Career history (positions, companies, dates, descriptions)
+- LinkedIn URL
+
+**Caching:** Profile data is cached in Sanity for 24 hours to minimize API calls
+
+## Setup
+
+<Steps>
+  <Step title="Get RapidAPI key">
+    1. Sign up at https://rapidapi.com
+    2. Subscribe to a LinkedIn scraper API
+    3. Copy your API key from the dashboard
+  </Step>
+  
+  <Step title="Add to environment">
+    **Local development (.dev.vars):**
+    ```bash
+    RAPIDAPI_KEY=your-rapidapi-key-here
+    ```
+    
+    **Production:**
+    ```bash
+    wrangler secret put RAPIDAPI_KEY
+    ```
+  </Step>
+  
+  <Step title="Test connection">
+    Scrape a guest LinkedIn profile from the Episode page to verify the integration works.
+  </Step>
+</Steps>
+
+## API endpoint
+
+### Scrape profile
+
+**Endpoint:** `POST /api/linkedin/profile`
+
+**Request:**
+```json
+{
+  "linkedinUrl": "https://www.linkedin.com/in/chris-pacifico/"
+}
+```
+
+**Response:**
+```json
+{
+  "profile": {
+    "name": "Chris Pacifico",
+    "headline": "CTO at TechCorp | Former VP Engineering",
+    "summary": "Experienced technology leader with 15+ years...",
+    "careerHistory": [
+      {
+        "_key": "pos-0-1234567890",
+        "title": "CTO",
+        "company": "TechCorp",
+        "startDate": "Jan 2020",
+        "endDate": null,
+        "description": "Leading technology strategy..."
+      },
+      {
+        "_key": "pos-1-1234567891",
+        "title": "VP Engineering",
+        "company": "StartupX",
+        "startDate": "Mar 2017",
+        "endDate": "Dec 2019",
+        "description": "Built engineering team from 5 to 50..."
+      }
+    ],
+    "scrapedAt": "2024-03-15T10:30:00Z",
+    "linkedinUrl": "https://www.linkedin.com/in/chris-pacifico/"
+  }
+}
+```
+
+## Usage in Pulse Content
+
+### Scrape guest profile
+
+```typescript
+import { scrapeLinkedInProfile } from '@/services/linkedin'
+
+const profile = await scrapeLinkedInProfile(
+  'https://www.linkedin.com/in/chris-pacifico/'
+)
+
+console.log(profile.name) // "Chris Pacifico"
+console.log(profile.headline) // "CTO at TechCorp"
+console.log(profile.positions.length) // Number of career positions
+```
+
+### With Sanity caching
+
+```typescript
+import { 
+  scrapeLinkedInProfile,
+  fetchGuestProfileByUrl,
+  upsertGuestProfile 
+} from '@/services/linkedin'
+
+// Check Sanity cache first
+const cached = await fetchGuestProfileByUrl(linkedinUrl)
+
+// Scrape with cache awareness
+const profile = await scrapeLinkedInProfile(linkedinUrl, {
+  cachedProfile: cached,
+  forceRefresh: false, // Use cache if fresh
+})
+
+// Store in Sanity for future use
+await upsertGuestProfile({
+  linkedinUrl: profile.linkedinUrl,
+  name: profile.name,
+  headline: profile.headline,
+  summary: profile.summary,
+  careerHistory: linkedInToCareerHistory(profile),
+})
+```
+
+### Force refresh
+
+```typescript
+// Skip cache and scrape fresh data
+const profile = await scrapeLinkedInProfile(linkedinUrl, {
+  forceRefresh: true,
+})
+```
+
+## Caching strategy
+
+### Three-tier cache
+
+<Steps>
+  <Step title="In-memory cache">
+    First check: Session-level cache (cleared on page refresh)
+    
+    **Fastest:** No network request
+    
+    **Duration:** Until page refresh
+  </Step>
+  
+  <Step title="Sanity cache">
+    Second check: Database-persisted cache
+    
+    **Fast:** Single Sanity query
+    
+    **Duration:** 24 hours from `scrapedAt` timestamp
+  </Step>
+  
+  <Step title="RapidAPI scrape">
+    Last resort: Fresh scrape from LinkedIn
+    
+    **Slow:** External API call (3-10 seconds)
+    
+    **Cost:** Consumes RapidAPI quota
+  </Step>
+</Steps>
+
+### Cache freshness check
+
+```typescript
+function isCacheFresh(scrapedAt?: string): boolean {
+  if (!scrapedAt) return false
+  
+  const scrapedTime = new Date(scrapedAt).getTime()
+  const now = Date.now()
+  const oneDayMs = 24 * 60 * 60 * 1000
+  
+  return (now - scrapedTime) < oneDayMs
+}
+```
+
+### Clear cache
+
+```typescript
+import { clearProfileCache } from '@/services/linkedin'
+
+// Clear specific profile
+clearProfileCache('https://www.linkedin.com/in/chris-pacifico/')
+
+// Clear all cached profiles
+clearProfileCache()
+```
+
+## LinkedIn URL validation
+
+### Supported formats
+
+```typescript
+import { isValidLinkedInUrl, normalizeLinkedInUrl } from '@/services/linkedin'
+
+// Valid URLs
+isValidLinkedInUrl('https://www.linkedin.com/in/chris-pacifico/') // true
+isValidLinkedInUrl('linkedin.com/in/chris-pacifico') // true
+isValidLinkedInUrl('www.linkedin.com/in/chris-pacifico/') // true
+
+// Invalid URLs
+isValidLinkedInUrl('https://twitter.com/chrispac') // false
+isValidLinkedInUrl('https://linkedin.com/company/techcorp') // false
+
+// Normalization
+normalizeLinkedInUrl('linkedin.com/in/Chris-Pacifico')
+// Returns: 'https://www.linkedin.com/in/chris-pacifico/'
+```
+
+### Extract from transcript
+
+Transcript headers often include LinkedIn URLs:
+
+```
+385-Chris Pacifico
+Host: Phil Howard
+Guest: Chris Pacifico
+https://www.linkedin.com/in/chris-pacifico/
+```
+
+Pulse Content automatically extracts and normalizes these URLs during episode creation.
+
+## Career timeline generation
+
+### Generate prompt
+
+```typescript
+import { generateCareerTimelinePrompt } from '@/services/linkedin'
+
+const prompt = generateCareerTimelinePrompt(profile)
+
+// Prompt includes:
+// - Guest name and current title
+// - Up to 6 career positions (most recent first)
+// - Visual style guidelines (isometric 3D, YBH brand colors)
+// - Layout instructions (horizontal timeline, numbered milestones)
+// - Quality standards (no logos, no facial features, professional tone)
+```
+
+### Generate image
+
+```typescript
+import { scrapeLinkedInProfile, generateCareerTimelinePrompt } from '@/services/linkedin'
+import { createTask, waitForTask } from '@/services/kieai'
+
+// Scrape profile
+const profile = await scrapeLinkedInProfile(linkedinUrl)
+
+// Generate prompt
+const prompt = generateCareerTimelinePrompt(profile)
+
+// Create Kie.ai task
+const { taskId } = await createTask({
+  prompt,
+  aspectRatio: '16:9',
+  resolution: '2K',
+})
+
+// Wait for completion
+const result = await waitForTask(taskId)
+
+if (result.state === 'success') {
+  console.log('Career timeline URL:', result.imageUrl)
+}
+```
+
+## Data structure
+
+### LinkedInProfile
+
+```typescript
+interface LinkedInProfile {
+  name: string
+  headline: string
+  summary: string
+  positions: Array<{
+    title: string
+    company: string
+    startDate: string
+    endDate?: string
+    description?: string
+  }>
+  scrapedAt?: string
+  linkedinUrl?: string
+}
+```
+
+### CareerPosition (Sanity)
+
+```typescript
+interface CareerPosition {
+  _key: string // Unique key for Sanity array items
+  title: string
+  company: string
+  startDate: string // "Jan 2020"
+  endDate?: string // "Dec 2022" or undefined for current
+  description?: string
+}
+```
+
+### GuestProfile (Sanity schema)
+
+```typescript
+interface GuestProfile {
+  _id: string
+  _type: 'guestProfile'
+  name: string
+  linkedinUrl: string
+  headline: string
+  summary: string
+  careerHistory: CareerPosition[]
+  scrapedAt: string // ISO 8601 timestamp
+}
+```
+
+## Link guest to episode
+
+```typescript
+import { linkGuestToEpisode } from '@/services/sanity'
+
+// After creating or finding guest profile
+const guestProfile = await upsertGuestProfile({ ... })
+
+// Link to episode
+await linkGuestToEpisode(episodeId, guestProfile._id)
+
+// Episode now has guestRef field pointing to guest
+```
+
+## Error handling
+
+### Profile not found
+
+```typescript
+try {
+  const profile = await scrapeLinkedInProfile(linkedinUrl)
+} catch (error) {
+  if (error.message.includes('404')) {
+    console.error('LinkedIn profile not found')
+    // Show error to user: Invalid LinkedIn URL
+  }
+}
+```
+
+### Rate limit exceeded
+
+```typescript
+try {
+  const profile = await scrapeLinkedInProfile(linkedinUrl)
+} catch (error) {
+  if (error.message.includes('429')) {
+    console.error('RapidAPI rate limit exceeded')
+    // Show error: Too many requests, try again later
+    // Or: Upgrade RapidAPI plan
+  }
+}
+```
+
+### Invalid LinkedIn URL
+
+```typescript
+import { isValidLinkedInUrl } from '@/services/linkedin'
+
+if (!isValidLinkedInUrl(linkedinUrl)) {
+  throw new Error('Invalid LinkedIn URL. Must be in format: linkedin.com/in/username')
+}
+```
+
+### Network timeout
+
+```typescript
+// Set timeout for scrape request
+const controller = new AbortController()
+const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 seconds
+
+try {
+  const response = await fetch('/api/linkedin/profile', {
+    method: 'POST',
+    signal: controller.signal,
+    body: JSON.stringify({ linkedinUrl }),
+  })
+} catch (error) {
+  if (error.name === 'AbortError') {
+    console.error('LinkedIn scrape timed out')
+  }
+} finally {
+  clearTimeout(timeoutId)
+}
+```
+
+## Cost management
+
+### RapidAPI pricing
+
+LinkedIn scraper APIs typically charge per request:
+- Free tier: 10-50 requests per month
+- Paid tiers: 500-5000+ requests per month
+
+### Reduce API calls
+
+<Steps>
+  <Step title="Use Sanity cache">
+    Always check Sanity for existing profile before scraping:
+    ```typescript
+    const cached = await fetchGuestProfileByUrl(linkedinUrl)
+    if (cached && isCacheFresh(cached.scrapedAt)) {
+      return cached // No API call needed
+    }
+    ```
+  </Step>
+  
+  <Step title="Batch scrapes">
+    Scrape multiple guest profiles during off-peak hours rather than on-demand.
+  </Step>
+  
+  <Step title="Manual entry fallback">
+    Allow team to manually enter career history if API quota is exhausted.
+  </Step>
+  
+  <Step title="Monitor usage">
+    Track RapidAPI usage in dashboard and set alerts for quota limits.
+  </Step>
+</Steps>
+
+## Best practices
+
+- **Always normalize URLs:** Use `normalizeLinkedInUrl()` before querying or caching
+- **Check cache first:** Avoid unnecessary API calls by checking Sanity cache
+- **Store in Sanity:** Always upsert profile after successful scrape
+- **Link to episodes:** Connect guest profiles to episodes via `guestRef`
+- **Handle errors gracefully:** Show clear error messages for invalid URLs or rate limits
+- **Refresh manually:** Provide "Refresh LinkedIn Data" button for users to force refresh
+- **Validate before scraping:** Use `isValidLinkedInUrl()` to catch invalid URLs early
+- **Generate timelines async:** Scrape profile and generate career timeline in background
+
+## Troubleshooting
+
+### API key invalid
+
+```
+Error: API error: 401
+```
+
+**Solution:** Verify `RAPIDAPI_KEY` is set correctly:
+```bash
+echo $RAPIDAPI_KEY
+```
+
+### Profile data incomplete
+
+**Causes:**
+- Guest has minimal LinkedIn profile
+- Privacy settings restrict scraping
+- Profile URL is incorrect
+
+**Solutions:**
+- Ask guest to update LinkedIn profile
+- Manually enter career history
+- Verify LinkedIn URL is correct
+
+### Scrape takes too long
+
+**Expected time:** 3-10 seconds
+
+**If longer:**
+- RapidAPI service may be slow
+- Network connectivity issues
+- Increase timeout to 15-30 seconds
+
+### Career history dates inconsistent
+
+**Issue:** LinkedIn returns dates in various formats ("Jan 2020", "2020", "Present")
+
+**Solution:** Normalize dates in UI:
+```typescript
+function formatDateRange(start: string, end?: string): string {
+  if (!end) return `${start} - Present`
+  return `${start} - ${end}`
+}
+```

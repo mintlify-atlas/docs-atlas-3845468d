@@ -1,0 +1,401 @@
+---
+title: Image Generation
+description: Kie.ai image generation API for infographics, quote cards, and thumbnails
+---
+
+# Image Generation
+
+Generate images using Kie.ai's Nano Banana Pro model with support for image transformation.
+
+## Create Generation Task
+
+Initiate an image generation task.
+
+```bash
+POST /api/images/generate
+```
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://production.youvebeenheard.com/api/images/generate \
+  -H "Content-Type: application/json" \
+  -H "Cookie: auth_token=<token>" \
+  -d '{
+    "prompt": "Create a professional isometric infographic showing the three pillars of IT leadership...",
+    "aspectRatio": "16:9",
+    "resolution": "2K"
+  }'
+```
+
+```javascript JavaScript
+const response = await fetch('/api/images/generate', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include',
+  body: JSON.stringify({
+    prompt: 'Create a professional isometric infographic...',
+    aspectRatio: '16:9',
+    resolution: '2K'
+  })
+})
+
+const data = await response.json()
+console.log('Task ID:', data.taskId)
+```
+</CodeGroup>
+
+### Request
+
+<ParamField body="prompt" type="string" required>
+  Image generation prompt (detailed description of desired image)
+</ParamField>
+
+<ParamField body="aspectRatio" type="string" default="16:9">
+  Image aspect ratio
+  
+  **Options**: `1:1`, `2:3`, `3:2`, `3:4`, `4:3`, `4:5`, `5:4`, `9:16`, `16:9`, `21:9`, `auto`
+</ParamField>
+
+<ParamField body="resolution" type="string" default="2K">
+  Image resolution
+  
+  **Options**: `1K`, `2K`, `4K`
+</ParamField>
+
+<ParamField body="imageInput" type="string[]" default="[]">
+  Input image URLs for transformation (max 8 images)
+  
+  Use this to modify existing images or create variations.
+</ParamField>
+
+### Response
+
+```json
+{
+  "taskId": "kie_abc123xyz"
+}
+```
+
+<ResponseField name="taskId" type="string">
+  Unique task ID for polling status
+</ResponseField>
+
+### Kie.ai Request Format
+
+The API forwards requests to Kie.ai:
+
+```json
+{
+  "model": "nano-banana-pro",
+  "input": {
+    "prompt": "...",
+    "image_input": [],
+    "aspect_ratio": "16:9",
+    "resolution": "2K",
+    "output_format": "png"
+  }
+}
+```
+
+## Check Task Status
+
+Poll for task completion and retrieve the generated image URL.
+
+```bash
+GET /api/images/status?taskId=<taskId>
+```
+
+<ParamField query="taskId" type="string" required>
+  Task ID from create task response
+</ParamField>
+
+<CodeGroup>
+```bash cURL
+curl "https://production.youvebeenheard.com/api/images/status?taskId=kie_abc123xyz" \
+  -H "Cookie: auth_token=<token>"
+```
+
+```javascript JavaScript
+const response = await fetch(`/api/images/status?taskId=${taskId}`, {
+  credentials: 'include'
+})
+
+const result = await response.json()
+console.log('State:', result.state)
+console.log('Image URL:', result.imageUrl)
+```
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "taskId": "kie_abc123xyz",
+  "state": "success",
+  "imageUrl": "https://kie.ai/cdn/images/abc123.png",
+  "costTime": 45000
+}
+```
+
+<ResponseField name="taskId" type="string">
+  Task ID
+</ResponseField>
+
+<ResponseField name="state" type="string">
+  Task state: `pending`, `processing`, `success`, or `fail`
+</ResponseField>
+
+<ResponseField name="imageUrl" type="string | null">
+  Generated image URL (only available when `state: "success"`)
+</ResponseField>
+
+<ResponseField name="failMsg" type="string">
+  Error message if `state: "fail"`
+</ResponseField>
+
+<ResponseField name="costTime" type="number">
+  Generation time in milliseconds
+</ResponseField>
+
+### Task States
+
+| State | Description | Action |
+|-------|-------------|--------|
+| `pending` | Task queued or waiting | Continue polling |
+| `processing` | Image being generated | Continue polling |
+| `success` | Image ready | Retrieve `imageUrl` |
+| `fail` | Generation failed | Check `failMsg` |
+
+## Polling Pattern
+
+Poll the status endpoint until the task completes:
+
+```javascript
+async function waitForImage(taskId, maxAttempts = 90, intervalMs = 3000) {
+  for (let i = 0; i < maxAttempts; i++) {
+    const response = await fetch(`/api/images/status?taskId=${taskId}`)
+    const result = await response.json()
+    
+    if (result.state === 'success') {
+      return result.imageUrl
+    }
+    
+    if (result.state === 'fail') {
+      throw new Error(result.failMsg || 'Generation failed')
+    }
+    
+    // Wait before next poll
+    await new Promise(resolve => setTimeout(resolve, intervalMs))
+  }
+  
+  throw new Error('Task timed out after 4.5 minutes')
+}
+
+// Usage
+const imageUrl = await waitForImage(taskId)
+console.log('Image ready:', imageUrl)
+```
+
+**Default Configuration**:
+- **Max attempts**: 90
+- **Interval**: 3 seconds
+- **Total timeout**: 4.5 minutes
+
+<Note>
+  **Generation Time**: Most images complete in 30-90 seconds. Complex infographics may take up to 2-3 minutes.
+</Note>
+
+## Image Transformation
+
+Modify existing images by providing them as input:
+
+```javascript
+const response = await fetch('/api/images/generate', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    prompt: 'Change the color scheme to dark mode with cyan and magenta accents',
+    imageInput: [
+      'https://kie.ai/cdn/images/original.png'
+    ],
+    aspectRatio: '16:9',
+    resolution: '2K'
+  })
+})
+```
+
+<ParamField body="imageInput" type="string[]">
+  Array of image URLs to use as input (max 8 images)
+  
+  Use cases:
+  - Recolor existing infographic
+  - Add/remove elements
+  - Change layout or composition
+  - Merge multiple images
+</ParamField>
+
+### Transformation Examples
+
+<CodeGroup>
+```javascript Recolor
+{
+  "prompt": "Convert this infographic to YBH brand colors (yellow #F7B500, orange #F17529, red #EF4136) on dark background",
+  "imageInput": ["https://kie.ai/cdn/images/original.png"],
+  "aspectRatio": "16:9"
+}
+```
+
+```javascript Add Elements
+{
+  "prompt": "Add episode number 'EP 385' in top-left corner and YBH logo in bottom-right",
+  "imageInput": ["https://kie.ai/cdn/images/base.png"],
+  "aspectRatio": "16:9"
+}
+```
+
+```javascript Change Layout
+{
+  "prompt": "Rearrange this 3-column layout into a pyramid structure with the same content",
+  "imageInput": ["https://kie.ai/cdn/images/columns.png"],
+  "aspectRatio": "16:9"
+}
+```
+</CodeGroup>
+
+## Aspect Ratios
+
+Supported aspect ratios and common use cases:
+
+| Ratio | Dimensions | Use Case |
+|-------|------------|----------|
+| `1:1` | Square | Instagram posts, profile images |
+| `16:9` | Landscape | LinkedIn posts, presentations, blog headers |
+| `9:16` | Portrait | Instagram Stories, TikTok |
+| `4:5` | Portrait | Instagram feed posts |
+| `21:9` | Ultrawide | Cinematic presentations |
+| `3:2` | Photo | Standard photography format |
+| `auto` | Dynamic | Let model decide optimal ratio |
+
+## Resolutions
+
+| Resolution | Dimensions | File Size | Use Case |
+|-----------|-----------|-----------|----------|
+| **1K** | ~1024px | ~200KB | Web thumbnails, previews |
+| **2K** | ~2048px | ~500KB | Social media, web display |
+| **4K** | ~4096px | ~2MB | Print, high-res displays |
+
+<Note>
+  **Default**: `2K` provides good balance between quality and file size for most social media use cases.
+</Note>
+
+## Error Responses
+
+| Status | Error | Description |
+|--------|-------|-------------|
+| `400` | Prompt is required | Missing or empty prompt |
+| `400` | taskId is required | Missing taskId in status check |
+| `400` | Kie.ai error | Upstream API error (check message) |
+| `500` | Kie.ai API key not configured | Missing KIEAI_API_KEY |
+| `500` | Failed to start image generation | Request processing error |
+| `500` | Failed to check task status | Status check error |
+
+## Prompt Engineering
+
+Effective prompts for infographics:
+
+### Good Prompt Structure
+
+```
+[Style] + [Subject] + [Layout] + [Color] + [Details] + [Constraints]
+```
+
+Example:
+
+```
+Create a professional isometric 3D infographic showing the three pillars of 
+IT leadership (Technical Expertise, Business Acumen, People Skills) arranged 
+in a pyramid structure. Use corporate colors (navy, teal, orange) on a dark 
+background. Include the title "The Three Pillars of IT Leadership" at the 
+top and "Episode 385" in the corner. Make it bold, clean, and suitable for 
+LinkedIn. 16:9 aspect ratio.
+```
+
+### Style Keywords
+
+- **Visual style**: `isometric 3D`, `flat design`, `minimalist`, `cinematic`, `data visualization`
+- **Mood**: `professional`, `bold`, `modern`, `tech-forward`, `premium`
+- **Composition**: `centered`, `asymmetric`, `grid layout`, `hero image`
+
+### Brand Consistency
+
+For YBH-branded images:
+
+```javascript
+const brandPrompt = `
+  Create a ${visualStyle} infographic with:
+  
+  Colors:
+  - Primary: Yellow (#F7B500), Orange (#F17529), Red (#EF4136)
+  - Background: Dark navy (#1A1A2E)
+  - Text: White (#FFFFFF)
+  
+  Typography:
+  - Title: Fonseca Bold, 48pt
+  - Body: Montserrat Regular, 16pt
+  
+  Include:
+  - Episode number in corner
+  - YBH branding subtle but present
+  - Bold, premium, industrial aesthetic
+`
+```
+
+## Service Integration
+
+For service-level usage, see:
+
+- [Kie.ai Service Reference](/api/services/kieai) - TypeScript functions and polling utilities
+
+## Rate Limits & Costs
+
+<Warning>
+  **Kie.ai Costs**: Image generation incurs costs per request:
+  
+  - **2K resolution**: ~$0.10-0.15 per image
+  - **4K resolution**: ~$0.20-0.30 per image
+  - **Transformation**: Same cost as generation
+  
+  Monitor usage via Kie.ai dashboard.
+</Warning>
+
+<Note>
+  **No Built-in Limits**: The API does not enforce rate limits. Implement client-side throttling to control costs.
+</Note>
+
+## Common Issues
+
+### Task Times Out
+
+If a task exceeds 4.5 minutes:
+
+1. Check Kie.ai dashboard for task status
+2. Increase `maxAttempts` or `intervalMs` in polling
+3. Simplify the prompt (complex requests take longer)
+
+### Image URL is Null
+
+If `state: "success"` but `imageUrl` is null:
+
+1. Check Kie.ai API response structure
+2. Wait a few seconds and poll again
+3. Contact Kie.ai support if persistent
+
+### Generation Fails
+
+Common failure reasons:
+
+- Prompt violates content policy
+- Input image URLs are inaccessible
+- Kie.ai service outage
+
+Check `failMsg` for details.

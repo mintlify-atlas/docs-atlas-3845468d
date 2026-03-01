@@ -1,0 +1,191 @@
+---
+title: API Overview
+description: YBH Pulse Content API reference - base URL, authentication, and core concepts
+---
+
+# API Overview
+
+The YBH Pulse Content API provides programmatic access to episode management, content generation, and image creation for podcast content production workflows.
+
+## Base URL
+
+All API endpoints are accessed via:
+
+```
+https://production.youvebeenheard.com/api
+```
+
+For local development:
+
+```
+http://localhost:8788/api
+```
+
+## Architecture
+
+The API is built on **Cloudflare Workers** (Pages Functions), providing:
+
+- **Global edge network** - Low latency worldwide
+- **Serverless execution** - Auto-scaling, no infrastructure management
+- **Secure by default** - Environment variables, JWT authentication
+- **CORS support** - Configurable cross-origin requests
+
+## Core Services
+
+The API integrates with multiple backend services:
+
+| Service | Purpose | Documentation |
+|---------|---------|---------------|
+| **Sanity.io** | Episode & guest data storage | [Sanity Service](/api/services/sanity) |
+| **Anthropic Claude** | AI content generation | [AI Service](/api/services/ai) |
+| **Pinecone** | RAG knowledge base for brand context | [Pinecone Service](/api/services/pinecone) |
+| **Kie.ai** | Image generation (Nano Banana Pro) | [Kie.ai Service](/api/services/kieai) |
+
+## Response Format
+
+All endpoints return JSON responses with consistent structure:
+
+### Success Response
+
+```json
+{
+  "_id": "abc123",
+  "metadata": {
+    "title": "Episode 385",
+    "guestName": "Chris Pacifico"
+  },
+  "status": "complete"
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "Episode not found"
+}
+```
+
+## HTTP Status Codes
+
+| Code | Meaning | Description |
+|------|---------|-------------|
+| `200` | OK | Request succeeded |
+| `201` | Created | Resource created successfully |
+| `202` | Accepted | Async job started (returns `jobId`) |
+| `400` | Bad Request | Invalid request parameters |
+| `401` | Unauthorized | Missing or invalid authentication |
+| `404` | Not Found | Resource does not exist |
+| `429` | Too Many Requests | Rate limit exceeded |
+| `500` | Internal Server Error | Server error occurred |
+| `502` | Bad Gateway | Upstream service error (Sanity, Anthropic, etc.) |
+
+## Rate Limiting
+
+Rate limits apply to authentication endpoints:
+
+- **Login**: 5 attempts per 15 minutes per IP
+- **Password reset**: 3 attempts per hour per IP
+
+When rate limited, the API returns `429 Too Many Requests` with headers:
+
+```
+Retry-After: 900
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1678901234
+```
+
+## CORS
+
+CORS is enabled for all endpoints. The API responds to `OPTIONS` preflight requests with:
+
+```
+Access-Control-Allow-Origin: *
+Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+Access-Control-Allow-Headers: Content-Type, Authorization
+```
+
+## Pagination
+
+Endpoints that return lists support pagination via query parameters:
+
+```
+GET /api/sanity/guests?limit=50&offset=0
+```
+
+<ParamField query="limit" type="number" default="100">
+  Maximum number of results to return (max: 500)
+</ParamField>
+
+<ParamField query="offset" type="number" default="0">
+  Number of results to skip
+</ParamField>
+
+Paginated responses include metadata:
+
+```json
+{
+  "guests": [...],
+  "totalCount": 250,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+## Async Operations
+
+Long-running operations (content generation, image creation) use async patterns:
+
+1. **Initiate**: POST request returns `202 Accepted` with `jobId`
+2. **Poll**: GET status endpoint with `jobId` until complete
+3. **Retrieve**: Fetch final result from status endpoint
+
+Example:
+
+```bash
+# 1. Start generation
+curl -X POST https://production.youvebeenheard.com/api/generate-episode \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+# Response: {"jobId": "abc123", "statusUrl": "/api/generate-episode/abc123"}
+
+# 2. Poll status
+curl https://production.youvebeenheard.com/api/generate-episode/abc123
+# Response: {"status": "running", "progress": 0.5}
+
+# 3. Get result when complete
+curl https://production.youvebeenheard.com/api/generate-episode/abc123
+# Response: {"status": "complete", "prf": "...", "viralHooks": "..."}
+```
+
+## Environment Variables
+
+The API requires the following environment variables:
+
+```bash
+# Sanity CMS
+SANITY_PROJECT_ID=usl8dp6j
+SANITY_DATASET=production
+SANITY_API_TOKEN=<write_token>
+
+# AI Services
+ANTHROPIC_API_KEY=<api_key>
+OPENROUTER_API_KEY=<api_key>  # For embeddings
+
+# Vector Database
+PINECONE_API_KEY=<api_key>
+PINECONE_HOST=<index_url>
+
+# Image Generation
+KIEAI_API_KEY=<api_key>
+
+# Authentication
+JWT_SECRET=<secret_key>
+```
+
+## Next Steps
+
+- [Authentication Guide](/api/authentication) - JWT token authentication
+- [Episode Management](/api/episodes) - Create and manage episodes
+- [Content Generation](/api/content-generation) - Generate PRF, hooks, and posts
+- [Image Generation](/api/images) - Create infographics and thumbnails

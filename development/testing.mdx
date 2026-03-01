@@ -1,0 +1,427 @@
+---
+title: Testing Strategy
+description: Testing approach, tools, and best practices for YBH Pulse Content
+---
+
+## Testing Philosophy
+
+Pulse Content follows a **test-driven development (TDD)** approach, especially for bug fixes:
+
+<Warning>
+  **Bug Fixing Workflow (Critical)**
+  
+  When a bug is reported:
+  1. **Don't start by trying to fix it** - First write a test that reproduces the bug
+  2. **Verify the test fails** - Confirming the bug exists and is captured
+  3. **Fix the bug** - Implement the solution
+  4. **Verify the test passes** - Ensures the fix works
+  5. **Only merge/commit when tests pass**
+  
+  This ensures bugs are properly understood before fixing and prevents regressions.
+</Warning>
+
+## Testing Stack
+
+| Tool | Purpose |
+|------|----------|
+| **Vitest** | Unit and integration testing framework (Vite-native) |
+| **Testing Library** | React component testing utilities |
+| **jsdom** | DOM implementation for Node.js |
+| **MSW (Mock Service Worker)** | API mocking for tests |
+| **@testing-library/user-event** | User interaction simulation |
+
+## Running Tests
+
+<CodeGroup>
+```bash Watch Mode
+# Run tests in watch mode (interactive)
+npm test
+
+# Tests re-run automatically on file changes
+# Great for TDD workflow
+```
+
+```bash CI Mode
+# Run tests once (exits after completion)
+npm run test:run
+
+# Used in CI/CD pipeline
+# Ensures all tests pass before deployment
+```
+
+```bash Coverage
+# Generate coverage report
+npm run test:coverage
+
+# Outputs to coverage/ directory
+# View HTML report at coverage/index.html
+```
+
+```bash Type Checking
+# Run TypeScript type checker
+npm run typecheck
+
+# Catches type errors without emitting files
+# Also runs in CI before deployment
+```
+</CodeGroup>
+
+## Test Structure
+
+### Unit Tests
+
+Test individual functions and components in isolation:
+
+```typescript
+// src/utils/formatDate.test.ts
+import { describe, it, expect } from 'vitest'
+import { formatDate } from './formatDate'
+
+describe('formatDate', () => {
+  it('formats date correctly', () => {
+    const date = new Date('2024-03-15')
+    expect(formatDate(date)).toBe('March 15, 2024')
+  })
+
+  it('handles invalid dates', () => {
+    expect(formatDate(null)).toBe('Invalid date')
+  })
+})
+```
+
+### Component Tests
+
+Test React components with user interactions:
+
+```typescript
+// src/components/EpisodeCard.test.tsx
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, it, expect, vi } from 'vitest'
+import { EpisodeCard } from './EpisodeCard'
+
+describe('EpisodeCard', () => {
+  it('renders episode information', () => {
+    const episode = {
+      id: '1',
+      episodeNumber: 348,
+      title: 'Test Episode',
+      guest: 'John Doe'
+    }
+
+    render(<EpisodeCard episode={episode} />)
+
+    expect(screen.getByText('Episode 348')).toBeInTheDocument()
+    expect(screen.getByText('Test Episode')).toBeInTheDocument()
+    expect(screen.getByText('John Doe')).toBeInTheDocument()
+  })
+
+  it('calls onClick when clicked', async () => {
+    const onClick = vi.fn()
+    const episode = { id: '1', episodeNumber: 348 }
+
+    render(<EpisodeCard episode={episode} onClick={onClick} />)
+
+    await userEvent.click(screen.getByRole('button'))
+
+    expect(onClick).toHaveBeenCalledWith('1')
+  })
+})
+```
+
+### API Tests
+
+Test backend functions with mocked dependencies:
+
+```typescript
+// functions/api/episodes/[id].test.ts
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { onRequestGet } from './[id]'
+import * as sanity from '@/services/sanity'
+
+vi.mock('@/services/sanity')
+
+describe('GET /api/episodes/:id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('returns episode data', async () => {
+    const mockEpisode = {
+      id: '1',
+      episodeNumber: 348,
+      title: 'Test Episode'
+    }
+
+    vi.spyOn(sanity, 'getEpisode').mockResolvedValue(mockEpisode)
+
+    const request = new Request('http://localhost/api/episodes/1')
+    const context = { params: { id: '1' } }
+
+    const response = await onRequestGet({ request, ...context })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data).toEqual(mockEpisode)
+    expect(sanity.getEpisode).toHaveBeenCalledWith('1')
+  })
+
+  it('returns 404 for non-existent episode', async () => {
+    vi.spyOn(sanity, 'getEpisode').mockResolvedValue(null)
+
+    const request = new Request('http://localhost/api/episodes/999')
+    const context = { params: { id: '999' } }
+
+    const response = await onRequestGet({ request, ...context })
+
+    expect(response.status).toBe(404)
+  })
+})
+```
+
+## Mocking External Services
+
+### Mock Service Worker (MSW)
+
+Mock HTTP requests for realistic testing:
+
+```typescript
+// src/test/mocks/handlers.ts
+import { http, HttpResponse } from 'msw'
+
+export const handlers = [
+  // Mock Sanity API
+  http.get('https://api.sanity.io/v1/data/query/:dataset', () => {
+    return HttpResponse.json({
+      result: [
+        { _id: '1', episodeNumber: 348, title: 'Test Episode' }
+      ]
+    })
+  }),
+
+  // Mock Kie.ai image generation
+  http.post('https://api.kie.ai/api/v1/jobs/createTask', () => {
+    return HttpResponse.json({
+      taskId: 'mock-task-123',
+      status: 'pending'
+    })
+  })
+]
+```
+
+```typescript
+// src/test/setup.ts
+import { setupServer } from 'msw/node'
+import { beforeAll, afterEach, afterAll } from 'vitest'
+import { handlers } from './mocks/handlers'
+
+const server = setupServer(...handlers)
+
+beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
+```
+
+### Mocking Modules
+
+Mock entire modules for unit testing:
+
+```typescript
+import { vi } from 'vitest'
+
+// Mock Sanity client
+vi.mock('@/services/sanity', () => ({
+  getEpisode: vi.fn(),
+  createEpisode: vi.fn(),
+  updateEpisode: vi.fn()
+}))
+
+// Mock Pinecone client
+vi.mock('@/services/pinecone', () => ({
+  queryDesigns: vi.fn().mockResolvedValue([])
+}))
+```
+
+## Test Configuration
+
+### vitest.config.ts
+
+```typescript
+export default defineConfig({
+  test: {
+    globals: true,                  // Enable global test APIs
+    environment: 'jsdom',           // DOM environment for React tests
+    setupFiles: ['./src/test/setup.ts'],  // Setup file
+    include: [
+      'src/**/*.{test,spec}.{ts,tsx}',
+      'functions/**/*.{test,spec}.{ts,tsx}'
+    ],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html'],
+      exclude: ['node_modules/', 'src/test/']
+    }
+  }
+})
+```
+
+## Testing Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Test Behavior, Not Implementation" icon="eye">
+    Test what the component does, not how it does it. Avoid testing internal state.
+  </Card>
+  
+  <Card title="Write Descriptive Test Names" icon="file-text">
+    Use clear, descriptive names: `it('displays error when API fails')`
+  </Card>
+  
+  <Card title="Follow AAA Pattern" icon="list-ordered">
+    **Arrange** (setup), **Act** (execute), **Assert** (verify)
+  </Card>
+  
+  <Card title="Keep Tests Independent" icon="arrows-split">
+    Each test should run in isolation without depending on others
+  </Card>
+  
+  <Card title="Mock External Dependencies" icon="link-slash">
+    Mock APIs, databases, and external services for reliable tests
+  </Card>
+  
+  <Card title="Test Edge Cases" icon="triangle-exclamation">
+    Test error states, empty states, loading states, and boundary conditions
+  </Card>
+</CardGroup>
+
+## Testing Checklist
+
+Before submitting a PR:
+
+<Steps>
+  <Step title="All tests pass">
+    ```bash
+    npm run test:run
+    ```
+    Ensure no failing tests
+  </Step>
+
+  <Step title="Type checking passes">
+    ```bash
+    npm run typecheck
+    ```
+    Fix any TypeScript errors
+  </Step>
+
+  <Step title="New features have tests">
+    Write tests for new functionality before implementing (TDD)
+  </Step>
+
+  <Step title="Bug fixes have regression tests">
+    Write a test that reproduces the bug first, then fix it
+  </Step>
+
+  <Step title="Coverage remains high">
+    ```bash
+    npm run test:coverage
+    ```
+    Aim for >80% coverage
+  </Step>
+</Steps>
+
+## CI/CD Testing
+
+Tests run automatically on every push via GitHub Actions:
+
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm run test:run
+      
+      - name: Type check
+        run: npm run typecheck
+
+  deploy:
+    needs: test  # Only deploys if tests pass
+    if: github.ref == 'refs/heads/main'
+```
+
+<Info>
+  Deployment to Cloudflare Pages only occurs if all tests pass.
+</Info>
+
+## Common Testing Patterns
+
+### Testing Hooks
+
+```typescript
+import { renderHook, waitFor } from '@testing-library/react'
+import { useEpisode } from './useEpisode'
+
+it('fetches episode data', async () => {
+  const { result } = renderHook(() => useEpisode('1'))
+
+  expect(result.current.loading).toBe(true)
+
+  await waitFor(() => {
+    expect(result.current.loading).toBe(false)
+    expect(result.current.episode).toBeDefined()
+  })
+})
+```
+
+### Testing Async Operations
+
+```typescript
+it('generates PRF document', async () => {
+  const { result } = renderHook(() => useGeneratePRF())
+
+  act(() => {
+    result.current.generate('transcript text')
+  })
+
+  await waitFor(() => {
+    expect(result.current.status).toBe('complete')
+    expect(result.current.prf).toBeDefined()
+  }, { timeout: 10000 })
+})
+```
+
+### Testing Error States
+
+```typescript
+it('displays error on API failure', async () => {
+  // Mock API failure
+  vi.spyOn(sanity, 'getEpisode').mockRejectedValue(
+    new Error('Network error')
+  )
+
+  render(<EpisodeDetail id="1" />)
+
+  await waitFor(() => {
+    expect(screen.getByText(/error/i)).toBeInTheDocument()
+  })
+})
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Contributing Guidelines" icon="code-pull-request" href="/development/contributing/guidelines">
+    Learn how to contribute code
+  </Card>
+  <Card title="Bug Workflow" icon="bug" href="/development/contributing/bug-workflow">
+    Follow the bug-fixing process
+  </Card>
+  <Card title="CI/CD Pipeline" icon="rocket" href="/development/deployment/ci-cd">
+    Understand automated testing and deployment
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    Review system architecture
+  </Card>
+</CardGroup>

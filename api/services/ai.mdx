@@ -1,0 +1,685 @@
+---
+title: AI Service
+description: TypeScript service functions for AI content generation with RAG
+---
+
+# AI Service
+
+Client-side TypeScript service for AI content generation. All functions call server-side API endpoints.
+
+**Location**: `src/services/ai.ts`
+
+## Overview
+
+The AI service provides functions for:
+
+- **PRF Generation** - Podcast Repurposing Framework from transcripts
+- **Viral Hooks** - Social media hooks from PRF
+- **Episode Metadata** - Titles, descriptions, takeaways, show notes
+- **Social Posts** - LinkedIn, Instagram, Twitter content
+- **Infographic Specs** - Design specifications for image generation
+- **Visual Suggestions** - Automated visual content recommendations
+- **Fact Checking** - Verify generated content against transcript
+
+All generation uses **Claude Sonnet 4** with RAG-enhanced prompts from the Pinecone knowledge base.
+
+## generatePRF()
+
+Generate PRF document from transcript.
+
+```typescript
+function generatePRF(transcript: string): Promise<string>
+```
+
+### Parameters
+
+<ParamField path="transcript" type="string" required>
+  Full episode transcript
+</ParamField>
+
+### Returns
+
+```typescript
+string // PRF document in Markdown format
+```
+
+### Example
+
+```typescript
+import { generatePRF } from '@/services/ai'
+
+const transcript = `385-Chris Pacifico\nGuest: Chris Pacifico\n...`
+
+try {
+  const prf = await generatePRF(transcript)
+  console.log('PRF generated:', prf.length, 'characters')
+  
+  // Save to episode
+  await updateEpisode(episodeId, { prf })
+} catch (error) {
+  console.error('PRF generation failed:', error.message)
+}
+```
+
+<Note>
+  **Automatic RAG**: Fetches brand guidelines and writing style from Pinecone. Uses the PRF agent prompt from settings.
+</Note>
+
+## generateHooks()
+
+Generate viral social media hooks from PRF.
+
+```typescript
+function generateHooks(
+  transcript: string,
+  prf: string,
+  episodeNumber: string,
+  guestName: string
+): Promise<string>
+```
+
+### Parameters
+
+<ParamField path="transcript" type="string" required>
+  Full episode transcript (for fact verification)
+</ParamField>
+
+<ParamField path="prf" type="string" required>
+  PRF document
+</ParamField>
+
+<ParamField path="episodeNumber" type="string" required>
+  Episode number (e.g., "385")
+</ParamField>
+
+<ParamField path="guestName" type="string" required>
+  Guest full name
+</ParamField>
+
+### Returns
+
+```typescript
+string // HTML content with TipTap-compatible structure
+```
+
+### Example
+
+```typescript
+import { generateHooks } from '@/services/ai'
+
+const hooks = await generateHooks(
+  transcript,
+  prf,
+  '385',
+  'Chris Pacifico'
+)
+
+// hooks is HTML:
+// "<h2>Hook 1: The Hidden Cost</h2>\n<p>Most IT leaders don't realize...</p>"
+
+await updateEpisode(episodeId, { viralHooks: hooks })
+```
+
+<Warning>
+  **Fact Verification Required**: Always pass the full transcript to enable fact-checking. The AI cross-references claims against the source.
+</Warning>
+
+## generateEpisodeMetadata()
+
+Generate comprehensive episode metadata using agentic workflow with SSE progress updates.
+
+```typescript
+function generateEpisodeMetadata(
+  episodeId: string,
+  episodeNumber: string,
+  guestName: string,
+  transcript: string,
+  prf?: string,
+  onProgress?: (step: string, detail: string, progress: number) => void
+): Promise<EpisodeMetadataResult>
+```
+
+### Parameters
+
+<ParamField path="episodeId" type="string" required>
+  Episode ID
+</ParamField>
+
+<ParamField path="episodeNumber" type="string" required>
+  Episode number
+</ParamField>
+
+<ParamField path="guestName" type="string" required>
+  Guest full name
+</ParamField>
+
+<ParamField path="transcript" type="string" required>
+  Full episode transcript
+</ParamField>
+
+<ParamField path="prf" type="string">
+  PRF document (optional but recommended)
+</ParamField>
+
+<ParamField path="onProgress" type="function">
+  Progress callback: `(step, detail, progress) => void`
+</ParamField>
+
+### Returns
+
+```typescript
+interface EpisodeMetadataResult {
+  title: string                    // "EP 385: The Hidden Cost of Vendor Lock-In"
+  shortDescription: string         // 1-2 sentence summary
+  longDescription: string          // Full "On this episode" content
+  keyTakeaways: [string, string, string]  // Exactly 3 takeaways
+  showNotes: ShowNote[]            // Timestamped segments
+}
+
+interface ShowNote {
+  timestamp: string  // "00:15:30"
+  description: string
+}
+```
+
+### Example
+
+```typescript
+import { generateEpisodeMetadata } from '@/services/ai'
+
+const metadata = await generateEpisodeMetadata(
+  episodeId,
+  '385',
+  'Chris Pacifico',
+  transcript,
+  prf,
+  (step, detail, progress) => {
+    console.log(`[${Math.round(progress * 100)}%] ${step}: ${detail}`)
+  }
+)
+
+// Save to Sanity
+await updateEpisode(episodeId, {
+  sanityPageMetadata: metadata
+})
+```
+
+<Note>
+  **SSE Streaming**: Progress updates stream via Server-Sent Events. Useful for showing real-time status in UI.
+</Note>
+
+## generateTitleVariations()
+
+Generate 3 viral title variations (contrarian, confession, specific angles).
+
+```typescript
+function generateTitleVariations(
+  episodeId: string,
+  episodeNumber: string,
+  guestName: string,
+  transcript: string,
+  prf?: string,
+  existingTitles?: string[]
+): Promise<TitleVariation[]>
+```
+
+### Parameters
+
+<ParamField path="existingTitles" type="string[]">
+  Previous titles to avoid repetition
+</ParamField>
+
+### Returns
+
+```typescript
+interface TitleVariation {
+  title: string
+  angle: 'contrarian' | 'confession' | 'specific'
+  wordCount: number
+}
+```
+
+### Example
+
+```typescript
+import { generateTitleVariations } from '@/services/ai'
+
+const variations = await generateTitleVariations(
+  episodeId,
+  '385',
+  'Chris Pacifico',
+  transcript,
+  prf,
+  ['The IT Leadership Crisis']  // Avoid similar titles
+)
+
+// variations:
+// [
+//   { title: "Why Most CIOs Fail...", angle: "contrarian", wordCount: 8 },
+//   { title: "I Wasted 3 Years...", angle: "confession", wordCount: 6 },
+//   { title: "387 IT Leaders Reveal...", angle: "specific", wordCount: 7 }
+// ]
+```
+
+## generateLinkedInPosts()
+
+Generate LinkedIn posts with verified facts bank.
+
+```typescript
+function generateLinkedInPosts(
+  transcript: string,
+  prf: string,
+  hooks: string,
+  episodeNumber: string,
+  guestName: string
+): Promise<LinkedInPostsResult>
+```
+
+### Returns
+
+```typescript
+interface LinkedInPostsResult {
+  verifiedFactsBank: {
+    directQuotes: string[]      // Verbatim quotes from transcript
+    specificNumbers: string[]   // Stats mentioned in episode
+    events: string[]            // Specific events or examples
+    frameworks: string[]        // Named frameworks or methodologies
+    insights: string[]          // Key insights
+  }
+  releaseDay: string           // Release day post copy
+  followUp: string             // Follow-up post copy
+}
+```
+
+### Example
+
+```typescript
+import { generateLinkedInPosts } from '@/services/ai'
+
+const posts = await generateLinkedInPosts(
+  transcript,
+  prf,
+  hooks,
+  '385',
+  'Chris Pacifico'
+)
+
+await updateEpisode(episodeId, {
+  socialPosts: {
+    linkedin: [posts.releaseDay, posts.followUp]
+  }
+})
+```
+
+<Note>
+  **Verified Facts Bank**: The AI extracts quotes, numbers, and frameworks directly from the transcript to prevent hallucinations.
+</Note>
+
+## generateInfographicSpec()
+
+Generate infographic design specification.
+
+```typescript
+function generateInfographicSpec(
+  selectedText: string,
+  transcript: string,
+  prf: string,
+  episodeNumber: string,
+  guestName: string,
+  history: string[],
+  designType?: 'infographic' | 'quote' | 'thumbnail'
+): Promise<InfographicSpec>
+```
+
+### Parameters
+
+<ParamField path="selectedText" type="string" required>
+  Text excerpt to visualize
+</ParamField>
+
+<ParamField path="history" type="string[]" required>
+  Previously used layout types (for variety)
+</ParamField>
+
+<ParamField path="designType" type="string" default="infographic">
+  Design type: `infographic`, `quote`, or `thumbnail`
+</ParamField>
+
+### Returns
+
+```typescript
+interface InfographicSpec {
+  layout: string              // "Pyramid (Bottom-Up)"
+  template: string            // "Strategic Framework"
+  title: string               // "The Three Pillars of IT Leadership"
+  colorSystem: string         // "Corporate Professional"
+  iconStyle: 'isometric' | 'flat2d'
+  aspectRatio: string         // "16:9"
+  contentBreakdown?: {
+    mainMessage: string
+    sections: string[]
+    dataPoints: string[]
+  }
+  prompt: string              // Complete Kie.ai prompt
+}
+```
+
+### Example
+
+```typescript
+import { generateInfographicSpec } from '@/services/ai'
+
+const spec = await generateInfographicSpec(
+  'The three pillars of IT leadership: technical expertise, business acumen, and people skills.',
+  transcript,
+  prf,
+  '385',
+  'Chris Pacifico',
+  ['Doom Loop', 'Timeline'],  // Avoid these layouts
+  'infographic'
+)
+
+// Use spec to generate image
+import { createTask } from '@/services/kieai'
+const { taskId } = await createTask({
+  prompt: spec.prompt,
+  aspectRatio: spec.aspectRatio,
+  resolution: '2K'
+})
+```
+
+## generateVisualSuggestionsV2()
+
+Generate 10 visual suggestions (4 data viz + 4 cinematic + 2 quote cards) in parallel.
+
+```typescript
+function generateVisualSuggestionsV2(
+  episodeId: string,
+  episodeNumber: string,
+  guestName: string,
+  transcript: string,
+  prf: string,
+  hooks: string,
+  history?: string[],
+  onProgress?: (step: string, detail: string, progress: number) => void,
+  customPrompts?: {
+    dataviz?: string
+    cinematic?: string
+    quoteCards?: string
+  }
+): Promise<VisualSuggestionsResponse>
+```
+
+### Returns
+
+```typescript
+interface VisualSuggestionsResponse {
+  suggestions: VisualSuggestionResult[]
+  counts: {
+    dataviz: number      // 4
+    cinematic: number    // 4
+    quoteCard: number    // 2
+  }
+  errors: {
+    dataviz: string | null
+    cinematic: string | null
+    quoteCard: string | null
+  }
+}
+
+interface VisualSuggestionResult {
+  visualType: 'dataviz' | 'cinematic' | 'quoteCard'
+  type: 'infographic' | 'quoteCard'
+  sourceText: string
+  sourceSection: string  // "Core Message", "Key Insight #2", etc.
+  spec: InfographicSpec
+}
+```
+
+### Example
+
+```typescript
+import { generateVisualSuggestionsV2 } from '@/services/ai'
+
+const { suggestions, counts } = await generateVisualSuggestionsV2(
+  episodeId,
+  '385',
+  'Chris Pacifico',
+  transcript,
+  prf,
+  hooks,
+  [],  // No history
+  (step, detail, progress) => {
+    console.log(`${Math.round(progress * 100)}%: ${step}`)
+  }
+)
+
+console.log(`Generated ${counts.dataviz} data viz + ${counts.cinematic} cinematic + ${counts.quoteCard} quote cards`)
+
+// Save to episode
+await updateEpisode(episodeId, {
+  visualSuggestions: suggestions
+})
+```
+
+<Note>
+  **Parallel Generation**: Uses agentic orchestrator to generate all 10 suggestions in parallel (~60-90 seconds total).
+</Note>
+
+## factCheckContent()
+
+Verify generated content against transcript to prevent hallucinations.
+
+```typescript
+function factCheckContent(
+  transcript: string,
+  prf: string,
+  guestName: string,
+  items: FactCheckItem[],
+  coHostName?: string,
+  onProgress?: (step: string, detail: string, progress: number) => void
+): Promise<FactCheckResponse>
+```
+
+### Parameters
+
+<ParamField path="items" type="FactCheckItem[]" required>
+  Items to verify
+  
+  ```typescript
+  interface FactCheckItem {
+    type: 'statistic' | 'quote' | 'claim' | 'list' | 'attribution'
+    content: string
+    source?: string  // e.g., guest name
+  }
+  ```
+</ParamField>
+
+### Returns
+
+```typescript
+interface FactCheckResponse {
+  overallScore: number           // 0-100
+  passedValidation: boolean      // true if score >= 80
+  results: ValidationResult[]
+  summary: string
+  criticalIssues: string[]       // Blocking errors
+}
+
+interface ValidationResult {
+  item: FactCheckItem
+  status: 'verified' | 'unverified' | 'misattributed' | 'fabricated'
+  confidence: number             // 0-1
+  issue?: string                 // Error description
+  suggestion?: string            // How to fix
+  transcriptEvidence?: string    // Supporting quote from transcript
+}
+```
+
+### Example
+
+```typescript
+import { factCheckContent, extractFactCheckItems } from '@/services/ai'
+
+// Extract items from infographic spec
+const items = extractFactCheckItems(spec, guestName)
+
+// Verify against transcript
+const result = await factCheckContent(
+  transcript,
+  prf,
+  'Chris Pacifico',
+  items,
+  'Doug'
+)
+
+if (!result.passedValidation) {
+  console.error('Fact-check failed:', result.summary)
+  console.error('Issues:', result.criticalIssues)
+  
+  // Show validation errors in UI
+  for (const r of result.results) {
+    if (r.status === 'fabricated') {
+      console.error(`❌ ${r.item.content}`)
+      console.error(`   Issue: ${r.issue}`)
+      console.error(`   Fix: ${r.suggestion}`)
+    }
+  }
+}
+```
+
+<Warning>
+  **Critical for Quality**: Always fact-check generated content before saving suggestions. Prevents publishing hallucinated data.
+</Warning>
+
+## extractFactCheckItems()
+
+Extract verifiable facts from an infographic spec.
+
+```typescript
+function extractFactCheckItems(
+  spec: Record<string, unknown>,
+  guestName: string
+): FactCheckItem[]
+```
+
+### Example
+
+```typescript
+import { extractFactCheckItems } from '@/services/ai'
+
+const spec = {
+  title: "Mark Baker's Tech Debt Doom Loop",  // NOT extracted (editorial title)
+  dataPoints: [
+    "70% of IT budgets go to maintenance",    // EXTRACTED (statistic)
+    "Average lifespan: 3-5 years"             // EXTRACTED (data)
+  ],
+  pullQuote: {
+    text: "We were spending more time firefighting than innovating",  // EXTRACTED (quote)
+    attribution: "Chris Pacifico"
+  },
+  sections: [
+    {
+      name: "The Cycle",
+      textContent: "1. Legacy systems age\n2. Technical debt grows\n3. Innovation stalls"  // EXTRACTED (list)
+    }
+  ]
+}
+
+const items = extractFactCheckItems(spec, 'Chris Pacifico')
+// Returns 4 items (2 statistics, 1 quote, 1 list)
+```
+
+<Note>
+  **Titles Not Extracted**: Editorial titles (e.g., "Mark Baker's Doom Loop") are not fact-checked because they're creative descriptions, not claims made by the guest.
+</Note>
+
+## checkSpelling()
+
+Check text for spelling and grammar errors.
+
+```typescript
+function checkSpelling(text: string): Promise<SpellCheckResult>
+```
+
+### Returns
+
+```typescript
+interface SpellCheckResult {
+  correctedText: string
+  changes: SpellCheckChange[]
+  hasChanges: boolean
+}
+
+interface SpellCheckChange {
+  original: string
+  corrected: string
+  type: 'spelling' | 'grammar' | 'punctuation'
+}
+```
+
+### Example
+
+```typescript
+import { checkSpelling } from '@/services/ai'
+
+const result = await checkSpelling(
+  'Most IT leaders dont realize the impact of techincal debt.'
+)
+
+if (result.hasChanges) {
+  console.log('Corrected:', result.correctedText)
+  // "Most IT leaders don't realize the impact of technical debt."
+  
+  console.log('Changes:', result.changes)
+  // [
+  //   { original: "dont", corrected: "don't", type: "spelling" },
+  //   { original: "techincal", corrected: "technical", type: "spelling" }
+  // ]
+}
+```
+
+## Settings Integration
+
+All AI functions automatically use settings from `settingsStore`:
+
+```typescript
+// Settings are fetched from store
+const settings = useSettingsStore.getState().settings
+
+// Used for:
+// - Model selection (e.g., "claude-sonnet-4-20250514")
+// - Agent prompts (PRF, hooks, infographic, etc.)
+// - Preset fields (brand name, co-host name, etc.)
+```
+
+No need to pass these manually - they're injected automatically.
+
+## Error Handling
+
+All functions throw errors that should be caught:
+
+```typescript
+try {
+  const prf = await generatePRF(transcript)
+} catch (error) {
+  if (error.message.includes('API error: 401')) {
+    // Authentication expired
+    redirectToLogin()
+  } else if (error.message.includes('rate limit')) {
+    // Rate limit hit
+    showToast('Too many requests, please wait')
+  } else {
+    // Generation failed
+    showToast('Generation failed: ' + error.message)
+  }
+}
+```
+
+Common error messages:
+
+- `"Transcript is required"`
+- `"API error: 401"` - Authentication issue
+- `"API error: 429"` - Rate limit
+- `"Failed to generate [content]"` - Generation error
+- `"Anthropic API error: 500"` - Upstream API issue

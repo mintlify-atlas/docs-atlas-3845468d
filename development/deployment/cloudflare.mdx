@@ -1,0 +1,358 @@
+---
+title: Cloudflare Pages Deployment
+description: Deploy YBH Pulse Content to Cloudflare Pages with Workers
+---
+
+## Overview
+
+Pulse Content is deployed on **Cloudflare Pages**, combining:
+- Static site hosting (React frontend)
+- Edge functions (Cloudflare Workers for API)
+- Global CDN (200+ data centers)
+- KV storage (rate limiting, social metadata)
+
+## Prerequisites
+
+<Steps>
+  <Step title="Cloudflare Account">
+    Sign up at [cloudflare.com](https://cloudflare.com) if you don't have an account
+  </Step>
+
+  <Step title="Wrangler CLI">
+    Install Cloudflare's CLI tool:
+    ```bash
+    npm install -g wrangler@latest
+    ```
+  </Step>
+
+  <Step title="Authenticate Wrangler">
+    ```bash
+    wrangler login
+    ```
+    Opens browser for authentication
+  </Step>
+</Steps>
+
+## Project Configuration
+
+### wrangler.toml
+
+```toml
+name = "pulse-content"
+compatibility_date = "2024-03-01"
+pages_build_output_dir = "dist"
+
+# KV Namespace for social approval metadata
+[[kv_namespaces]]
+binding = "SOCIAL_META"
+id = "21b5593775dd4a75b0fcbb56de55c06d"
+```
+
+<Info>
+  **Note:** Do NOT add `account_id` in `wrangler.toml` for Pages projects. It's passed via GitHub Actions secrets.
+</Info>
+
+### Build Configuration
+
+**Build command:** `npm run build`
+
+**Output directory:** `dist/`
+
+**Build steps:**
+1. TypeScript compilation (`tsc -p tsconfig.json`)
+2. Vite bundling with code splitting
+3. Asset optimization and minification
+
+## Environment Variables
+
+### Required Secrets
+
+<CodeGroup>
+```bash Cloudflare Dashboard
+# Navigate to:
+# Workers & Pages > pulse-content > Settings > Environment Variables
+
+# Add the following secrets:
+SANITY_PROJECT_ID=your-project-id
+SANITY_DATASET=production
+SANITY_API_TOKEN=your-token-with-editor-role
+ANTHROPIC_API_KEY=your-anthropic-key
+OPENROUTER_API_KEY=your-openrouter-key
+PINECONE_API_KEY=your-pinecone-key
+PINECONE_HOST=https://your-index.svc.region.pinecone.io
+KIEAI_API_KEY=your-kie-api-key
+RAPIDAPI_KEY=your-rapidapi-key
+JWT_SECRET=your-32-byte-hex-string
+RESEND_API_KEY=re_xxx
+RESEND_FROM_EMAIL="Pulse Studio <noreply@yourdomain.com>"
+APP_BASE_URL=https://production.youvebeenheard.com
+ASSEMBLYAI_API_KEY=your-assemblyai-key
+```
+
+```bash Wrangler CLI
+# Set secrets via command line
+wrangler secret put JWT_SECRET
+wrangler secret put SANITY_API_TOKEN
+wrangler secret put ANTHROPIC_API_KEY
+wrangler secret put KIEAI_API_KEY
+wrangler secret put RESEND_API_KEY
+wrangler secret put ASSEMBLYAI_API_KEY
+
+# For base64-encoded values (like Google Drive SA key)
+wrangler secret put GOOGLE_DRIVE_SA_KEY
+```
+</CodeGroup>
+
+### Optional Variables
+
+```bash
+# YBH Sales Integration
+YBH_SALES_API_URL=https://api.youvebeenheard.com
+YBH_SALES_API_KEY=your-shared-api-key
+
+# Backfill API Protection
+YBH_BACKFILL_API_KEY=your-backfill-key
+
+# Pulse Bot API Key
+PULSE_BOT_API_KEY=your-bot-key
+```
+
+## KV Namespace Setup
+
+### Create KV Namespace
+
+```bash
+# Create production namespace
+wrangler kv:namespace create "SOCIAL_META"
+
+# Output:
+# { binding = "SOCIAL_META", id = "21b5593775dd4a75b0fcbb56de55c06d" }
+```
+
+Add the `id` to `wrangler.toml`:
+
+```toml
+[[kv_namespaces]]
+binding = "SOCIAL_META"
+id = "21b5593775dd4a75b0fcbb56de55c06d"
+```
+
+### Preview Namespace (Optional)
+
+For testing in preview environments:
+
+```bash
+wrangler kv:namespace create "SOCIAL_META" --preview
+```
+
+## Manual Deployment
+
+### Build and Deploy
+
+<Steps>
+  <Step title="Build the project">
+    ```bash
+    npm run build
+    ```
+    Creates optimized production build in `dist/`
+  </Step>
+
+  <Step title="Deploy to Cloudflare Pages">
+    ```bash
+    npm run deploy
+    # or
+    wrangler pages deploy dist --project-name=pulse-content
+    ```
+  </Step>
+
+  <Step title="Verify deployment">
+    Wrangler outputs the deployment URL:
+    ```
+    ✨ Deployment complete!
+    🌎 https://pulse-content.pages.dev
+    ```
+  </Step>
+</Steps>
+
+### Preview Production Build Locally
+
+Test the production build before deploying:
+
+```bash
+npm run preview
+# or
+wrangler pages dev dist
+```
+
+Access at `http://localhost:8788`
+
+## Custom Domain Setup
+
+<Steps>
+  <Step title="Add custom domain">
+    In Cloudflare dashboard:
+    1. Navigate to **Workers & Pages** > **pulse-content**
+    2. Go to **Custom domains** tab
+    3. Click **Set up a custom domain**
+  </Step>
+
+  <Step title="Configure DNS">
+    Add CNAME record pointing to `pulse-content.pages.dev`:
+    ```
+    CNAME  production  pulse-content.pages.dev
+    ```
+  </Step>
+
+  <Step title="Enable HTTPS">
+    Cloudflare automatically provisions SSL certificate
+  </Step>
+</Steps>
+
+## Deployment Checklist
+
+Before deploying to production:
+
+<Steps>
+  <Step title="Run all tests">
+    ```bash
+    npm run test:run
+    npm run typecheck
+    ```
+  </Step>
+
+  <Step title="Test production build locally">
+    ```bash
+    npm run build
+    npm run preview
+    ```
+  </Step>
+
+  <Step title="Verify environment variables">
+    Check all required secrets are set in Cloudflare dashboard
+  </Step>
+
+  <Step title="Update APP_BASE_URL">
+    Ensure `APP_BASE_URL` matches production domain
+  </Step>
+
+  <Step title="Deploy">
+    ```bash
+    npm run deploy
+    ```
+  </Step>
+
+  <Step title="Verify deployment">
+    - Check production URL loads correctly
+    - Test authentication flow
+    - Verify API endpoints respond
+    - Test content generation
+  </Step>
+</Steps>
+
+## Rollback
+
+Cloudflare Pages keeps deployment history:
+
+1. Go to **Workers & Pages** > **pulse-content** > **Deployments**
+2. Find previous successful deployment
+3. Click **⋯** > **Rollback to this deployment**
+
+<Warning>
+  Rollback only affects code, not data. Database changes are not rolled back.
+</Warning>
+
+## Monitoring
+
+### View Logs
+
+```bash
+# Tail production logs
+wrangler pages deployment tail --project-name=pulse-content
+
+# Filter by status
+wrangler pages deployment tail --status error
+```
+
+### Analytics
+
+View analytics in Cloudflare dashboard:
+- **Workers & Pages** > **pulse-content** > **Analytics**
+- Request volume, error rates, response times
+- Top endpoints, geographic distribution
+
+## Performance
+
+### Cloudflare Global Network
+
+- **200+ data centers** worldwide
+- **Sub-100ms latency** for most users
+- **Automatic caching** of static assets
+- **Edge computing** for API endpoints
+
+### Build Optimizations
+
+```javascript
+// vite.config.ts - Code splitting
+rollupOptions: {
+  output: {
+    manualChunks(id) {
+      if (id.includes('@tiptap')) return 'tiptap'        // ~300KB
+      if (id.includes('react-dom')) return 'react-vendor' // ~130KB
+      if (id.includes('@sanity')) return 'sanity'         // ~80KB
+    }
+  }
+}
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Build fails with TypeScript errors">
+    Run type checking locally:
+    ```bash
+    npm run typecheck
+    ```
+    Fix all errors before deploying
+  </Accordion>
+
+  <Accordion title="Environment variables not working">
+    - Verify secrets are set in Cloudflare dashboard
+    - Redeploy after adding new secrets
+    - Check variable names match code references
+  </Accordion>
+
+  <Accordion title="API endpoints return 500 errors">
+    Check Worker logs:
+    ```bash
+    wrangler pages deployment tail --status error
+    ```
+    Common causes:
+    - Missing environment variables
+    - API rate limits exceeded
+    - Invalid API credentials
+  </Accordion>
+
+  <Accordion title="KV namespace binding errors">
+    Ensure KV namespace ID in `wrangler.toml` matches actual namespace:
+    ```bash
+    wrangler kv:namespace list
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Environment Config" icon="gear" href="/development/deployment/environment">
+    Learn about environment configuration
+  </Card>
+  <Card title="CI/CD Pipeline" icon="rocket" href="/development/deployment/ci-cd">
+    Set up automated deployment
+  </Card>
+  <Card title="Setup Guide" icon="wrench" href="/development/setup">
+    Local development setup
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    System architecture overview
+  </Card>
+</CardGroup>

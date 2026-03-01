@@ -1,0 +1,457 @@
+---
+title: Contributing Guidelines
+description: How to contribute to YBH Pulse Content development
+---
+
+## Welcome Contributors
+
+Thank you for considering contributing to Pulse Content! This guide will help you understand our development process and coding standards.
+
+## Getting Started
+
+<Steps>
+  <Step title="Fork and clone">
+    ```bash
+    git clone <your-fork-url>
+    cd pulse-content
+    ```
+  </Step>
+
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+
+  <Step title="Set up environment">
+    Create `.dev.vars` file with required environment variables
+    
+    See [Setup Guide](/development/setup) for details
+  </Step>
+
+  <Step title="Create a branch">
+    ```bash
+    git checkout -b feature/your-feature-name
+    # or
+    git checkout -b fix/bug-description
+    ```
+  </Step>
+
+  <Step title="Start development">
+    ```bash
+    npm run dev
+    ```
+  </Step>
+</Steps>
+
+## Branch Naming
+
+Use descriptive branch names:
+
+- **Features:** `feature/add-social-scheduler`
+- **Bug fixes:** `fix/editor-crash-on-save`
+- **Refactoring:** `refactor/simplify-api-client`
+- **Documentation:** `docs/update-deployment-guide`
+- **Tests:** `test/add-episode-tests`
+
+## Coding Standards
+
+### TypeScript
+
+**Type Safety:**
+```typescript
+// ✅ Good: Explicit types
+interface Episode {
+  id: string
+  episodeNumber: number
+  title: string
+}
+
+function getEpisode(id: string): Promise<Episode> {
+  // ...
+}
+
+// ❌ Bad: Using 'any'
+function getEpisode(id: any): Promise<any> {
+  // ...
+}
+```
+
+**Avoid Type Assertions:**
+```typescript
+// ✅ Good: Type guards
+function isEpisode(data: unknown): data is Episode {
+  return typeof data === 'object' && data !== null && 'episodeNumber' in data
+}
+
+// ❌ Bad: Unsafe assertion
+const episode = data as Episode
+```
+
+### React Components
+
+**Functional Components:**
+```typescript
+// ✅ Good: Typed props with interface
+interface EpisodeCardProps {
+  episode: Episode
+  onClick?: (id: string) => void
+}
+
+export function EpisodeCard({ episode, onClick }: EpisodeCardProps) {
+  return (
+    <div onClick={() => onClick?.(episode.id)}>
+      <h3>{episode.title}</h3>
+    </div>
+  )
+}
+```
+
+**Hooks:**
+```typescript
+// ✅ Good: Custom hooks with proper types
+function useEpisode(id: string) {
+  const [episode, setEpisode] = useState<Episode | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+  
+  // ... fetch logic
+  
+  return { episode, loading, error }
+}
+```
+
+### File Organization
+
+```
+src/
+├── components/
+│   ├── ui/              # Reusable UI components
+│   │   ├── Button.tsx
+│   │   └── Card.tsx
+│   ├── editor/          # TipTap editor components
+│   └── layout/          # Layout components
+├── routes/              # Page components
+│   ├── index.tsx
+│   └── episode/
+├── services/            # API clients
+│   ├── sanity.ts
+│   └── kieai.ts
+├── hooks/               # Custom React hooks
+├── utils/               # Utility functions
+└── types/               # TypeScript type definitions
+```
+
+### Import Order
+
+```typescript
+// 1. External dependencies
+import { useState, useEffect } from 'react'
+import { useQuery } from '@tanstack/react-query'
+
+// 2. Internal modules
+import { Button } from '@/components/ui/Button'
+import { useEpisode } from '@/hooks/useEpisode'
+
+// 3. Types
+import type { Episode } from '@/types'
+
+// 4. Styles
+import './styles.css'
+```
+
+## Testing Requirements
+
+<Warning>
+  **All new features must include tests.** PRs without tests will not be merged.
+</Warning>
+
+### Test Coverage
+
+**Required:**
+- Unit tests for utility functions
+- Component tests for UI components
+- Integration tests for API endpoints
+
+**Example:**
+```typescript
+// src/utils/formatDate.test.ts
+import { describe, it, expect } from 'vitest'
+import { formatDate } from './formatDate'
+
+describe('formatDate', () => {
+  it('formats date correctly', () => {
+    const date = new Date('2024-03-15')
+    expect(formatDate(date)).toBe('March 15, 2024')
+  })
+
+  it('handles null', () => {
+    expect(formatDate(null)).toBe('Invalid date')
+  })
+
+  it('handles invalid dates', () => {
+    expect(formatDate(new Date('invalid'))).toBe('Invalid date')
+  })
+})
+```
+
+### Run Tests Before Committing
+
+```bash
+# Run all tests
+npm run test:run
+
+# Type check
+npm run typecheck
+
+# Lint
+npm run lint
+```
+
+## Commit Messages
+
+### Format
+
+Follow Conventional Commits:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+```
+
+### Types
+
+- `feat`: New feature
+- `fix`: Bug fix
+- `docs`: Documentation changes
+- `style`: Code style changes (formatting, no logic change)
+- `refactor`: Code refactoring
+- `test`: Adding or updating tests
+- `chore`: Maintenance tasks
+
+### Examples
+
+```bash
+# Feature
+feat(editor): add table support to TipTap editor
+
+# Bug fix
+fix(api): prevent duplicate episode creation
+
+# Documentation
+docs(readme): update installation instructions
+
+# Refactoring
+refactor(services): simplify Sanity client API
+
+# Test
+test(episodes): add tests for episode CRUD operations
+```
+
+## Pull Request Process
+
+<Steps>
+  <Step title="Ensure all tests pass">
+    ```bash
+    npm run test:run
+    npm run typecheck
+    npm run lint
+    ```
+  </Step>
+
+  <Step title="Update documentation">
+    - Update README.md if needed
+    - Add/update code comments
+    - Update relevant docs pages
+  </Step>
+
+  <Step title="Create pull request">
+    - Write clear title and description
+    - Reference related issues
+    - Add screenshots for UI changes
+    - Request review from maintainers
+  </Step>
+
+  <Step title="Address review feedback">
+    - Respond to comments
+    - Make requested changes
+    - Re-request review after updates
+  </Step>
+
+  <Step title="Merge">
+    Maintainer will merge after approval
+  </Step>
+</Steps>
+
+## PR Template
+
+```markdown
+## Description
+Brief description of changes
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+- [ ] Tests added/updated
+- [ ] All tests pass
+- [ ] Type checking passes
+
+## Screenshots (if applicable)
+[Add screenshots for UI changes]
+
+## Related Issues
+Closes #123
+
+## Checklist
+- [ ] Code follows style guidelines
+- [ ] Self-review completed
+- [ ] Comments added for complex code
+- [ ] Documentation updated
+- [ ] No new warnings
+```
+
+## Code Review Guidelines
+
+### For Authors
+
+<CardGroup cols={2}>
+  <Card title="Keep PRs Small" icon="compress">
+    Aim for less than 400 lines changed. Split large features into multiple PRs.
+  </Card>
+  
+  <Card title="Explain Decisions" icon="comment">
+    Add comments explaining why, not just what.
+  </Card>
+  
+  <Card title="Test Thoroughly" icon="flask">
+    Test edge cases, error states, and happy paths.
+  </Card>
+  
+  <Card title="Document Changes" icon="book">
+    Update docs and README as needed.
+  </Card>
+</CardGroup>
+
+### For Reviewers
+
+<CardGroup cols={2}>
+  <Card title="Be Constructive" icon="comment">
+    Suggest improvements, don't just criticize.
+  </Card>
+  
+  <Card title="Ask Questions" icon="question">
+    If something is unclear, ask for clarification.
+  </Card>
+  
+  <Card title="Check Tests" icon="check">
+    Ensure adequate test coverage.
+  </Card>
+  
+  <Card title="Consider Performance" icon="gauge">
+    Look for performance implications.
+  </Card>
+</CardGroup>
+
+## Design Principles
+
+### User Experience
+
+- **Speed:** Optimize for fast load times and interactions
+- **Clarity:** Use clear labels and error messages
+- **Consistency:** Follow YBH design system
+- **Accessibility:** Support keyboard navigation and screen readers
+
+### Code Quality
+
+- **DRY:** Don't Repeat Yourself - extract reusable code
+- **SOLID:** Follow SOLID principles
+- **KISS:** Keep It Simple, Stupid - avoid over-engineering
+- **YAGNI:** You Aren't Gonna Need It - don't add unused features
+
+### Performance
+
+- **Code Splitting:** Lazy load large components
+- **Memoization:** Use `useMemo` and `useCallback` appropriately
+- **Debouncing:** Debounce expensive operations
+- **Caching:** Use React Query for API response caching
+
+## Common Pitfalls
+
+<AccordionGroup>
+  <Accordion title="Modifying state directly">
+    ```typescript
+    // ❌ Bad: Direct mutation
+    episode.title = 'New Title'
+    setEpisode(episode)
+    
+    // ✅ Good: Create new object
+    setEpisode({ ...episode, title: 'New Title' })
+    ```
+  </Accordion>
+
+  <Accordion title="Missing error handling">
+    ```typescript
+    // ❌ Bad: No error handling
+    async function fetchEpisode(id: string) {
+      const response = await fetch(`/api/episodes/${id}`)
+      return response.json()
+    }
+    
+    // ✅ Good: Proper error handling
+    async function fetchEpisode(id: string) {
+      try {
+        const response = await fetch(`/api/episodes/${id}`)
+        if (!response.ok) throw new Error('Failed to fetch')
+        return response.json()
+      } catch (error) {
+        console.error('Error fetching episode:', error)
+        throw error
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Ignoring TypeScript errors">
+    ```typescript
+    // ❌ Bad: Using @ts-ignore
+    // @ts-ignore
+    const result = someFunction()
+    
+    // ✅ Good: Fix the type issue
+    const result: ExpectedType = someFunction()
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Getting Help
+
+<CardGroup cols={2}>
+  <Card title="Documentation" icon="book" href="/development/setup">
+    Read the full documentation
+  </Card>
+  
+  <Card title="GitHub Issues" icon="github">
+    Ask questions in GitHub Issues
+  </Card>
+  
+  <Card title="Architecture" icon="sitemap" href="/development/architecture">
+    Understand the system architecture
+  </Card>
+  
+  <Card title="Bug Workflow" icon="bug" href="/development/contributing/bug-workflow">
+    Learn the bug-fixing process
+  </Card>
+</CardGroup>
+
+## License
+
+**Proprietary - You've Been Heard**
+
+By contributing, you agree that your contributions will be licensed under the same license as the project.
